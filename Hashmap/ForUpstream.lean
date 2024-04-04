@@ -9,6 +9,12 @@
 @[simp] theorem List.contains_cons [BEq α] {a : α} {l : List α} {x : α} :
     (a :: l).contains x = (x == a || l.contains x) := rfl
 
+theorem List.erase_cons [BEq α] (a b : α) (l : List α) :
+    (b :: l).erase a = if b == a then l else b :: l.erase a := by
+  cases h : b == a
+  · simp [List.erase, h]
+  · simp [List.erase, h]
+
 /-! From Std.Data.List.Basic -/
 
 section

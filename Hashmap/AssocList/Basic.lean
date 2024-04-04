@@ -53,6 +53,16 @@ theorem findEntry?_cons_of_false [BEq α] {l : AssocList α β} {k a : α} {v : 
 theorem findEntry?_cons [BEq α] {l : AssocList α β} {k a : α} {v : β} :
     (l.cons k v).findEntry? a = bif k == a then some (k, v) else l.findEntry? a := rfl
 
+theorem findEntry?_eq_of_beq [BEq α] [EquivBEq α] {l : AssocList α β} {a a' : α} (h : a == a') :
+    l.findEntry? a = l.findEntry? a' := by
+  induction l
+  · simp
+  · next k v l ih =>
+    cases h' : k == a
+    · have h₂ : (k == a') = false := sorry
+      rw [findEntry?_cons_of_false h', findEntry?_cons_of_false h₂, ih]
+    · rw [findEntry?_cons_of_true h', findEntry?_cons_of_true (BEq.trans h' h)]
+
 def find? [BEq α] (a : α) : AssocList α β → Option β
   | nil => none
   | cons k v es => bif k == a then some v else find? a es
@@ -308,6 +318,7 @@ theorem findKey?_replace_of_true [BEq α] [EquivBEq α] {l : AssocList α β} {k
     (hl : l.contains a = true) (h : (k == a)) : (l.replace a b).findKey? k = some (l.findKey a hl) := by
   simp [findKey?_eq_findEntry?, findEntry?_replace_of_true hl h]
 
+-- TODO: We also need findEntry?_of_beq, findKey?_of_beq, find?_of_beq, and then this will follow trivially
 theorem contains_of_beq [BEq α] [EquivBEq α] {l : AssocList α β} {a b : α} (hla : l.contains a) (hab : a == b) :
     l.contains b := by
   induction l
@@ -383,7 +394,8 @@ theorem contains_eq_keys_contains [BEq α] [EquivBEq α] {l : AssocList α β} {
 structure WF [BEq α] (l : AssocList α β) : Prop where
   distinct : l.keys.Pairwise fun a b => (a == b) = false
 
-theorem WF.nil [BEq α] : (nil : AssocList α β).WF :=
+@[simp]
+theorem WF_nil [BEq α] : (nil : AssocList α β).WF :=
   ⟨by simp⟩
 
 theorem WF_of_keys_eq [BEq α] {l l' : AssocList α β} (h : l.keys = l'.keys) : l.WF → l'.WF :=
@@ -468,6 +480,69 @@ theorem contains_insert_self [BEq α] [EquivBEq α] {l : AssocList α β} {k : �
 
 -- TODO: results about findEntry?+insert and findKey?+insert
 
+@[simp]
+theorem keys_erase [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} :
+    (l.erase k).keys = l.keys.erase k := by
+  induction l
+  · rfl
+  · next k' v' l ih =>
+    simp [erase_cons, List.erase_cons]
+    cases k' == k
+    · simp [ih]
+    · simp [ih]
+
+-- WF_erase now follows from erase_sublist,
+-- and WF_of_keys_sublist (which doesn't exist yet, but follows from Pairwise_sublist)
+
+-- theorem WF_erase [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} (h : l.WF) :
+--     (l.erase k).WF := sorry
+
+theorem findEntry?_erase_self [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} (h : l.WF) :
+    (l.erase k).findEntry? k = none := by
+  induction l
+  · simp
+  · next k' v' t ih =>
+    cases h' : k' == k
+    · rw [erase_cons_of_false h', findEntry?_cons_of_false h']
+      exact ih (WF_cons_iff.1 h).1
+    · rw [erase_cons_of_beq h', ← Option.not_isSome_iff_eq_none, Bool.not_eq_true,
+        ← contains_eq_isSome_findEntry?, ← contains_eq_of_beq h']
+      exact (WF_cons_iff.1 h).2
+
+theorem findEntry?_erase_of_beq [BEq α] [EquivBEq α] {l : AssocList α β} {k a : α} (hl : l.WF)
+    (hka : k == a) : (l.erase k).findEntry? a = none := by
+  rw [← findEntry?_eq_of_beq hka, findEntry?_erase_self hl]
+
+theorem findEntry?_erase_of_false [BEq α] [EquivBEq α] {l : AssocList α β} {k a : α}
+    (hka : (k == a) = false) : (l.erase k).findEntry? a = l.findEntry? a := by
+  induction l
+  · simp
+  · next k' v' t ih =>
+    cases h' : k' == k
+    · rw [erase_cons_of_false h']
+      cases h'' : k' == a
+      · rw [findEntry?_cons_of_false h'', ih, findEntry?_cons_of_false h'']
+      · rw [findEntry?_cons_of_true h'', findEntry?_cons_of_true h'']
+    · rw [erase_cons_of_beq h']
+      have hx : (k' == a) = false := sorry
+      rw [findEntry?_cons_of_false hx]
+
+theorem findEntry?_erase [BEq α] [EquivBEq α] {l : AssocList α β} {k a : α} (hl : l.WF) :
+    (l.erase k).findEntry? a = bif k == a then none else l.findEntry? a := by
+  cases h : k == a
+  · simp [findEntry?_erase_of_false h, h]
+  · simp [findEntry?_erase_of_beq hl h, h]
+
+theorem contains_erase_self [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} (h : l.WF) :
+    (l.erase k).contains k = false := by
+  sorry -- immediate from findEntry?_erase_self
+
+theorem contains_erase_eq_false_of_beq [BEq α] [EquivBEq α] {l : AssocList α β} {k a : α} (hl : l.WF)
+    (hka : k == a) : (l.erase k).contains a = false := by
+  rw [← contains_eq_of_beq hka, contains_erase_self hl]
+
+
+--     · sorry
 -- TODO: lots of results about erase, including contains+erase, erase+insert and erase+WF
 
 end AssocList
