@@ -10,3 +10,5 @@ lean_lib «Hashmap» where
 @[default_target]
 lean_exe «hashmap» where
   root := `Main
+
+require std from git "https://github.com/leanprover/std4" @ "main"
