@@ -78,8 +78,8 @@ theorem find?_cons_of_false [BEq α] {l : AssocList α β} {k a : α} {v : β} (
     (l.cons k v).find? a = l.find? a := by
   simp [find?, h]
 
-theorem find?_eq_findEntry? [BEq α] (a : α) (l : AssocList α β) :
-    find? a l = (l.findEntry? a).map (·.2) := by
+theorem find?_eq_findEntry? [BEq α] {l : AssocList α β} {a : α} :
+    l.find? a = (l.findEntry? a).map (·.2) := by
   induction l
   · simp
   · next k v es ih =>
@@ -107,8 +107,8 @@ theorem findKey?_cons_of_false [BEq α] {l : AssocList α β} {k a : α} {v : β
     (l.cons k v).findKey? a = l.findKey? a := by
   simp [findKey?, h]
 
-theorem findKey?_eq_findEntry? [BEq α] (a : α) (l : AssocList α β) :
-    findKey? a l = (l.findEntry? a).map (·.1) := by
+theorem findKey?_eq_findEntry? [BEq α] {l : AssocList α β} {a : α} :
+    l.findKey? a = (l.findEntry? a).map (·.1) := by
   induction l
   · simp
   · next k v es ih =>
@@ -124,7 +124,7 @@ def contains [BEq α] (a : α) : AssocList α β → Bool
   | nil => false
   | cons k _ l => k == a || l.contains a
 
-@[simp] theorem contains_nil [BEq α] : (nil : AssocList α β).contains a = false := rfl
+@[simp] theorem contains_nil [BEq α] {a : α} : (nil : AssocList α β).contains a = false := rfl
 @[simp] theorem contains_cons [BEq α] {l : AssocList α β} {k a : α} {v : β} :
     (l.cons k v).contains a = (k == a || l.contains a) := rfl
 
@@ -153,7 +153,7 @@ theorem contains_of_contains_cons [BEq α] {l : AssocList α β} {k a : α} {v :
   · exact False.elim (Bool.eq_false_iff.1 h₂ h)
   · exact h
 
-theorem contains_eq_isSome_findEntry? [BEq α] (l : AssocList α β) {a : α} :
+theorem contains_eq_isSome_findEntry? [BEq α] {l : AssocList α β} {a : α} :
     l.contains a = (l.findEntry? a).isSome := by
   induction l
   · simp
@@ -162,11 +162,11 @@ theorem contains_eq_isSome_findEntry? [BEq α] (l : AssocList α β) {a : α} :
     · simp [findEntry?_cons_of_false h, h, ih]
     · simp [findEntry?_cons_of_true h, h]
 
-theorem contains_eq_isSome_find? [BEq α] (l : AssocList α β) {a : α} :
+theorem contains_eq_isSome_find? [BEq α] {l : AssocList α β} {a : α} :
     l.contains a = (l.find? a).isSome := by
   simp [contains_eq_isSome_findEntry?, find?_eq_findEntry?]
 
-theorem contains_eq_isSome_findKey? [BEq α] (l : AssocList α β) {a : α} :
+theorem contains_eq_isSome_findKey? [BEq α] {l : AssocList α β} {a : α} :
     l.contains a = (l.findKey? a).isSome := by
   simp [contains_eq_isSome_findEntry?, findKey?_eq_findEntry?]
 
@@ -179,7 +179,7 @@ theorem contains_of_beq [BEq α] [EquivBEq α] {l : AssocList α β} {a b : α} 
   rwa [← contains_eq_of_beq hab]
 
 def findEntry [BEq α] (l : AssocList α β) (a : α) (h : l.contains a) : α × β :=
-  (l.findEntry? a).get <| (contains_eq_isSome_findEntry? l).symm.trans h
+  (l.findEntry? a).get <| contains_eq_isSome_findEntry?.symm.trans h
 
 theorem findEntry?_eq_some_findEntry [BEq α] {l : AssocList α β} {a : α} (h : l.contains a) :
     l.findEntry? a = some (l.findEntry a h) := by
@@ -199,7 +199,7 @@ theorem findEntry_cons_of_false [BEq α] {l : AssocList α β} {k a : α} {v : �
   simp [findEntry, findEntry?_cons_of_false h₂]
 
 def findKey [BEq α] (l : AssocList α β) (a : α) (h : l.contains a) : α :=
-  (l.findKey? a).get <| (contains_eq_isSome_findKey? l).symm.trans h
+  (l.findKey? a).get <| contains_eq_isSome_findKey?.symm.trans h
 
 theorem findKey?_eq_some_findKey [BEq α] {l : AssocList α β} {a : α} (h : l.contains a) :
     l.findKey? a = some (l.findKey a h) := by
@@ -228,7 +228,7 @@ theorem findKey_beq [BEq α] {l : AssocList α β} {a : α} {h : l.contains a} :
     · rwa [findKey_cons_of_beq h']
 
 def find [BEq α] (l : AssocList α β) (a : α) (h : l.contains a) : β :=
-  (l.find? a).get <| (contains_eq_isSome_find? l).symm.trans h
+  (l.find? a).get <| contains_eq_isSome_find?.symm.trans h
 
 theorem find?_eq_some_find [BEq α] {l : AssocList α β} {a : α} (h : l.contains a) :
     l.find? a = some (l.find a h) := by
@@ -498,6 +498,7 @@ theorem contains_insert_of_beq [BEq α] [EquivBEq α] {l : AssocList α β} {k a
     (l.insert k v).contains a := by
   simp [h]
 
+@[simp]
 theorem contains_insert_self [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} {v : β} :
     (l.insert k v).contains k :=
   contains_insert_of_beq BEq.refl

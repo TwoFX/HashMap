@@ -61,6 +61,11 @@ theorem List.Pairwise.sublist (R : α → α → Prop) (l₁ l₂ : List α) : l
 
 end
 
+/-! From Std.Data.Array.Lemmas -/
+
+theorem Array.get_set (a : Array α) (i : Fin a.size) (j : Nat) (hj : j < a.size) (v : α) :
+    (a.set i v)[j]'(by simp [*]) = if i = j then v else a[j] := sorry
+
 /-! New results -/
 
 theorem List.contains_iff_exists_beq [BEq α] (l : List α) (a : α) : l.contains a ↔ ∃ a' ∈ l, a == a' := by
