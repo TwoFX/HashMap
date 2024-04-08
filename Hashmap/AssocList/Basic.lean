@@ -153,6 +153,7 @@ theorem contains_cons_eq_true [BEq α] {l : AssocList α β} {k a : α} {v : β 
 theorem contains_cons_of_beq [BEq α] {l : AssocList α β} {k a : α} {v : β k} (h : k == a) :
     (l.cons k v).contains a := contains_cons_eq_true.2 <| Or.inl h
 
+@[simp]
 theorem contains_cons_self [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} {v : β k} :
     (l.cons k v).contains k := contains_cons_of_beq BEq.refl
 
@@ -436,6 +437,10 @@ theorem WF_cons_iff [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} {v : �
   · rw [keys_cons, List.pairwise_cons, ← contains_eq_false_iff_forall]
     exact ⟨h₂, h₁⟩
 
+theorem WF_cons [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} {v : β k} (h : l.contains k = false) :
+    l.WF → (l.cons k v).WF :=
+  fun h' => WF_cons_iff.mpr ⟨h', h⟩
+
 theorem WF_replace [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} {v : β k} (h : l.WF) : (l.replace k v).WF := by
   induction l
   · simp
@@ -635,6 +640,7 @@ theorem contains_erase [BEq α] [EquivBEq α] {l : AssocList α β} {k a : α} (
     (l.erase k).contains a = bif k == a then false else l.contains a := by
   simp [contains_eq_isSome_findEntry?, findEntry?_erase hl, apply_bif Option.isSome]
 
+-- TODO: Technically this should be true without assuming l.WF
 theorem contains_of_contains_erase [BEq α] [EquivBEq α] {l : AssocList α β} {k a : α} (hl : l.WF)
     (h : (l.erase k).contains a) : l.contains a := by
   cases hka : k == a

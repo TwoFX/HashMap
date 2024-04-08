@@ -10,6 +10,10 @@ namespace MyLean
 def AssocListMap (α : Type u) [BEq α] (β : α → Type v) :=
   { l : AssocList α β // ∀ [EquivBEq α], l.WF }
 
+#check Nat.recAux
+
+-- def AssocListMap
+
 abbrev AssocListMap' (α : Type u) [BEq α] (β : Type v) :=
   AssocListMap α (fun _ => β)
 
@@ -158,6 +162,35 @@ theorem contains_insert_self [BEq α] [EquivBEq α] {l : AssocList α β} {k : �
   AssocList.contains_insert_self
 
 /- Skipping findEntry?_insert, findKey?_insert and find?_insert for now. -/
+
+def cons [BEq α] (k : α) (v : β k) (l : AssocListMap α β) (h : ∀ [EquivBEq α], l.contains k = false) : AssocListMap α β :=
+  ⟨l.1.cons k v, AssocList.WF_cons h l.2⟩
+
+theorem cons_eq_insert [BEq α] {k : α} {v : β k} {l : AssocListMap α β} {h : l.contains k = false} :
+    l.cons k v h = l.insert k v := by
+  apply ext
+  dsimp only [cons, insert]
+  rw [AssocList.insert_of_contains_eq_false h]
+
+@[simp]
+theorem contains_cons [BEq α] {k a : α} {v : β k} {l : AssocListMap α β} {h : l.contains k = false} :
+    (l.cons k v h).contains a = (k == a || l.contains a) :=
+  AssocList.contains_cons
+
+@[simp]
+theorem contains_cons_self [BEq α] [EquivBEq α] {k : α} {v : β k} {l : AssocListMap α β} {h : l.contains k = false} :
+    (l.cons k v h).contains k = true :=
+  AssocList.contains_cons_self
+
+-- theorem
+
+@[elab_as_elim]
+def wfRec [BEq α] {motive : AssocListMap α β → Sort w} (nil : motive nil)
+    (cons : (key : α) → (value : β key) → (tail : AssocListMap α β) →
+      (h : ∀ [EquivBEq α], tail.contains key = false) → motive (tail.cons key value h)) :
+    (l : AssocListMap α β) → motive l
+  | ⟨AssocList.nil, _⟩ => nil
+  | ⟨AssocList.cons k v l, h⟩ => cons k v ⟨l, (AssocList.WF_cons_iff.mp h).1⟩ (AssocList.WF_cons_iff.mp h).2
 
 end AssocListMap
 
