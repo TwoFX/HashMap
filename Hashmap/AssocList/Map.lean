@@ -7,8 +7,11 @@ import Hashmap.AssocList.Basic
 
 namespace Lean
 
-def AssocListMap (α : Type u) [BEq α] (β : Type v) :=
+def AssocListMap (α : Type u) [BEq α] (β : α → Type v) :=
   { l : AssocList α β // l.WF }
+
+abbrev AssocListMap' (α : Type u) [BEq α] (β : Type v) :=
+  AssocListMap α (fun _ => β)
 
 theorem AssocListMap.ext [BEq α] {l l' : AssocListMap α β} : l.1 = l'.1 → l = l' := by
   cases l; cases l'; rintro rfl; rfl
@@ -18,7 +21,7 @@ namespace AssocListMap
 def nil [BEq α] : AssocListMap α β :=
   ⟨AssocList.nil, AssocList.WF_nil⟩
 
-def findEntry? [BEq α] (a : α) : AssocListMap α β → Option (α × β) :=
+def findEntry? [BEq α] (a : α) : AssocListMap α β → Option (Σ a, β a) :=
   fun l => l.1.findEntry? a
 
 @[simp]
@@ -29,18 +32,18 @@ theorem findEntry?_eq_of_beq [BEq α] [EquivBEq α] {l : AssocListMap α β} {a 
     l.findEntry? a = l.findEntry? a' :=
   AssocList.findEntry?_eq_of_beq h
 
-def find? [BEq α] (a : α) : AssocListMap α β → Option β :=
+def find? [BEq α] (a : α) : AssocListMap' α β → Option β :=
   fun l => l.1.find? a
 
 @[simp]
-theorem find?_nil [BEq α] {a : α} : (nil : AssocListMap α β).find? a = none :=
+theorem find?_nil [BEq α] {a : α} : (nil : AssocListMap' α β).find? a = none :=
   AssocList.find?_nil
 
-theorem find?_eq_findEntry? [BEq α] {l : AssocListMap α β} {a : α} :
+theorem find?_eq_findEntry? [BEq α] {l : AssocListMap' α β} {a : α} :
     l.find? a = (l.findEntry? a).map (·.2) :=
   AssocList.find?_eq_findEntry?
 
-theorem find?_eq_of_beq [BEq α] [EquivBEq α] {l : AssocListMap α β} {a a' : α} (h : a == a') :
+theorem find?_eq_of_beq [BEq α] [EquivBEq α] {l : AssocListMap' α β} {a a' : α} (h : a == a') :
     l.find? a = l.find? a' :=
   AssocList.find?_eq_of_beq h
 
@@ -70,7 +73,7 @@ theorem contains_eq_isSome_findEntry? [BEq α] {l : AssocListMap α β} :
     l.contains a = (l.findEntry? a).isSome :=
   AssocList.contains_eq_isSome_findEntry?
 
-theorem contains_eq_isSome_find? [BEq α] {l : AssocListMap α β} :
+theorem contains_eq_isSome_find? [BEq α] {l : AssocListMap' α β} :
     l.contains a = (l.find? a).isSome :=
   AssocList.contains_eq_isSome_find?
 
@@ -116,7 +119,7 @@ theorem findEntry?_erase [BEq α] [EquivBEq α] {l : AssocListMap α β} {k a : 
 
 /- Skipping findKey?_erase, find?_erase and contains_erase for now. -/
 
-def insert [BEq α] [EquivBEq α] (k : α) (v : β) : AssocListMap α β → AssocListMap α β :=
+def insert [BEq α] [EquivBEq α] (k : α) (v : β k) : AssocListMap α β → AssocListMap α β :=
   fun l => ⟨l.1.insert k v, AssocList.WF_insert l.2⟩
 
 /- Skipping findEntry?_insert, findKey?_insert, find?_insert and contains_insert for now. -/

@@ -10,7 +10,7 @@ namespace Lean
 
 namespace HashMap.Imp
 
-def Buckets (α : Type u) [BEq α] (β : Type v) :=
+def Buckets (α : Type u) [BEq α] (β : α → Type v) :=
   { t : Array (AssocListMap α β) // t.size.isPowerOfTwo }
 
 namespace Buckets
