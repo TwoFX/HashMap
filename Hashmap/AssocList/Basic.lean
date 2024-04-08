@@ -8,7 +8,7 @@ import Hashmap.BEq
 
 universe v u
 
-namespace Lean
+namespace MyLean
 
 variable {α : Type u} {β : α → Type v}
 
@@ -396,13 +396,6 @@ def keys : AssocList α β → List α
 @[simp] theorem keys_nil : (nil : AssocList α β).keys = [] := rfl
 @[simp] theorem keys_cons {l : AssocList α β} {k : α} {v : β k} : (l.cons k v).keys = k :: l.keys := rfl
 
--- @[simp]
--- theorem keys_replace [BEq α] {l : AssocList α β} {a : α} {b : β a} : (l.replace a b).keys = l.keys := by
---   induction l
---   · simp
---   · next k v t ih =>
---     simp [replace_cons, apply_bif keys, ih]
-
 theorem contains_eq_keys_contains [BEq α] [EquivBEq α] {l : AssocList α β} {a : α} :
     l.contains a = l.keys.contains a := by
   induction l
@@ -421,7 +414,7 @@ theorem WF_nil [BEq α] : (nil : AssocList α β).WF :=
 open List
 
 theorem WF_of_sublist_keys [BEq α] {l l' : AssocList α β} (h : l'.keys <+ l.keys) : l.WF → l'.WF :=
-  fun ⟨h'⟩ => ⟨h'.sublist _ h⟩
+  fun ⟨h'⟩ => ⟨h'.sublist h⟩
 
 theorem WF_of_keys_eq [BEq α] {l l' : AssocList α β} (h : l.keys = l'.keys) : l.WF → l'.WF :=
   WF_of_sublist_keys (h ▸ Sublist.refl _)
@@ -549,8 +542,8 @@ theorem keys_erase [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} :
     · simp [ih]
     · simp [ih]
 
-theorem WF_erase [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} : l.WF → (l.erase k).WF :=
-  WF_of_sublist_keys (by simpa using erase_sublist _ _)
+theorem WF_erase [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} : l.WF → (l.erase k).WF := by
+  apply WF_of_sublist_keys (by simpa using erase_sublist' _ _)
 
 theorem findEntry?_erase_self [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} (h : l.WF) :
     (l.erase k).findEntry? k = none := by
@@ -642,8 +635,14 @@ theorem contains_erase [BEq α] [EquivBEq α] {l : AssocList α β} {k a : α} (
     (l.erase k).contains a = bif k == a then false else l.contains a := by
   simp [contains_eq_isSome_findEntry?, findEntry?_erase hl, apply_bif Option.isSome]
 
+theorem contains_of_contains_erase [BEq α] [EquivBEq α] {l : AssocList α β} {k a : α} (hl : l.WF)
+    (h : (l.erase k).contains a) : l.contains a := by
+  cases hka : k == a
+  · rwa [contains_erase_of_false hka] at h
+  · simp [contains_erase_of_beq hl hka] at h
+
 -- TODO: results about combining modification operations
 
 end AssocList
 
-end Lean
+end MyLean

@@ -6,3 +6,9 @@ Authors: Markus Himmel
 
 class LawfulHashable (α : Type u) [BEq α] [Hashable α] where
   hash_eq_of_beq (a b : α) : a == b → hash a = hash b
+
+theorem hash_eq_of_beq [BEq α] [Hashable α] [LawfulHashable α] {a b : α} : a == b → hash a = hash b :=
+  LawfulHashable.hash_eq_of_beq a b
+
+instance (priority := low) [BEq α] [Hashable α] [LawfulBEq α] : LawfulHashable α where
+  hash_eq_of_beq _ _ h := eq_of_beq h ▸ rfl

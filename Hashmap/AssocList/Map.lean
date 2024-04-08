@@ -5,10 +5,10 @@ Authors: Markus Himmel
 -/
 import Hashmap.AssocList.Basic
 
-namespace Lean
+namespace MyLean
 
 def AssocListMap (α : Type u) [BEq α] (β : α → Type v) :=
-  { l : AssocList α β // l.WF }
+  { l : AssocList α β // ∀ [EquivBEq α], l.WF }
 
 abbrev AssocListMap' (α : Type u) [BEq α] (β : Type v) :=
   AssocListMap α (fun _ => β)
@@ -93,7 +93,7 @@ theorem contains_of_beq [BEq α] [EquivBEq α] {l : AssocListMap α β} {a b : �
 
 /- Skipping replace and cons (with proof arguments) for now. -/
 
-def erase [BEq α] [EquivBEq α] (a : α) : AssocListMap α β → AssocListMap α β :=
+def erase [BEq α] (a : α) : AssocListMap α β → AssocListMap α β :=
   fun l => ⟨l.1.erase a, AssocList.WF_erase l.2⟩
 
 @[simp]
@@ -117,13 +117,48 @@ theorem findEntry?_erase [BEq α] [EquivBEq α] {l : AssocListMap α β} {k a : 
     (l.erase k).findEntry? a = bif k == a then none else l.findEntry? a :=
   AssocList.findEntry?_erase l.2
 
-/- Skipping findKey?_erase, find?_erase and contains_erase for now. -/
+@[simp]
+theorem contains_erase_self [BEq α] [EquivBEq α] {l : AssocListMap α β} {k : α} :
+    (l.erase k).contains k = false :=
+  AssocList.contains_erase_self l.2
 
-def insert [BEq α] [EquivBEq α] (k : α) (v : β k) : AssocListMap α β → AssocListMap α β :=
+theorem contains_erase_of_beq [BEq α] [EquivBEq α] {l : AssocListMap α β} {k a : α}
+    (hka : k == a) : (l.erase k).contains a = false :=
+  AssocList.contains_erase_of_beq l.2 hka
+
+theorem contains_erase_of_false [BEq α] [EquivBEq α] {l : AssocListMap α β} {k a : α}
+    (hka : (k == a) = false) : (l.erase k).contains a = l.contains a :=
+  AssocList.contains_erase_of_false hka
+
+theorem contains_erase [BEq α] [EquivBEq α] {l : AssocListMap α β} {k a : α} :
+    (l.erase k).contains a = bif k == a then false else l.contains a :=
+  AssocList.contains_erase l.2
+
+theorem contains_of_contains_erase [BEq α] [EquivBEq α] {l : AssocListMap α β} {k a : α}
+    (h : (l.erase k).contains a) : l.contains a :=
+  AssocList.contains_of_contains_erase l.2 h
+
+/- Skipping findKey?_erase and find?_erase for now. -/
+
+def insert [BEq α] (k : α) (v : β k) : AssocListMap α β → AssocListMap α β :=
   fun l => ⟨l.1.insert k v, AssocList.WF_insert l.2⟩
 
-/- Skipping findEntry?_insert, findKey?_insert, find?_insert and contains_insert for now. -/
+@[simp]
+theorem contains_insert [BEq α] [EquivBEq α] {l : AssocListMap α β} {k a : α} {v : β k} :
+    (l.insert k v).contains a = ((k == a) || l.contains a) :=
+  AssocList.contains_insert
+
+theorem contains_insert_of_beq [BEq α] [EquivBEq α] {l : AssocListMap α β} {k a : α} {v : β k} (h : k == a) :
+    (l.insert k v).contains a :=
+  AssocList.contains_insert_of_beq h
+
+@[simp]
+theorem contains_insert_self [BEq α] [EquivBEq α] {l : AssocList α β} {k : α} {v : β k} :
+    (l.insert k v).contains k :=
+  AssocList.contains_insert_self
+
+/- Skipping findEntry?_insert, findKey?_insert and find?_insert for now. -/
 
 end AssocListMap
 
-end Lean
+end MyLean
