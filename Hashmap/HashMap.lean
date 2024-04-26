@@ -24,10 +24,28 @@ theorem update_size [BEq α] {b : Buckets α β} (i : Fin b.1.size) {l : AssocLi
     (b.update i l).1.size = b.1.size := by simp [update]
 
 theorem update_get [BEq α] {b : Buckets α β} {i : Fin b.1.size} {l : AssocListMap α β}
-    {j : Fin (b.update i l).1.size}:
+    {j : Fin (b.update i l).1.size} :
     (b.update i l).1[j] = if (i : Nat) = j then l else b.1[j] := by
   simp [update]
   rw [Array.get_set]
+
+theorem update_get' [BEq α] {b : Buckets α β} {i : Nat} {hi : i < b.1.size} {l : AssocListMap α β}
+    {j : Nat} {hj : j < (b.update ⟨i, hi⟩ l).1.size} :
+    have hj' : j < b.1.size := by simpa using hj;
+    (b.update ⟨i, hi⟩ l).1[j] = if i = j then l else b.1[j] := by
+  simp [update]
+  rw [Array.get_set]
+
+@[simp]
+theorem update_get_self [BEq α] {b : Buckets α β} {i : Nat} {hi : i < b.1.size} {l : AssocListMap α β} :
+    have hi' : i < (b.update ⟨i, hi⟩ l).1.size := by simpa
+    (b.update ⟨i, hi⟩ l).1[i] = l := by
+  simp [update_get']
+
+@[simp]
+theorem update_get_self' [BEq α] {b : Buckets α β} {i : Fin b.1.size} {l : AssocListMap α β} :
+    (b.update i l).1[i] = l :=
+  update_get_self
 
 private def mkIdx {sz : Nat} (hash : UInt64) (h : sz.isPowerOfTwo) : { u : USize // u.toNat < sz } :=
   -- TODO: avoid `if` in the reference implementation
@@ -39,6 +57,10 @@ private def mkIdx {sz : Nat} (hash : UInt64) (h : sz.isPowerOfTwo) : { u : USize
 
 def mkIdx' {sz : Nat} (hash : UInt64) (h : sz.isPowerOfTwo) : Fin sz :=
   let i := mkIdx hash h; ⟨i.1.toNat, i.2⟩
+
+theorem mkIdx'_eq [BEq α] {b : Buckets α β} {i : Fin b.1.size} {l : AssocListMap α β} (hash : UInt64) :
+    (mkIdx' hash b.2 : Nat) = mkIdx' hash (b.update i l).2 := by
+  simp [mkIdx', mkIdx, apply_dite Subtype.val, apply_dite USize.toNat]
 
 structure BucketWFAt [BEq α] [Hashable α] (l : AssocListMap α β)
     {size : Nat} (h : size.isPowerOfTwo) (i : Nat) : Prop where
@@ -77,6 +99,18 @@ theorem WF_update [BEq α] [Hashable α] [LawfulHashable α] {b : Buckets α β}
 -- def bucketFor [BEq α] [Hashable α] (b : Buckets α β) (k : α) : AssocListMap α β :=
 --   b.1[mkIdx' (hash k) b.2]
 
+-- WN's mathematical model: List (Σ a, β b)
+-- My mathematical model: α → Option (Σ a, β b)
+
+-- Idea: axiomatize map using this single function? Or maybe this function + size
+
+def getBucket [BEq α] [Hashable α] (b : Buckets α β) (k : α) : AssocListMap α β :=
+  b.1[mkIdx' (hash k) b.2]
+
+def modifyBucket [BEq α] [Hashable α] (b : Buckets α β) (k : α) (f : AssocListMap α β → AssocListMap α β) : Buckets α β :=
+  let idx := mkIdx' (hash k) b.2;
+  b.update idx <| f b.1[idx]
+
 def contains [BEq α] [Hashable α] (b : Buckets α β) (k : α) : Bool :=
   b.1[mkIdx' (hash k) b.2].contains k
 
@@ -86,7 +120,13 @@ def cons [BEq α] [Hashable α] (b : Buckets α β) (k : α) (v : β k) (h : b.c
 
 @[simp]
 theorem contains_cons [BEq α] [Hashable α] (b : Buckets α β) {k a : α} {v : β k} {h : b.contains k = false} :
-    (b.cons k v h).contains a = (k == a || b.contains a) := sorry
+    (b.cons k v h).contains a = (k == a || b.contains a) := by
+  dsimp only [cons, contains]
+  rw [update_get]
+  rw [if_pos]
+  · sorry
+  · sorry
+
 
 structure Consable [BEq α] [Hashable α] (b : Buckets α β) (l : AssocListMap α β) : Prop where
   contains : ∀ a, l.contains a → b.contains a = false
