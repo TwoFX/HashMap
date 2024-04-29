@@ -7,6 +7,7 @@ import Hashmap.BEq
 import Std.Data.List.Lemmas
 import Std.Data.List.Perm
 import Hashmap.LawfulHashable
+import Hashmap.Or
 
 universe v u
 
@@ -125,6 +126,7 @@ def containsKey [BEq α] (a : α) : List (Σ a, β a) → Bool
 @[simp] theorem containsKey_cons [BEq α] {l : List (Σ a, β a)} {k a : α} {v : β k} :
     (⟨k, v⟩ :: l).containsKey a = (k == a || l.containsKey a) := rfl
 
+-- TODO: is this still needed?
 theorem containsKey_eq_foldl [BEq α] {a : α} {l : List (Σ a, β a)} :
     l.containsKey a = l.foldl (fun acc e => acc || e.1 == a) false := by
   suffices ∀ b, (b || l.containsKey a) = l.foldl (fun acc e => acc || e.1 == a) b by simpa using this false
@@ -447,6 +449,10 @@ theorem WF_of_perm [BEq α] [PartialEquivBEq α] {l l' : List (Σ a, β a)} (h :
   apply WF_of_perm_keys
   rw [keys_eq_map, keys_eq_map]
   exact h.map _
+
+theorem WF_congr [BEq α] [PartialEquivBEq α] {l l' : List (Σ a, β a)} (h : l ~ l') :
+    l.WF ↔ l'.WF :=
+  ⟨WF_of_perm h.symm, WF_of_perm h⟩
 
 theorem WF_of_sublist_keys [BEq α] {l l' : List (Σ a, β a)} (h : l'.keys <+ l.keys) : l.WF → l'.WF :=
   fun ⟨h'⟩ => ⟨h'.sublist h⟩
@@ -780,9 +786,20 @@ theorem insertEntry_of_perm [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k
   simp [findEntry?_insertEntry, findEntry?_of_perm hl h]
 
 @[simp]
+theorem findEntry?_append [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k : α} :
+    (l ++ l').findEntry? k = (l.findEntry? k).or (l'.findEntry? k) := by
+  induction l using assoc_induction
+  · simp
+  · next k' v' t ih => cases h : k' == k <;> simp_all [findEntry?_cons]
+
+theorem findEntry?_append_of_containsKey_eq_false [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k : α}
+    (h : l'.containsKey k = false) : (l ++ l').findEntry? k = l.findEntry? k := by
+  rw [findEntry?_append, findEntry?_eq_none h, Option.or_none]
+
+@[simp]
 theorem containsKey_append [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k : α} :
     (l ++ l').containsKey k = (l.containsKey k || l'.containsKey k) := by
-  induction l using assoc_induction <;> simp_all [Bool.or_assoc]
+  simp [containsKey_eq_isSome_findEntry?]
 
 theorem containsKey_append_of_not_contains_right [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k : α}
     (hl' : l'.containsKey k = false) : (l ++ l').containsKey k = l.containsKey k := by
@@ -807,7 +824,7 @@ theorem insert_append_of_not_contains_right [BEq α] [EquivBEq α] {l l' : List 
 
 -- TODO: Move to new file
 structure HashesTo [BEq α] [Hashable α] (l : List (Σ a, β a)) (i : Nat) (size : Nat) : Prop where
-  hash_self : ∀ k, l.containsKey k → ((hash k).toUSize % size).toNat = i
+  hash_self : ∀ p, p ∈ l → ((hash p.1).toUSize % size).toNat = i
 
 @[simp]
 theorem hashesTo_nil [BEq α] [Hashable α] {i : Nat} {size : Nat} :
@@ -818,9 +835,9 @@ theorem hashesTo_cons [BEq α] [Hashable α] [LawfulHashable α] {i : Nat} {size
     {v : β k} (h : ((hash k).toUSize % size).toNat = i) :
     l.HashesTo i size → (⟨k, v⟩ :: l).HashesTo i size := by
   refine fun ⟨ih⟩ => ⟨fun k' hk => ?_⟩
-  simp only [containsKey_cons, Bool.or_eq_true] at hk
-  rcases hk with (hk|hk)
-  · rwa [← hash_eq hk]
+  simp only [mem_cons] at hk
+  rcases hk with (rfl|hk)
+  · exact h
   · exact ih _ hk
 
 

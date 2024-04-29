@@ -17,6 +17,9 @@ namespace MyLean
 
 namespace DHashMap
 
+structure IsHashSelf [BEq α] [Hashable α] (m : Array (AssocList α β)) : Prop where
+  hashes_to (i : Nat) (h : i < m.size) : m[i].toList.HashesTo i m.size
+
 structure Raw (α : Type u) (β : α → Type v) where
   size : Nat
   buckets : Array (AssocList α β)
@@ -31,7 +34,7 @@ def empty (capacity := 8) : Raw α β where
   size := 0
   buckets := mkArray (numBucketsForCapacity capacity).nextPowerOfTwo AssocList.nil
 
-private def mkIdx {sz : Nat} (hash : UInt64) (h : 0 < sz) : { u : USize // u.toNat < sz } :=
+def mkIdx {sz : Nat} (hash : UInt64) (h : 0 < sz) : { u : USize // u.toNat < sz } :=
   -- TODO: restore this to hash.toUSize &&& (sz.toUSize - 1). This is not so easy because we probably (?) don't want
   -- to check for m.buckets.size.isPowerOfTwo in Raw.insert, right?
   ⟨hash.toUSize % sz, Nat.mod_lt _ h⟩
@@ -104,10 +107,8 @@ section WF
 def toList (m : Raw α β) : List (Σ a, β a) :=
   m.buckets.data.bind AssocList.toList
 
-structure IsHashSelf [BEq α] [Hashable α] (m : Raw α β) : Prop where
-  hashes_to (i : Nat) (h : i < m.buckets.size) : m.buckets[i].toList.HashesTo i m.buckets.size
-
-structure WF [BEq α] [Hashable α] (m : Raw α β) extends IsHashSelf m : Prop where
+structure WF [BEq α] [Hashable α] (m : Raw α β) : Prop where
+  buckets_hash_self : IsHashSelf m.buckets
   buckets_size : m.buckets.size.isPowerOfTwo
   size_eq : m.size = m.toList.length
   distinct : m.toList.WF
