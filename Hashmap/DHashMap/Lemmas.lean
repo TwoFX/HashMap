@@ -100,16 +100,22 @@ theorem exists_bucket [BEq α] [Hashable α]
   obtain ⟨l, h₁, -, h₂⟩ := exists_bucket_of_uset self i hi .nil
   exact ⟨l, h₁, h₂⟩
 
--- theorem reinsertAux_buckets_size {data : { d : Array (AssocList α β) // 0 < d.size }} (a : α) (b : β a)
-
 namespace Raw
 
+theorem empty_eq (c) : ∃ c', (empty c : Raw α β) = ⟨0, mkArray c' AssocList.nil⟩ := by
+  dsimp [empty]
+  split <;> exact ⟨_, rfl⟩
+
 @[simp]
-theorem size_empty {c} : (empty c : Raw α β).size = 0 := rfl
+theorem size_empty {c} : (empty c : Raw α β).size = 0 := by
+  obtain ⟨c', h⟩ := empty_eq c
+  rw [h]
 
 @[simp]
 theorem toList_empty {c} : (empty c : Raw α β).toList = [] := by
-  suffices ∀ d, (List.replicate d AssocList.nil).bind AssocList.toList = [] from this _
+  suffices ∀ d, (List.replicate d AssocList.nil).bind AssocList.toList = [] by
+    obtain ⟨c', h⟩ := empty_eq c
+    exact h ▸ this _
   intro d
   induction d <;> simp_all
 

@@ -31,10 +31,12 @@ private def numBucketsForCapacity (capacity : Nat) : Nat :=
   -- a "load factor" of 0.75 is the usual standard for hash maps
   capacity * 4 / 3
 
-def empty (capacity := 8) : Raw α β where
-  size := 0
-  buckets := mkArray (numBucketsForCapacity capacity).nextPowerOfTwo AssocList.nil
-
+def empty (capacity := 8) : Raw α β :=
+  let numBuckets := (numBucketsForCapacity capacity).nextPowerOfTwo
+  if numBuckets < USize.size then
+    ⟨0, mkArray numBuckets AssocList.nil⟩
+  else -- User requested an absurd number of buckets, fall back to the default
+    ⟨0, mkArray 16 AssocList.nil⟩
 
 @[inline] def reinsertAux [Hashable α]
     (data : { d : Array (AssocList α β) // IsGoodSize d.size }) (a : α) (b : β a) : { d : Array (AssocList α β) // IsGoodSize d.size } :=
@@ -112,10 +114,20 @@ structure ActuallyWF [BEq α] [Hashable α] (m : Raw α β) : Prop where
 
 inductive WF [BEq α] [Hashable α] : Raw α β → Prop where
   | wf : ∀ m, m.ActuallyWF → WF m
+  | empty : ∀ c, WF (empty c)
   | insertWellFormed : ∀ m h a b, WF m → WF (Raw.insertWellFormed ⟨m, h⟩ a b).1.1
 
 theorem WF.size_buckets_pos [BEq α] [Hashable α] (m : Raw α β) : WF m → IsGoodSize m.buckets.size
   | wf m h => h.buckets_size
+  | empty c => by -- TODO extract this
+      rw [Raw.empty]
+      dsimp
+      split
+      · next h =>
+        simp only [Array.size_mkArray] at *
+        exact ⟨Nat.isPowerOfTwo_nextPowerOfTwo _, h⟩
+      · simp only [Array.size_mkArray]
+        exact ⟨⟨4, rfl⟩, Nat.lt_of_lt_of_le (by decide) USize.le_size⟩
   | insertWellFormed m h a b _ => (Raw.insertWellFormed ⟨m, h⟩ a b).1.2
 
 theorem WF.insert' [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β a} (h : m.WF) : (m.insert' a b).1.WF := by
@@ -147,7 +159,5 @@ namespace DHashMap
 
 @[inline] def findEntry? [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Option (Σ a, β a) :=
   Raw.findEntry?WellFormed ⟨m.1, m.2.size_buckets_pos⟩ a
-
-#eval ((Raw.empty : Raw Nat (fun _ => Nat)).insert 2 3).findEntry? 2
 
 end MyLean.DHashMap
