@@ -13,6 +13,19 @@ universe v u
 
 variable {α : Type u} {β : α → Type v}
 
+section
+variable {α : Type u} {β : Type v}
+
+theorem apply_bif (f : α → β) {b : Bool} {a a' : α} :
+    f (bif b then a else a') = bif b then f a else f a' := by
+  cases b <;> simp
+
+@[simp]
+theorem bif_const {b : Bool} {a : α} : (bif b then a else a) = a := by
+  cases b <;> simp
+
+end
+
 namespace List
 
 @[elab_as_elim]
@@ -339,6 +352,11 @@ theorem findEntry?_replaceEntry [BEq α] [EquivBEq α] {l : List (Σ a, β a)} {
     · simp [findEntry?_replaceEntry_of_false h]
     · simp [findEntry?_replaceEntry_of_true hl h]
 
+@[simp]
+theorem length_replaceEntry [BEq α] [EquivBEq α] {l : List (Σ a, β a)} {k : α} {v : β k} :
+    (l.replaceEntry k v).length = l.length := by
+  induction l using assoc_induction <;> simp_all [replaceEntry_cons, apply_bif List.length]
+
 section
 
 variable {β : Type v}
@@ -653,18 +671,6 @@ section
 variable {β : Type v}
 
 -- TODO
-section
-
-theorem apply_bif (f : α → β) {b : Bool} {a a' : α} :
-    f (bif b then a else a') = bif b then f a else f a' := by
-  cases b <;> simp
-
-@[simp]
-theorem bif_const {b : Bool} {a : α} : (bif b then a else a) = a := by
-  cases b <;> simp
-
-end
-
 theorem findValue?_eraseKey_self [BEq α] [EquivBEq α] {l : List ((_ : α) × β)} {k : α} (h : l.WF) :
     (l.eraseKey k).findValue? k = none := by
   simp [findValue?_eq_findEntry?, findEntry?_eraseKey_self h]

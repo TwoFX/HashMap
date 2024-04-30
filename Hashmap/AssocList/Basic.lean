@@ -124,17 +124,13 @@ theorem toList_erase [BEq α] {l : AssocList α β} {a : α} : (l.erase a).toLis
   · simp [erase]
   · next k v t ih => cases h : k == a <;> simp_all [erase, List.eraseKey_cons]
 
--- def keys : AssocList α β → List α
---   | nil => []
---   | cons k _ l => k :: (keys l)
-
 def insert [BEq α] (l : AssocList α β) (k : α) (v : β k) : AssocList α β :=
   bif l.contains k then l.replace k v else l.cons k v
 
 @[simp]
 theorem toList_insert [BEq α] {l : AssocList α β} {k : α} {v : β k} :
     (l.insert k v).toList = l.toList.insertEntry k v := by
-  simp [insert, List.insertEntry, List.apply_bif toList]
+  simp [insert, List.insertEntry, apply_bif toList]
 
 end AssocList
 

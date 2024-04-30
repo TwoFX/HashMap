@@ -100,7 +100,12 @@ theorem exists_bucket [BEq α] [Hashable α]
   obtain ⟨l, h₁, -, h₂⟩ := exists_bucket_of_uset self i hi .nil
   exact ⟨l, h₁, h₂⟩
 
+-- theorem reinsertAux_buckets_size {data : { d : Array (AssocList α β) // 0 < d.size }} (a : α) (b : β a)
+
 namespace Raw
+
+@[simp]
+theorem size_empty {c} : (empty c : Raw α β).size = 0 := rfl
 
 @[simp]
 theorem toList_empty {c} : (empty c : Raw α β).toList = [] := by
@@ -109,14 +114,14 @@ theorem toList_empty {c} : (empty c : Raw α β).toList = [] := by
   induction d <;> simp_all
 
 theorem findEntry?WellFormed_eq_findEntry_toList [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable α]
-    (m : { m : Raw α β // 0 < m.buckets.size }) (h : m.1.WF) (a : α) :
+    (m : { m : Raw α β // IsGoodSize m.buckets.size }) (h : m.1.ActuallyWF) (a : α) :
       Raw.findEntry?WellFormed m a = m.1.toList.findEntry? a := by
   rw [findEntry?WellFormed]
   dsimp only [Array.ugetElem_eq_getElem]
   obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets (mkIdx (hash a) m.2).1 (mkIdx (hash a) m.2).2
   refine Eq.trans ?_ (List.findEntry?_of_perm (WF_of_perm hl.symm h.distinct) hl.symm)
   rw [AssocList.findEntry?_eq, findEntry?_append_of_containsKey_eq_false]
-  exact hlk h.buckets_hash_self _ rfl
+  exact hlk h.buckets_hash_self _ (by simp only [mkIdx_val])
 
 end Raw
 
