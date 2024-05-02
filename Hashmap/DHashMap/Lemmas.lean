@@ -102,6 +102,22 @@ theorem exists_bucket [BEq α] [Hashable α]
   obtain ⟨l, h₁, -, h₂⟩ := exists_bucket_of_uset self i hi .nil
   exact ⟨l, h₁, h₂⟩
 
+namespace IsHashSelf
+
+@[simp]
+theorem mkArray [BEq α] [Hashable α] {c : Nat} : IsHashSelf (mkArray c (AssocList.nil : AssocList α β)) :=
+  ⟨by simp⟩
+
+theorem uset [BEq α] [Hashable α] {m : Array (AssocList α β)} {i : USize} {h : i.toNat < m.size} {d : AssocList α β}
+    (hd : d.toList.HashesTo i.toNat m.size) (hm : IsHashSelf m) : IsHashSelf (m.uset i d h) := by
+  refine ⟨fun j hj => ?_⟩
+  simp only [Array.uset, Array.getElem_set, Array.size_set]
+  split
+  · next hij => exact hij ▸ hd
+  · exact hm.hashes_to j (by simpa using hj)
+
+end IsHashSelf
+
 namespace Raw
 
 @[simp]
@@ -112,6 +128,27 @@ theorem toList_empty {c} : (empty c : Raw α β).toList = [] := by
   suffices ∀ d, (List.replicate d AssocList.nil).bind AssocList.toList = [] from this _
   intro d
   induction d <;> simp_all
+
+theorem ActuallyWF.empty [BEq α] [Hashable α] {c} : (empty c : Raw α β).ActuallyWF where
+  buckets_hash_self := by simp [Raw.empty]
+  buckets_size := (WF.empty _).size_buckets_pos
+  size_eq := by simp
+  distinct := by simp
+
+theorem bucket_contains_eq_containsKey [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw α β} (hm : m.ActuallyWF) {a : α} :
+    haveI h : (mkIdx (hash a) hm.buckets_size).1.toNat < m.buckets.size := (mkIdx (hash a) hm.buckets_size).2
+    (m.buckets[(mkIdx (hash a) hm.buckets_size).1.toNat]'h).contains a = m.toList.containsKey a := by
+  obtain ⟨l, hl, hlk⟩ := exists_bucket m.buckets (mkIdx (hash a) hm.buckets_size).1 (mkIdx (hash a) hm.buckets_size).2
+  refine Eq.trans ?_ (List.containsKey_of_perm (WF_of_perm hl.symm hm.distinct) hl.symm)
+  rw [AssocList.contains_eq, List.containsKey_append_of_not_contains_right]
+  exact hlk hm.buckets_hash_self _ rfl
+
+theorem size_insertWellFormed [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : { m : Raw α β // 0 < m.buckets.size }} {a : α} {b : β a} :
+    (insertWellFormed m a b).1.1.size = if m.1.toList.containsKey a then m.1.size else m.1.size + 1 := by
+  rw [insertWellFormed]
+  dsimp
+  rw [bucket_contains_eq_containsKey]
+  sorry
 
 theorem findEntry?WellFormed_eq_findEntry_toList [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable α]
     (m : { m : Raw α β // 0 < m.buckets.size }) (h : m.1.ActuallyWF) (a : α) :
