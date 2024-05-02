@@ -828,24 +828,6 @@ theorem insert_append_of_not_contains_right [BEq α] [EquivBEq α] {l l' : List 
   · simp [insertEntry, containsKey_append, h, h']
   · simp [insertEntry, containsKey_append, h, h', replaceEntry_append_of_containsKey_left h]
 
--- TODO: Move to new file
-structure HashesTo [BEq α] [Hashable α] (l : List (Σ a, β a)) (i : Nat) (size : Nat) : Prop where
-  hash_self : ∀ p, p ∈ l → ((hash p.1).toUSize % size).toNat = i
-
-@[simp]
-theorem hashesTo_nil [BEq α] [Hashable α] {i : Nat} {size : Nat} :
-    ([] : List (Σ a, β a)).HashesTo i size where
-  hash_self := by simp
-
-theorem hashesTo_cons [BEq α] [Hashable α] [LawfulHashable α] {i : Nat} {size : Nat} {l : List (Σ a, β a)} {k : α}
-    {v : β k} (h : ((hash k).toUSize % size).toNat = i) :
-    l.HashesTo i size → (⟨k, v⟩ :: l).HashesTo i size := by
-  refine fun ⟨ih⟩ => ⟨fun k' hk => ?_⟩
-  simp only [mem_cons] at hk
-  rcases hk with (rfl|hk)
-  · exact h
-  · exact ih _ hk
-
 
 -- TODO: results about combining modification operations
 

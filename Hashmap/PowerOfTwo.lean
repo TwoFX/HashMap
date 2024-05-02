@@ -93,55 +93,55 @@ Authors: Markus Himmel
 --   · exact Or.inl (testBit_mul_two_pow_lt h')
 --   · exact Or.inr (Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le h (Nat.pow_le_pow_of_le Nat.one_lt_two (Nat.le_of_not_lt h'))))
 
-theorem testBit_mul_two_pow_add_add {n n' k i : Nat} (h : n' < 2 ^ k) :
-    (n * 2^k + n').testBit (i + k) = n.testBit i := by
-  rw [Nat.mul_comm, Nat.testBit_mul_pow_two_add _ h]
-  split
-  · omega
-  · simp
+-- theorem testBit_mul_two_pow_add_add {n n' k i : Nat} (h : n' < 2 ^ k) :
+--     (n * 2^k + n').testBit (i + k) = n.testBit i := by
+--   rw [Nat.mul_comm, Nat.testBit_mul_pow_two_add _ h]
+--   split
+--   · omega
+--   · simp
 
-instance : Std.Associative (α := Nat) (· + ·) := ⟨Nat.add_assoc⟩
-instance : Std.Commutative (α := Nat) (· + ·) := ⟨Nat.add_comm⟩
-instance : Std.Associative (α := Nat) (· * ·) := ⟨Nat.mul_assoc⟩
-instance : Std.Commutative (α := Nat) (· * ·) := ⟨Nat.mul_comm⟩
+-- instance : Std.Associative (α := Nat) (· + ·) := ⟨Nat.add_assoc⟩
+-- instance : Std.Commutative (α := Nat) (· + ·) := ⟨Nat.add_comm⟩
+-- instance : Std.Associative (α := Nat) (· * ·) := ⟨Nat.mul_assoc⟩
+-- instance : Std.Commutative (α := Nat) (· * ·) := ⟨Nat.mul_comm⟩
 
-theorem Nat.exists_lsb {n : Nat} (hn : 0 < n) : ∃ n' k, n = n' * (2^(k+1)) + 2^k := by
-  induction n using Nat.div2Induction
-  next n ih =>
-  skip
-  by_cases h : n % 2 = 0
-  · obtain ⟨n'', k', h'⟩ := ih hn (by omega)
-    refine ⟨n'', k' + 1, ?_⟩
-    rw [← Nat.div_add_mod n 2, h', h, Nat.pow_succ, Nat.pow_succ, Nat.pow_succ]
-    simp [Nat.mul_add, ← Nat.mul_assoc]
-    ac_rfl -- Why can't omega do this?
-  · have h : n % 2 = 1 := by omega
-    refine ⟨n / 2, 0, ?_⟩
-    simp only [Nat.zero_add, Nat.pow_one, Nat.pow_zero]
-    rw (config := {occs := .pos [1]}) [← Nat.div_add_mod n 2]
-    rw [h, Nat.mul_comm]
+-- theorem Nat.exists_lsb {n : Nat} (hn : 0 < n) : ∃ n' k, n = n' * (2^(k+1)) + 2^k := by
+--   induction n using Nat.div2Induction
+--   next n ih =>
+--   skip
+--   by_cases h : n % 2 = 0
+--   · obtain ⟨n'', k', h'⟩ := ih hn (by omega)
+--     refine ⟨n'', k' + 1, ?_⟩
+--     rw [← Nat.div_add_mod n 2, h', h, Nat.pow_succ, Nat.pow_succ, Nat.pow_succ]
+--     simp [Nat.mul_add, ← Nat.mul_assoc]
+--     ac_rfl -- Why can't omega do this?
+--   · have h : n % 2 = 1 := by omega
+--     refine ⟨n / 2, 0, ?_⟩
+--     simp only [Nat.zero_add, Nat.pow_one, Nat.pow_zero]
+--     rw (config := {occs := .pos [1]}) [← Nat.div_add_mod n 2]
+--     rw [h, Nat.mul_comm]
 
-theorem isPowerOfTwo_iff {n : Nat} : n.isPowerOfTwo ↔ 0 < n ∧ (n &&& (n - 1)) = 0 := by
-  refine ⟨?_, ?_⟩
-  · rintro ⟨k, rfl⟩
-    simpa using Nat.pos_pow_of_pos _ Nat.two_pos
-  · rintro ⟨h₁, h₂⟩
-    obtain ⟨n', k, hn'⟩ := Nat.exists_lsb h₁
-    refine ⟨k, ?_⟩
-    suffices n' = 0 by simp [hn', this]
-    suffices ∀ i, n'.testBit i = false from Nat.eq_of_testBit_eq (by simpa using this)
-    intro i
-    have hn'₁ : n'.testBit i = n.testBit (i + (k + 1)) := by
-      rw [hn', testBit_mul_two_pow_add_add]
-      exact Nat.pow_lt_pow_succ Nat.one_lt_two
-    have hn'₂ : n'.testBit i = (n - 1).testBit (i + (k + 1)) := by
-      rw [hn', Nat.add_sub_assoc (k := 1) (Nat.pow_pos Nat.two_pos), testBit_mul_two_pow_add_add]
-      exact Nat.lt_of_le_of_lt (Nat.sub_le _ _) (Nat.pow_lt_pow_succ Nat.one_lt_two)
-    calc n'.testBit i = (n'.testBit i && n'.testBit i) := (Bool.and_self _).symm
-      _ = (n.testBit (i + (k + 1)) && (n - 1).testBit (i + (k + 1))) := by simp [← hn'₁, ← hn'₂]
-      _ = ((n &&& (n - 1)).testBit (i + (k + 1))) := by simp
-      _ = ((0 : Nat).testBit (i + (k + 1))) := by rw [h₂]
-      _ = false := by simp
+-- theorem isPowerOfTwo_iff {n : Nat} : n.isPowerOfTwo ↔ 0 < n ∧ (n &&& (n - 1)) = 0 := by
+--   refine ⟨?_, ?_⟩
+--   · rintro ⟨k, rfl⟩
+--     simpa using Nat.pos_pow_of_pos _ Nat.two_pos
+--   · rintro ⟨h₁, h₂⟩
+--     obtain ⟨n', k, hn'⟩ := Nat.exists_lsb h₁
+--     refine ⟨k, ?_⟩
+--     suffices n' = 0 by simp [hn', this]
+--     suffices ∀ i, n'.testBit i = false from Nat.eq_of_testBit_eq (by simpa using this)
+--     intro i
+--     have hn'₁ : n'.testBit i = n.testBit (i + (k + 1)) := by
+--       rw [hn', testBit_mul_two_pow_add_add]
+--       exact Nat.pow_lt_pow_succ Nat.one_lt_two
+--     have hn'₂ : n'.testBit i = (n - 1).testBit (i + (k + 1)) := by
+--       rw [hn', Nat.add_sub_assoc (k := 1) (Nat.pow_pos Nat.two_pos), testBit_mul_two_pow_add_add]
+--       exact Nat.lt_of_le_of_lt (Nat.sub_le _ _) (Nat.pow_lt_pow_succ Nat.one_lt_two)
+--     calc n'.testBit i = (n'.testBit i && n'.testBit i) := (Bool.and_self _).symm
+--       _ = (n.testBit (i + (k + 1)) && (n - 1).testBit (i + (k + 1))) := by simp [← hn'₁, ← hn'₂]
+--       _ = ((n &&& (n - 1)).testBit (i + (k + 1))) := by simp
+--       _ = ((0 : Nat).testBit (i + (k + 1))) := by rw [h₂]
+--       _ = false := by simp
 
 theorem le_of_testBit {n m : Nat} (h : ∀ i, n.testBit i = true → m.testBit i = true) : n ≤ m := by
   induction n using Nat.div2Induction generalizing m
