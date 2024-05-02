@@ -49,6 +49,11 @@ def toList : AssocList α β → List (Σ a, β a)
 @[simp] theorem toList_nil : (nil : AssocList α β).toList = [] := rfl
 @[simp] theorem toList_cons {l : AssocList α β} {a : α} {b : β a} : (l.cons a b).toList = ⟨a, b⟩ :: l.toList := rfl
 
+@[simp]
+theorem foldl_eq [BEq α] {f : δ → (a : α) → β a → δ} {init : δ} {l : AssocList α β} :
+    l.foldl f init = l.toList.foldl (fun d p => f d p.1 p.2) init := by
+  induction l generalizing init <;> simp_all [foldl, Id.run, foldlM]
+
 /-- `O(n)`. Returns the first entry in the list whose key is equal to `a`. -/
 def findEntry? [BEq α] (a : α) : AssocList α β → Option (Σ a, β a)
   | nil => none

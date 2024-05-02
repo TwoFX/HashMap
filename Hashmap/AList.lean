@@ -448,6 +448,10 @@ theorem containsKey_eq_true_iff_exists_mem [BEq α] [EquivBEq α] {l : List (Σ 
     l.containsKey a = true ↔ ∃ p ∈ l, p.1 == a := by
   induction l using assoc_induction <;> simp_all
 
+theorem containsKey_of_mem [BEq α] [EquivBEq α] {l : List (Σ a, β a)} {p : Σ a, β a} (hp : p ∈ l) :
+    l.containsKey p.1 :=
+  containsKey_eq_true_iff_exists_mem.2 ⟨p, ⟨hp, BEq.refl⟩⟩
+
 /-- The well-formedness predicate for `AssocList` says that keys are pairwise distinct. -/
 structure WF [BEq α] (l : List (Σ a, β a)) : Prop where
   distinct : l.keys.Pairwise fun a b => (a == b) = false
@@ -820,6 +824,21 @@ theorem replaceEntry_append_of_containsKey_left [BEq α] [EquivBEq α] {l l' : L
     cases h' : k' == k
     · simpa [replaceEntry_cons, h'] using ih (h.resolve_left (Bool.not_eq_true _ ▸ h'))
     · simp [replaceEntry_cons, h']
+
+theorem replaceEntry_append_of_containsKey_left_eq_false [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k : α}
+    {v : β k} (h : l.containsKey k = false) : (l ++ l').replaceEntry k v = l ++ l'.replaceEntry k v := by
+  induction l using assoc_induction
+  · simp
+  · next k' v' t ih =>
+    simp only [containsKey_cons, Bool.or_eq_false_iff] at h
+    simpa [replaceEntry_cons, h.1] using ih h.2
+
+theorem replaceEntry_append_of_containsKey_right_eq_false [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k : α}
+    {v : β k} (h : l'.containsKey k = false) : (l ++ l').replaceEntry k v = l.replaceEntry k v ++ l' := by
+  cases h' : l.containsKey k
+  · rw [replaceEntry_of_containsKey_eq_false, replaceEntry_of_containsKey_eq_false h']
+    simpa using ⟨h', h⟩
+  · rw [replaceEntry_append_of_containsKey_left h']
 
 theorem insert_append_of_not_contains_right [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)}
     {k : α} {v : β k} (h' : l'.containsKey k = false) :

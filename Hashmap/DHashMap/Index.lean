@@ -77,6 +77,7 @@ theorem USize.toNat_lt' {a : USize} : a.toNat < USize.size :=
 -- TODO: benchmark if we need a C implementation for this. Currently this still needs to do a scalar check for sz which we could
 -- maybe get rid of, if we changed to size condition in IsGoodSize to assert that sz is definitely a scalar.
 -- Note that this indexing scheme always produces a valid index, but it has a chance of returning every index if sz is a power of two.
+@[irreducible]
 def mkIdx {sz : Nat} (hash : UInt64) (h : 0 < sz) : { u : USize // u.toNat < sz } :=
   ⟨hash.toUSize &&& (sz.toUSize - 1), by
     by_cases h' : sz < USize.size
