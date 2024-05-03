@@ -303,6 +303,20 @@ theorem ActuallyWF.cons [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
     refine WF_of_perm (toListModel_cons _ _ _) (WF_cons ?_ h.distinct)
     rwa [← bucket_contains_eq_containsKey h]
 
+theorem toListModel_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : { m : Raw α β // 0 < m.buckets.size})
+    (h : m.1.ActuallyWF) (a : α) (b : β a) : toListModel (Model.insert m a b).2 ~ (toListModel m.1.2).insertEntry a b := by
+  rw [Model.insert]
+  split
+  · next h' =>
+    rw [bucket_contains_eq_containsKey h] at h'
+    rw [insertEntry_of_containsKey h']
+    exact toListModel_replace _ h _ _
+  · next h' =>
+    rw [bucket_contains_eq_containsKey h, Bool.not_eq_true] at h'
+    rw [insertEntry_of_containsKey_eq_false h']
+    refine (toListModel_expandIfNecessary _).trans ?_
+    exact toListModel_cons m a b
+
 theorem ActuallyWF.insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : { m : Raw α β // 0 < m.buckets.size})
     (h : m.1.ActuallyWF) (a : α) (b : β a) : (Model.insert m a b).ActuallyWF := by
   rw [Model.insert]
@@ -311,21 +325,12 @@ theorem ActuallyWF.insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable �
   · apply ActuallyWF.expandIfNecessary
     apply ActuallyWF.cons _ h _ _ (by simp_all)
 
-theorem WF.out [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw α β) (h :m.WF) : m.ActuallyWF := by
+theorem WF.out [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw α β} (h : m.WF) : m.ActuallyWF := by
   induction h
   · assumption
   · exact ActuallyWF.empty
   · rw [insertWellFormed_eq_insertModel]
     exact ActuallyWF.insert _ (by simpa) _ _
-
--- theorem size_insertWellFormed [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : { m : Raw α β // 0 < m.buckets.size }}
---     (hm : m.1.ActuallyWF) {a : α} {b : β a} :
---     (insertWellFormed m a b).1.1.size = if m.1.toList.containsKey a then m.1.size else m.1.size + 1 := by
---   rw [insertWellFormed]
---   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
---   rw [bucket_contains_eq_containsKey hm]
---   split <;> try rfl
---   split <;> rfl
 
 theorem findEntry?WellFormed_eq_findEntry_toList [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable α]
     (m : { m : Raw α β // 0 < m.buckets.size }) (h : m.1.ActuallyWF) (a : α) :
@@ -335,6 +340,19 @@ theorem findEntry?WellFormed_eq_findEntry_toList [BEq α] [EquivBEq α] [Hashabl
   refine Eq.trans ?_ (List.findEntry?_of_perm (WF_of_perm hl.symm h.distinct) hl.symm)
   rw [Model.findEntry?, AssocList.findEntry?_eq, findEntry?_append_of_containsKey_eq_false]
   exact hlk h.buckets_hash_self _ rfl
+
+theorem findEntry?WellFormed_insertWellFormed [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable α]
+    (m : { m : Raw α β // 0 < m.buckets.size }) (h : m.1.WF) (a k : α) (b : β a) :
+      findEntry?WellFormed ((insertWellFormed m a b).1) k =
+        bif a == k then some ⟨a, b⟩ else findEntry?WellFormed m k := by
+  rw [findEntry?WellFormed_eq_findEntry_toList _ h.out,
+    findEntry?WellFormed_eq_findEntry_toList]
+  · rw [insertWellFormed_eq_insertModel, List.findEntry?_of_perm _ (toListModel_insert _ _ _ _)]
+    · rw [List.findEntry?_insertEntry]
+    · exact (ActuallyWF.insert _ h.out _ _).distinct
+    · exact h.out
+  · rw [insertWellFormed_eq_insertModel]
+    exact ActuallyWF.insert _ h.out _ _
 
 end Raw
 
