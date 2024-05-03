@@ -122,7 +122,7 @@ structure ActuallyWF [BEq α] [Hashable α] (m : Raw α β) : Prop where
   buckets_hash_self : IsHashSelf m.buckets
   buckets_size : 0 < m.buckets.size
   size_eq : m.size = (toListModel m.buckets).length
-  distinct : (toListModel m.buckets).WF
+  distinct : (toListModel m.buckets).DistinctKeys
 
 inductive WF [BEq α] [Hashable α] : Raw α β → Prop where
   | wf : ∀ m, m.ActuallyWF → WF m
