@@ -18,21 +18,29 @@ namespace MyLean
 
 namespace DHashMap
 
+-- TODO: Move this to a better place
 structure IsHashSelf [BEq α] [Hashable α] (m : Array (AssocList α β)) : Prop where
   hashes_to (i : Nat) (h : i < m.size) : m[i].toList.HashesTo i m.size
-
-structure Raw (α : Type u) (β : α → Type v) where
-  size : Nat
-  buckets : Array (AssocList α β)
-
-namespace Raw
 
 private def numBucketsForCapacity (capacity : Nat) : Nat :=
   -- a "load factor" of 0.75 is the usual standard for hash maps
   capacity * 4 / 3
 
-def empty (capacity := 8) : Raw α β :=
-  ⟨0, mkArray (numBucketsForCapacity capacity).nextPowerOfTwo AssocList.nil⟩
+def toListModel (buckets : Array (AssocList α β)) : List (Σ a, β a) :=
+  buckets.data.bind AssocList.toList
+
+structure Raw (α : Type u) (β : α → Type v) where
+  size : Nat
+  buckets : Array (AssocList α β)
+
+abbrev Raw₀ (α : Type u) (β : α → Type v) :=
+  { m : Raw α β // 0 < m.buckets.size }
+
+namespace Raw₀
+
+def empty (capacity := 8) : Raw₀ α β :=
+  ⟨⟨0, mkArray (numBucketsForCapacity capacity).nextPowerOfTwo AssocList.nil⟩,
+    by simpa using Nat.pos_of_isPowerOfTwo (Nat.isPowerOfTwo_nextPowerOfTwo _)⟩
 
 @[inline] def reinsertAux [Hashable α]
     (data : { d : Array (AssocList α β) // 0 < d.size }) (a : α) (b : β a) : { d : Array (AssocList α β) // 0 < d.size } :=
@@ -62,8 +70,7 @@ where
     else target
   termination_by source.size - i
 
-@[inline] def expandIfNecessary [BEq α] [Hashable α] (m : { m : Raw α β // 0 < m.buckets.size }) :
-    { m : Raw α β // 0 < m.buckets.size } :=
+@[inline] def expandIfNecessary [BEq α] [Hashable α] (m : Raw₀ α β) : Raw₀ α β :=
   let ⟨⟨size, buckets⟩, hm⟩ := m
   if numBucketsForCapacity size ≤ buckets.size then
     ⟨⟨size, buckets⟩, hm⟩
@@ -71,8 +78,7 @@ where
     let ⟨buckets', h'⟩ := expand ⟨buckets, by simpa⟩
     ⟨⟨size, buckets'⟩, h'⟩
 
-@[inline] def insertWellFormed [BEq α] [Hashable α] (m : { m : Raw α β // 0 < m.buckets.size }) (a : α) (b : β a) :
-    { m : Raw α β // 0 < m.buckets.size } × Bool :=
+@[inline] def insert [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β × Bool :=
   let ⟨⟨size, buckets⟩, hm⟩ := m
   let ⟨i, h⟩ := mkIdx (hash a) hm
   let bkt := buckets[i]
@@ -83,30 +89,34 @@ where
     let buckets' := buckets.uset i (AssocList.cons a b bkt) h
     (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, false)
 
+@[inline] def findEntry? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
+    Option (Σ a, β a) :=
+  let ⟨⟨_, buckets⟩, h⟩ := m
+  let ⟨i, h⟩ := mkIdx (hash a) h
+  buckets[i].findEntry? a
+
+end Raw₀
+
+namespace Raw
+
+@[inline] def empty (capacity := 8) : Raw α β :=
+  (Raw₀.empty capacity).1
+
 @[inline] def insert' [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β a) : Raw α β × Bool :=
   if h : 0 < m.buckets.size then
-    let ⟨⟨r, _⟩, replaced⟩ := insertWellFormed ⟨m, h⟩ a b
+    let ⟨⟨r, _⟩, replaced⟩ := Raw₀.insert ⟨m, h⟩ a b
     ⟨r, replaced⟩
   else (m, false) -- will never happen for well-formed inputs
 
 @[inline] def insert [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β a) : Raw α β :=
   (insert' m a b).1
 
-@[inline] def findEntry?WellFormed [BEq α] [Hashable α] (m : { m : Raw α β // 0 < m.buckets.size }) (a : α) :
-    Option (Σ a, β a) :=
-  let ⟨⟨_, buckets⟩, h⟩ := m
-  let ⟨i, h⟩ := mkIdx (hash a) h
-  buckets[i].findEntry? a
-
 @[inline] def findEntry? [BEq α] [Hashable α] (m : Raw α β) (a : α) : Option (Σ a, β a) :=
   if h : 0 < m.buckets.size then
-    findEntry?WellFormed ⟨m, h⟩ a
+    Raw₀.findEntry? ⟨m, h⟩ a
   else none -- will never happen for well-formed inputs
 
 section WF
-
-def toListModel (buckets : Array (AssocList α β)) : List (Σ a, β a) :=
-  buckets.data.bind AssocList.toList
 
 structure ActuallyWF [BEq α] [Hashable α] (m : Raw α β) : Prop where
   buckets_hash_self : IsHashSelf m.buckets
@@ -117,17 +127,17 @@ structure ActuallyWF [BEq α] [Hashable α] (m : Raw α β) : Prop where
 inductive WF [BEq α] [Hashable α] : Raw α β → Prop where
   | wf : ∀ m, m.ActuallyWF → WF m
   | empty : ∀ c, WF (empty c)
-  | insertWellFormed : ∀ m h a b, WF m → WF (Raw.insertWellFormed ⟨m, h⟩ a b).1.1
+  | insert₀ : ∀ m h a b, WF m → WF (Raw₀.insert ⟨m, h⟩ a b).1.1
 
 theorem WF.size_buckets_pos [BEq α] [Hashable α] (m : Raw α β) : WF m → 0 < m.buckets.size
   | wf m h => h.buckets_size
-  | empty c => by simpa [Raw.empty] using Nat.pos_of_isPowerOfTwo (Nat.isPowerOfTwo_nextPowerOfTwo _)
-  | insertWellFormed m h a b _ => (Raw.insertWellFormed ⟨m, h⟩ a b).1.2
+  | empty c => (Raw₀.empty _).2
+  | insert₀ m h a b _ => (Raw₀.insert ⟨m, h⟩ a b).1.2
 
 theorem WF.insert' [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β a} (h : m.WF) : (m.insert' a b).1.WF := by
   rw [Raw.insert']
   split
-  · next h' => exact .insertWellFormed _ h' _ _ h
+  · next h' => exact .insert₀ _ h' _ _ h
   · exact h
 
 theorem WF.insert [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β a} (h : m.WF) : (m.insert a b).WF :=
@@ -144,14 +154,17 @@ def DHashMap (α : Type u) (β : α → Type v) [BEq α] [Hashable α] := { m : 
 
 namespace DHashMap
 
+@[inline] def emtpy [BEq α] [Hashable α] (capacity := 8) : DHashMap α β :=
+  ⟨Raw.empty capacity, .empty _⟩
+
 @[inline] def insert' [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
-  let m' := Raw.insertWellFormed ⟨m.1, m.2.size_buckets_pos⟩ a b
-  ⟨⟨m'.1.1, .insertWellFormed _ _ _ _ m.2⟩, m'.2⟩
+  let m' := Raw₀.insert ⟨m.1, m.2.size_buckets_pos⟩ a b
+  ⟨⟨m'.1.1, .insert₀ _ _ _ _ m.2⟩, m'.2⟩
 
 @[inline] def insert [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
   (m.insert' a b).1
 
 @[inline] def findEntry? [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Option (Σ a, β a) :=
-  Raw.findEntry?WellFormed ⟨m.1, m.2.size_buckets_pos⟩ a
+  Raw₀.findEntry? ⟨m.1, m.2.size_buckets_pos⟩ a
 
 end MyLean.DHashMap

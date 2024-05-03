@@ -36,33 +36,37 @@ theorem size_updateBucket [Hashable α] {self : Array (AssocList α β)} {h : 0 
 
 namespace Model
 
-def replace [BEq α] [Hashable α] (m : { m : Raw α β // 0 < m.buckets.size }) (a : α) (b : β a) : Raw α β :=
-  ⟨m.1.size, updateBucket m.1.buckets m.2 a (fun l => l.replace a b)⟩
+def replace [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
+  ⟨⟨m.1.size, updateBucket m.1.buckets m.2 a (fun l => l.replace a b)⟩, by simpa using m.2⟩
 
-def cons [BEq α] [Hashable α] (m : { m : Raw α β // 0 < m.buckets.size }) (a : α) (b : β a) : { m : Raw α β // 0 < m.buckets.size } :=
+def cons [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   ⟨⟨m.1.size + 1, updateBucket m.1.buckets m.2 a (fun l => l.cons a b)⟩, by simpa using m.2⟩
 
-def insert [BEq α] [Hashable α] (m : { m : Raw α β // 0 < m.buckets.size }) (a : α) (b : β a) : Raw α β :=
-  if (bucket m.1.buckets m.2 a).contains a then replace m a b else (Raw.expandIfNecessary (cons m a b)).1
+def insert [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
+  if (bucket m.1.buckets m.2 a).contains a then replace m a b else Raw₀.expandIfNecessary (cons m a b)
 
-def findEntry? [BEq α] [Hashable α] (m : { m : Raw α β // 0 < m.buckets.size }) (a : α) : Option (Σ a, β a) :=
+def findEntry? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
   (bucket m.1.buckets m.2 a).findEntry? a
 
 end Model
 
-namespace Raw
+namespace Raw₀
 
-theorem insertWellFormed_eq_insertModel [BEq α] [Hashable α] (m : { m : Raw α β // 0 < m.buckets.size }) (a : α) (b : β a) :
-    (insertWellFormed m a b).1.1 = Model.insert m a b := by
-  rw [insertWellFormed, Model.insert, bucket]
+theorem reinsertAux_eq [Hashable α] (data : { d : Array (AssocList α β) // 0 < d.size }) (a : α) (b : β a) :
+    (reinsertAux data a b).1 = updateBucket data.1 data.2 a (fun l => l.cons a b) := rfl
+
+theorem insert_eq_model [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) :
+    (insert m a b).1 = Model.insert m a b := by
+  rw [insert, Model.insert, bucket]
+  apply Subtype.eq
   dsimp
   split
   · rfl
   · rfl
 
-theorem findEntry?WellFormed_eq [BEq α] [Hashable α] (m : { m : Raw α β // 0 < m.buckets.size }) (a : α) :
-    findEntry?WellFormed m a = Model.findEntry? m a := rfl
+theorem findEntry?_eq_model [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
+    findEntry? m a = Model.findEntry? m a := rfl
 
-end Raw
+end Raw₀
 
 end MyLean.DHashMap
