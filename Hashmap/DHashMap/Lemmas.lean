@@ -13,17 +13,23 @@ variable {α : Type v} {β : α → Type v}
 
 namespace MyLean.DHashMap
 
+namespace Model
+
+theorem findEntry?_insert [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable α]
+    (m : Raw₀ α β) (h : m.1.WF) (a k : α) (b : β a) :
+    findEntry? (insert m a b) k = bif a == k then some ⟨a, b⟩ else findEntry? m k := by
+  rw [findEntry?_eq_findEntry? _ (ActuallyWF_insert _ h.out _ _), findEntry?_eq_findEntry? _ h.out,
+    List.findEntry?_of_perm (ActuallyWF_insert _ h.out _ _).distinct (toListModel_insert _ h.out _ _),
+    List.findEntry?_insertEntry]
+
+end Model
+
 namespace Raw₀
 
 theorem findEntry?_insert [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable α]
     (m : Raw₀ α β) (h : m.1.WF) (a k : α) (b : β a) :
     (m.insert a b).1.findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k := by
-  rw [findEntry?_eq_findEntry? _ h.out, findEntry?_eq_findEntry?]
-  · rw [insert_eq_model, List.findEntry?_of_perm _ (toListModel_insert _ _ _ _), List.findEntry?_insertEntry]
-    · exact (ActuallyWF.insert _ h.out _ _).distinct
-    · exact h.out
-  · rw [insert_eq_model]
-    exact ActuallyWF.insert _ h.out _ _
+  rw [findEntry?_eq_model, insert_eq_model, findEntry?_eq_model, Model.findEntry?_insert _ h]
 
 end Raw₀
 
