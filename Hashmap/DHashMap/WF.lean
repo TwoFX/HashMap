@@ -341,16 +341,6 @@ theorem findEntry?_eq_findEntry? [BEq α] [EquivBEq α] [Hashable α] [LawfulHas
   rw [Model.findEntry?, AssocList.findEntry?_eq, findEntry?_append_of_containsKey_eq_false]
   exact hlk h.buckets_hash_self _ rfl
 
-theorem findEntry?_insert [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable α]
-    (m : Raw₀ α β) (h : m.1.WF) (a k : α) (b : β a) :
-    (m.insert a b).1.findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k := by
-  rw [findEntry?_eq_findEntry? _ h.out, findEntry?_eq_findEntry?]
-  · rw [insert_eq_model, List.findEntry?_of_perm _ (toListModel_insert _ _ _ _), findEntry?_insertEntry]
-    · exact (ActuallyWF.insert _ h.out _ _).distinct
-    · exact h.out
-  · rw [insert_eq_model]
-    exact ActuallyWF.insert _ h.out _ _
-
 end Raw₀
 
 namespace Raw
