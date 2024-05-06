@@ -17,67 +17,6 @@ open List
 
 namespace MyLean.DHashMap
 
-/-! # Setting up the infrastructure -/
-
-theorem exists_bucket_of_uset [BEq α] [Hashable α]
-  (self : Array (AssocList α β)) (i : USize) (hi : i.toNat < self.size) (d : AssocList α β) :
-    ∃ l, toListModel self ~ self[i.toNat].toList ++ l ∧
-      toListModel (self.uset i d hi) ~ d.toList ++ l ∧
-      (∀ [EquivBEq α] [LawfulHashable α],
-        IsHashSelf self → ∀ k : α, (mkIdx (hash k) (show 0 < self.size by omega)).1.toNat = i.toNat → l.containsKey k = false) := by
-  have h₀ : 0 < self.size := by omega
-  obtain ⟨l₁, l₂, h₁, h₂, h₃⟩ := Array.exists_of_update self i d hi
-  refine ⟨l₁.bind AssocList.toList ++ l₂.bind AssocList.toList, ?_, ?_, ?_⟩
-  · rw [toListModel, h₁]
-    simpa using List.perm_append_comm_assoc _ _ _
-  · rw [toListModel, h₃]
-    simpa using List.perm_append_comm_assoc _ _ _
-  · intro _ _ h k
-    rw [← Decidable.not_imp_not]
-    intro hk
-    simp only [Bool.not_eq_false, containsKey_eq_true_iff_exists_mem, mem_append, mem_bind] at hk
-    obtain ⟨⟨k', v'⟩, ⟨(⟨a, ha₁, ha₂⟩|⟨a, ha₁, ha₂⟩), hk⟩⟩ := hk
-    · obtain ⟨n, hn⟩ := List.get_of_mem ha₁
-      rw [List.get_eq_get_append_right (self[i] :: l₂)] at hn
-      suffices (mkIdx (hash k') h₀).1.toNat = n from
-        Nat.ne_of_lt (Nat.lt_of_eq_of_lt (hash_eq hk ▸ this) (h₂ ▸ n.2))
-      rw [List.get_congr h₁.symm, ← Array.getElem_eq_data_get] at hn
-      exact (h.hashes_to n (by omega)).hash_self h₀ _ (hn.symm ▸ ha₂)
-    · obtain ⟨n, hn⟩ := List.get_of_mem ha₁
-      rw [List.get_eq_get_cons self[i], List.get_eq_get_append_left l₁] at hn
-      suffices (mkIdx (hash k') h₀).1.toNat = n + 1 + l₁.length by
-        refine Nat.ne_of_lt' ?_
-        simp only [← hash_eq hk, this, h₂, Nat.lt_add_left_iff_pos, Nat.succ_pos]
-      rw [List.get_congr h₁.symm, ← Array.getElem_eq_data_get] at hn
-      refine (h.hashes_to (n + 1 + l₁.length) ?_).hash_self h₀ _ (hn.symm ▸ ha₂)
-      rw [Array.size_eq_length_data, h₁, length_append, length_cons]
-      omega
-
-theorem exists_bucket_of_update [BEq α] [Hashable α] (m : Array (AssocList α β)) (h : 0 < m.size) (k : α)
-    (f : AssocList α β → AssocList α β) :
-    ∃ l : List (Σ a, β a),
-      toListModel m ~ (bucket m h k).toList ++ l ∧
-      toListModel (updateBucket m h k f) ~ (f (bucket m h k)).toList ++ l ∧
-      (∀ [EquivBEq α] [LawfulHashable α], IsHashSelf m → ∀ k', hash k = hash k' → l.containsKey k' = false) := by
-  let idx := mkIdx (hash k) h
-  obtain ⟨l, h₁, h₂, h₃⟩ := exists_bucket_of_uset m idx.1 idx.2 (f m[idx.1])
-  exact ⟨l, h₁, h₂, fun h k' hk' => h₃ h _ (hk' ▸ rfl)⟩
-
-theorem exists_bucket' [BEq α] [Hashable α]
-    (self : Array (AssocList α β)) (i : USize) (hi : i.toNat < self.size) :
-      ∃ l, self.data.bind AssocList.toList ~ self[i.toNat].toList ++ l ∧
-        (∀ [EquivBEq α] [LawfulHashable α], IsHashSelf self → ∀ k,
-          (mkIdx (hash k) (show 0 < self.size by omega)).1.toNat = i.toNat → l.containsKey k = false) := by
-  obtain ⟨l, h₁, -, h₂⟩ := exists_bucket_of_uset self i hi .nil
-  exact ⟨l, h₁, h₂⟩
-
-theorem exists_bucket [BEq α] [Hashable α]
-    (m : Array (AssocList α β)) (h : 0 < m.size) (k : α) :
-    ∃ l : List (Σ a, β a), toListModel m ~ (bucket m h k).toList ++ l ∧
-      (∀ [EquivBEq α] [LawfulHashable α], IsHashSelf m → ∀ k', hash k = hash k' → l.containsKey k' = false) := by
-  obtain ⟨l, h₁, -, h₂⟩ := exists_bucket_of_update m h k (fun _ => .nil)
-  exact ⟨l, h₁, h₂⟩
-
 @[simp]
 theorem toListModel_mkArray_nil {c} : toListModel (mkArray c (AssocList.nil : AssocList α β)) = [] := by
   suffices ∀ d, (List.replicate d AssocList.nil).bind AssocList.toList = [] from this _
@@ -285,16 +224,15 @@ theorem isHashSelf_consₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable 
   · exact Or.inr rfl
   · exact Or.inl (containsKey_of_mem hp)
 
--- TODO: as stated, this is in the wrong namespace, maybe move to Model.lean?
-theorem bucket_contains_eq_containsKey [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw α β} (hm : m.WFImp) {a : α} :
-    (bucket m.buckets hm.buckets_size a).contains a = (toListModel m.buckets).containsKey a := by
-  obtain ⟨l, hl, hlk⟩ := exists_bucket m.buckets hm.buckets_size a
+theorem containsₘ_eq_containsKey [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} :
+    m.containsₘ a = (toListModel m.1.buckets).containsKey a := by
+  obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets hm.buckets_size a
   refine Eq.trans ?_ (List.containsKey_of_perm (hm.distinct.perm hl.symm) hl.symm)
-  rw [AssocList.contains_eq, List.containsKey_append_of_not_contains_right]
+  rw [containsₘ, AssocList.contains_eq, List.containsKey_append_of_not_contains_right]
   exact hlk hm.buckets_hash_self _ rfl
 
 theorem wfImp_consₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
-    (h : m.1.WFImp) (a : α) (b : β a) (hc : (bucket m.1.buckets m.2 a).contains a = false) : (m.consₘ a b).1.WFImp where
+    (h : m.1.WFImp) (a : α) (b : β a) (hc : m.containsₘ a = false) : (m.consₘ a b).1.WFImp where
   buckets_hash_self := isHashSelf_consₘ m h a b
   buckets_size := by simpa [consₘ] using h.buckets_size
   size_eq := by
@@ -302,18 +240,18 @@ theorem wfImp_consₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (
     simpa [consₘ] using h.size_eq
   distinct := by
     refine (h.distinct.cons ?_).perm (toListModel_consₘ _ _ _)
-    rwa [← bucket_contains_eq_containsKey h]
+    rwa [← containsₘ_eq_containsKey h]
 
 theorem toListModel_insertₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
     (h : m.1.WFImp) (a : α) (b : β a) : toListModel (m.insertₘ a b).1.2 ~ (toListModel m.1.2).insertEntry a b := by
   rw [insertₘ]
   split
   · next h' =>
-    rw [bucket_contains_eq_containsKey h] at h'
+    rw [containsₘ_eq_containsKey h] at h'
     rw [insertEntry_of_containsKey h']
     exact toListModel_replaceₘ _ h _ _
   · next h' =>
-    rw [bucket_contains_eq_containsKey h, Bool.not_eq_true] at h'
+    rw [containsₘ_eq_containsKey h, Bool.not_eq_true] at h'
     rw [insertEntry_of_containsKey_eq_false h']
     refine (Raw₀.toListModel_expandIfNecessary _).trans ?_
     exact toListModel_consₘ m a b

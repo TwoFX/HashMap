@@ -89,11 +89,15 @@ where
     let buckets' := buckets.uset i (AssocList.cons a b bkt) h
     (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, false)
 
-@[inline] def findEntry? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
-    Option (Σ a, β a) :=
+@[inline] def findEntry? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let ⟨i, h⟩ := mkIdx (hash a) h
   buckets[i].findEntry? a
+
+@[inline] def contains [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Bool :=
+  let ⟨⟨_, buckets⟩, h⟩ := m
+  let ⟨i, h⟩ := mkIdx (hash a) h
+  buckets[i].contains a
 
 end Raw₀
 
