@@ -19,20 +19,46 @@ variable (m : Raw₀ α β) (h : m.1.WF)
 
 /-! # Lemmas about model implementations -/
 
+@[simp]
+theorem find?ₘ_empty {β : Type v} {c : Nat} {a : α} : (empty c : Raw₀ α (fun _ => β)).find?ₘ a = none := by
+  simp [find?ₘ_eq_findValue? _ Raw.WF.empty.out]
+
+@[simp]
+theorem findEntry?ₘ_empty {c : Nat} {a : α} : (empty c : Raw₀ α β).findEntry?ₘ a = none := by
+  simp [findEntry?ₘ_eq_findEntry? _ Raw.WF.empty.out]
+
 theorem findEntry?ₘ_insertₘ (a k : α) (b : β a) :
     (m.insertₘ a b).findEntry?ₘ k = bif a == k then some ⟨a, b⟩ else m.findEntry?ₘ k := by
   rw [findEntry?ₘ_eq_findEntry? _ (wfImp_insertₘ _ h.out _ _), findEntry?ₘ_eq_findEntry? _ h.out,
     List.findEntry?_of_perm (wfImp_insertₘ _ h.out _ _).distinct (toListModel_insertₘ _ h.out _ _),
     List.findEntry?_insertEntry]
 
+theorem find?ₘ_insertₘ {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) {a k : α} {b : β} :
+    (m.insertₘ a b).find?ₘ k = bif a == k then some b else m.find?ₘ k := by
+  rw [find?ₘ_eq_findValue? _ (wfImp_insertₘ _ h.out _ _), find?ₘ_eq_findValue? _ h.out,
+    List.findValue?_of_perm (wfImp_insertₘ _ h.out _ _).distinct (toListModel_insertₘ _ h.out _ _),
+    List.findValue?_insertEntry]
+
 theorem containsₘ_eq_isSome_findEntry?ₘ {a : α} : m.containsₘ a = (m.findEntry?ₘ a).isSome := by
   rw [findEntry?ₘ_eq_findEntry? _ h.out, containsₘ_eq_containsKey h.out, List.containsKey_eq_isSome_findEntry?]
 
 /-! # Lemmas about actual implementations -/
 
+@[simp]
+theorem findEntry?_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).findEntry? a = none := by
+  rw [findEntry?_eq_findEntry?ₘ, findEntry?ₘ_empty]
+
+@[simp]
+theorem find?_empty {β : Type v} {a : α} {c : Nat} : (empty c : Raw₀ α (fun _ => β)).find? a = none := by
+  rw [find?_eq_find?ₘ, find?ₘ_empty]
+
 theorem findEntry?_insert (a k : α) (b : β a) :
     (m.insert a b).1.findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k := by
   rw [findEntry?_eq_findEntry?ₘ, insert_eq_insertₘ, findEntry?_eq_findEntry?ₘ, findEntry?ₘ_insertₘ _ h]
+
+theorem find?_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) (a k : α) (b : β) :
+    (m.insert a b).1.find? k = bif a == k then some b else m.find? k := by
+  rw [find?_eq_find?ₘ, insert_eq_insertₘ, find?_eq_find?ₘ, find?ₘ_insertₘ _ h]
 
 theorem contains_eq_isSome_findEntry? {a : α} : m.contains a = (m.findEntry? a).isSome := by
   rw [findEntry?_eq_findEntry?ₘ, contains_eq_containsₘ, containsₘ_eq_isSome_findEntry?ₘ _ h]
@@ -43,9 +69,31 @@ namespace Raw
 
 variable (m : Raw α β) (h : m.WF)
 
+@[simp]
+theorem findEntry?_empty {a : α} {c : Nat} : (empty c : Raw α β).findEntry? a = none := by
+  rw [empty_eq, findEntry?_eq, Raw₀.findEntry?_empty]
+  exact WF.empty
+
+@[simp]
+theorem findEntry?_emptyc {a : α} : (∅ : Raw α β).findEntry? a = none :=
+  findEntry?_empty
+
+@[simp]
+theorem find?_empty {β : Type v} {a : α} {c : Nat} : (empty c : Raw α (fun _ => β)).find? a = none := by
+  rw [empty_eq, find?_eq, Raw₀.find?_empty]
+  exact WF.empty
+
+@[simp]
+theorem find?_emptyc {β : Type v} {a : α} : (∅ : Raw α (fun _ => β)).find? a = none :=
+  find?_empty
+
 theorem findEntry?_insert {a k : α} {b : β a} :
     (m.insert a b).findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k := by
   rw [insert_eq h, findEntry?_eq h, findEntry?_eq h.insert₀, Raw₀.findEntry?_insert ⟨m, _⟩ h]
+
+theorem find?_insert {β : Type v} (m : Raw α (fun _ => β)) (h : m.WF) (a k : α) (b : β) :
+    (m.insert a b).find? k = bif a == k then some b else m.find? k := by
+  rw [insert_eq h, find?_eq h, find?_eq h.insert₀, Raw₀.find?_insert ⟨m, _⟩ h]
 
 theorem contains_eq_isSome_findEntry? {a : α} : m.contains a = (m.findEntry? a).isSome := by
   rw [contains_eq h, findEntry?_eq h, Raw₀.contains_eq_isSome_findEntry? ⟨m, _⟩ h]
@@ -56,9 +104,29 @@ section
 
 variable (m : DHashMap α β)
 
+@[simp]
+theorem findEntry?_empty {a : α} {c : Nat} : (empty c : DHashMap α β).findEntry? a = none :=
+  Raw₀.findEntry?_empty
+
+@[simp]
+theorem findEntry?_emptyc {a : α} : (∅ : DHashMap α β).findEntry? a = none :=
+  Raw₀.findEntry?_empty
+
+@[simp]
+theorem find?_empty {β : Type v} {a : α} {c : Nat} : (empty c : DHashMap α (fun _ => β)).find? a = none :=
+  Raw₀.find?_empty
+
+@[simp]
+theorem find?_emptyc {β : Type v} {a : α} : (∅ : DHashMap α (fun _ => β)).find? a = none :=
+  Raw₀.find?_empty
+
 theorem findEntry?_insert (a k : α) (b : β a) :
     (m.insert a b).findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k :=
   Raw₀.findEntry?_insert ⟨m.1, _⟩ m.2 a k b
+
+theorem find?_insert {β : Type v} (m : DHashMap α (fun _ => β)) (a k : α) (b : β) :
+    (m.insert a b).find? k = bif a == k then some b else m.find? k :=
+  Raw₀.find?_insert ⟨m.1, _⟩ m.2 _ _ _
 
 theorem contains_eq_isSome_findEntry? {a : α} : m.contains a = (m.findEntry? a).isSome :=
   Raw₀.contains_eq_isSome_findEntry? ⟨m.1, _⟩ m.2

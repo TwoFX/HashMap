@@ -99,12 +99,26 @@ where
   let ⟨i, h⟩ := mkIdx (hash a) h
   buckets[i].contains a
 
+section
+
+variable {β : Type v}
+
+@[inline] def find? [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) : Option β :=
+  let ⟨⟨_, buckets⟩, h⟩ := m
+  let ⟨i, h⟩ := mkIdx (hash a) h
+  buckets[i].find? a
+
+end
+
 end Raw₀
 
 namespace Raw
 
 @[inline] def empty (capacity := 8) : Raw α β :=
   (Raw₀.empty capacity).1
+
+instance : EmptyCollection (Raw α β) where
+  emptyCollection := empty
 
 @[inline] def insert' [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β a) : Raw α β × Bool :=
   if h : 0 < m.buckets.size then
@@ -124,6 +138,17 @@ namespace Raw
   if h : 0 < m.buckets.size then
     Raw₀.contains ⟨m, h⟩ a
   else false -- will never happen for well-formed inputs
+
+section
+
+variable {β : Type v}
+
+@[inline] def find? [BEq α] [Hashable α] (m : Raw α (fun _ => β)) (a : α) : Option β :=
+  if h : 0 < m.buckets.size then
+    Raw₀.find? ⟨m, h⟩ a
+  else none -- will never happen for well-formed inputs
+
+end
 
 section WF
 
@@ -172,6 +197,9 @@ namespace DHashMap
 @[inline] def empty [BEq α] [Hashable α] (capacity := 8) : DHashMap α β :=
   ⟨Raw.empty capacity, .empty⟩
 
+instance [BEq α] [Hashable α] : EmptyCollection (DHashMap α β) where
+  emptyCollection := empty
+
 @[inline] def insert' [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
   let m' := Raw₀.insert ⟨m.1, m.2.size_buckets_pos⟩ a b
   ⟨⟨m'.1.1, .insert₀ m.2⟩, m'.2⟩
@@ -184,5 +212,14 @@ namespace DHashMap
 
 @[inline] def contains [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Bool :=
   Raw₀.contains ⟨m.1, m.2.size_buckets_pos⟩ a
+
+section
+
+variable {β : Type v}
+
+@[inline] def find? [BEq α] [Hashable α] (m : DHashMap α (fun _ => β)) (a : α) : Option β :=
+  Raw₀.find? ⟨m.1, m.2.size_buckets_pos⟩ a
+
+end
 
 end MyLean.DHashMap

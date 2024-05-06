@@ -17,45 +17,58 @@ namespace MyLean
 namespace HashMap
 
 structure Raw (α : Type u) (β : Type v) where
-  raw : DHashMap.Raw α (fun _ => β)
+  inner : DHashMap.Raw α (fun _ => β)
 
 namespace Raw
 
 @[inline] def empty (capacity := 8) : Raw α β :=
   ⟨DHashMap.Raw.empty capacity⟩
 
+instance : EmptyCollection (Raw α β) where
+  emptyCollection := empty
+
 @[inline] def insert' [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β) : Raw α β × Bool :=
-  let ⟨r, replaced⟩ := m.raw.insert' a b
+  let ⟨r, replaced⟩ := m.inner.insert' a b
   ⟨⟨r⟩, replaced⟩
 
 @[inline] def insert [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β) : Raw α β :=
-  ⟨m.raw.insert a b⟩
+  ⟨m.inner.insert a b⟩
 
 @[inline] def findEntry? [BEq α] [Hashable α] (m : Raw α β) (a : α) : Option (α × β) :=
-  m.raw.findEntry? a |> .map Sigma.toProd
+  m.inner.findEntry? a |> .map Sigma.toProd
+
+@[inline] def find? [BEq α] [Hashable α] (m : Raw α β) (a : α) : Option β :=
+  m.inner.find? a
 
 def WF [BEq α] [Hashable α] : Raw α β → Prop :=
-  fun r => r.raw.WF
+  fun r => r.inner.WF
 
 end Raw
 
 end HashMap
 
-def HashMap (α : Type u) (β : Type v) [BEq α] [Hashable α] :=
-  DHashMap α (fun _ => β)
+structure HashMap (α : Type u) (β : Type v) [BEq α] [Hashable α] where
+  inner : DHashMap α (fun _ => β)
 
 namespace HashMap
 
 @[inline] def empty [BEq α] [Hashable α] (capacity := 8) : HashMap α β :=
-  DHashMap.empty capacity
+  ⟨DHashMap.empty capacity⟩
+
+instance [BEq α] [Hashable α] : EmptyCollection (HashMap α β) where
+  emptyCollection := empty
 
 @[inline] def insert' [BEq α] [Hashable α] (m : HashMap α β) (a : α) (b : β) : HashMap α β × Bool :=
-  DHashMap.insert' m a b
+  let ⟨r, replaced⟩ := m.inner.insert' a b
+  ⟨⟨r⟩, replaced⟩
 
 @[inline] def insert [BEq α] [Hashable α] (m : HashMap α β) (a : α) (b : β) : HashMap α β :=
-  DHashMap.insert m a b
+  ⟨m.inner.insert a b⟩
 
 @[inline] def findEntry? [BEq α] [Hashable α] (m : HashMap α β) (a : α) : Option (α × β) :=
-  DHashMap.findEntry? m a |> .map Sigma.toProd
+  m.inner.findEntry? a |> .map Sigma.toProd
+
+@[inline] def find? [BEq α] [Hashable α] (m : HashMap α β) (a : α) : Option β :=
+  m.inner.find? a
 
 end MyLean.HashMap

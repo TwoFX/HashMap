@@ -18,12 +18,35 @@ namespace Raw
 
 variable (m : Raw α β) (h : m.WF)
 
+@[simp] theorem inner_emptyc : (∅ : Raw α β).inner = ∅ := rfl
+@[simp] theorem inner_empty {c : Nat} : (empty c : Raw α β).inner = DHashMap.Raw.empty c := rfl
+
 -- theorem ext (m m' : Raw α β) : m.raw = m'.raw → m = m' := by
 --   cases m; cases m'; rintro rfl; rfl
+
+@[simp]
+theorem findEntry?_empty {a : α} {c : Nat} : (empty c : Raw α β).findEntry? a = none := by
+  simp [findEntry?]
+
+@[simp]
+theorem findEntry?_emptyc {a : α} : (∅ : Raw α β).findEntry? a = none := by
+  simp [findEntry?]
+
+@[simp]
+theorem find?_empty {a : α} {c : Nat} : (empty c : Raw α β).find? a = none := by
+  simp [find?]
+
+@[simp]
+theorem find?_emptyc {a : α} : (∅ : Raw α β).find? a = none := by
+  simp [find?]
 
 theorem findEntry?_insert {a k : α} {b : β} :
     (m.insert a b).findEntry? k = bif a == k then some (a, b) else m.findEntry? k := by
   simp [findEntry?, insert, DHashMap.Raw.findEntry?_insert _ h, apply_bif (Option.map Sigma.toProd)]
+
+theorem find?_insert {a k : α} {b : β} :
+    (m.insert a b).find? k = bif a == k then some b else m.find? k := by
+  simp [find?, insert, DHashMap.Raw.find?_insert _ h]
 
 end Raw
 
@@ -31,9 +54,32 @@ section
 
 variable (m : HashMap α β)
 
+@[simp] theorem inner_emptyc : (∅ : HashMap α β).inner = ∅ := rfl
+@[simp] theorem inner_empty {c : Nat} : (empty c : HashMap α β).inner = DHashMap.empty c := rfl
+
+@[simp]
+theorem findEntry?_empty {a : α} {c : Nat} : (empty c : HashMap α β).findEntry? a = none := by
+  simp [findEntry?]
+
+@[simp]
+theorem findEntry?_emptyc {a : α} : (∅ : HashMap α β).findEntry? a = none := by
+  simp [findEntry?]
+
+@[simp]
+theorem find?_empty {a : α} {c : Nat} : (empty c : HashMap α β).find? a = none := by
+  simp [find?]
+
+@[simp]
+theorem find?_emptyc {a : α} : (∅ : HashMap α β).find? a = none := by
+  simp [find?]
+
 theorem findEntry?_insert {a k : α} {b : β} :
     (m.insert a b).findEntry? k = bif a == k then some (a, b) else m.findEntry? k := by
   simp [findEntry?, insert, DHashMap.findEntry?_insert, apply_bif (Option.map Sigma.toProd)]
+
+theorem find?_insert {a k : α} {b : β} :
+    (m.insert a b).find? k = bif a == k then some b else m.find? k := by
+  simp [find?, insert, DHashMap.find?_insert]
 
 end
 

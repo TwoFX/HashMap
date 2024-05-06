@@ -117,6 +117,15 @@ def containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Bool :=
 def insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   if m.containsₘ a then m.replaceₘ a b else Raw₀.expandIfNecessary (m.consₘ a b)
 
+section
+
+variable {β : Type v}
+
+def find?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) : Option β :=
+  (bucket m.1.buckets m.2 a).find? a
+
+end
+
 /-! # Equivalence between model functions and real implementations -/
 
 theorem reinsertAux_eq [Hashable α] (data : { d : Array (AssocList α β) // 0 < d.size }) (a : α) (b : β a) :
@@ -134,6 +143,15 @@ theorem insert_eq_insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (
   apply Subtype.eq
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
   split <;> rfl
+
+section
+
+variable {β : Type v}
+
+theorem find?_eq_find?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) :
+    m.find? a = m.find?ₘ a := rfl
+
+end
 
 end Raw₀
 

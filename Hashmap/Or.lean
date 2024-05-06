@@ -43,3 +43,6 @@ instance : Std.IdempotentOp (Option.or (α := α)) := ⟨Option.or_self⟩
 
 theorem Option.or_eq_orElse (o o' : Option α) : Option.or o o' = o.orElse (fun _ => o') := by
   cases o <;> rfl
+
+theorem Option.map_or (f : α → β) (o o' : Option α) : (o.or o').map f = (o.map f).or (o'.map f) := by
+  cases o <;> rfl

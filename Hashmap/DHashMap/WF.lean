@@ -200,6 +200,20 @@ theorem findEntry?ₘ_eq_findEntry? [BEq α] [Hashable α] [PartialEquivBEq α] 
   rw [findEntry?ₘ, AssocList.findEntry?_eq, findEntry?_append_of_containsKey_eq_false]
   exact hlk h.buckets_hash_self _ rfl
 
+section
+
+variable {β : Type v}
+
+theorem find?ₘ_eq_findValue? [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α]
+    (m : Raw₀ α (fun _ => β)) (h : m.1.WFImp) (a : α) :
+    m.find?ₘ a = (toListModel m.1.buckets).findValue? a := by
+  obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets m.2 a
+  refine Eq.trans ?_ (List.findValue?_of_perm (h.distinct.perm hl.symm) hl.symm)
+  rw [find?ₘ, AssocList.find?_eq, findValue?_append_of_containsKey_eq_false]
+  exact hlk h.buckets_hash_self _ rfl
+
+end
+
 /-! # `replaceₘ` -/
 
 theorem toListModel_replaceₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
@@ -289,6 +303,10 @@ theorem WF.out [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw
   · rw [Raw₀.insert_eq_insertₘ]
     exact Raw₀.wfImp_insertₘ _ (by simpa) _ _
 
+theorem empty_eq [BEq α] [Hashable α] {c : Nat} : (empty c : Raw α β) = (Raw₀.empty c).1 := rfl
+
+theorem emptyc_eq [BEq α] [Hashable α] : (∅ : Raw α β) = Raw₀.empty.1 := rfl
+
 theorem insert'_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
     (m.insert' a b).1 = (Raw₀.insert ⟨m, h.size_buckets_pos⟩ a b).1.1 := by
   simp [insert', h.size_buckets_pos]
@@ -305,6 +323,20 @@ theorem contains_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} :
     m.contains a = Raw₀.contains ⟨m, h.size_buckets_pos⟩ a := by
   simp [contains, h.size_buckets_pos]
 
+section
+
+variable {β : Type v}
+
+theorem find?_eq [BEq α] [Hashable α] {m : Raw α (fun _ => β)} (h : m.WF) {a : α} :
+    m.find? a = Raw₀.find? ⟨m, h.size_buckets_pos⟩ a := by
+  simp [find?, h.size_buckets_pos]
+
+end
+
 end Raw
+
+theorem empty_eq [BEq α] [Hashable α] {c : Nat} : (empty c : DHashMap α β).1 = (Raw₀.empty c).1 := rfl
+
+theorem emptyc_eq [BEq α] [Hashable α] : (∅ : DHashMap α β).1 = Raw₀.empty.1 := rfl
 
 end MyLean.DHashMap
