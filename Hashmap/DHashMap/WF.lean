@@ -301,6 +301,10 @@ theorem findEntry?_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α}
     m.findEntry? a = Raw₀.findEntry? ⟨m, h.size_buckets_pos⟩ a := by
   simp [findEntry?, h.size_buckets_pos]
 
+theorem contains_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} :
+    m.contains a = Raw₀.contains ⟨m, h.size_buckets_pos⟩ a := by
+  simp [contains, h.size_buckets_pos]
+
 end Raw
 
 end MyLean.DHashMap

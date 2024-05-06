@@ -120,6 +120,11 @@ namespace Raw
     Raw₀.findEntry? ⟨m, h⟩ a
   else none -- will never happen for well-formed inputs
 
+@[inline] def contains [BEq α] [Hashable α] (m : Raw α β) (a : α) : Bool :=
+  if h : 0 < m.buckets.size then
+    Raw₀.contains ⟨m, h⟩ a
+  else false -- will never happen for well-formed inputs
+
 section WF
 
 /--
@@ -176,5 +181,8 @@ namespace DHashMap
 
 @[inline] def findEntry? [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Option (Σ a, β a) :=
   Raw₀.findEntry? ⟨m.1, m.2.size_buckets_pos⟩ a
+
+@[inline] def contains [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Bool :=
+  Raw₀.contains ⟨m.1, m.2.size_buckets_pos⟩ a
 
 end MyLean.DHashMap

@@ -10,24 +10,31 @@ set_option autoImplicit false
 
 universe u v
 
-variable {α : Type u} {β : Type v}
+variable {α : Type u} {β : Type v} [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
 
 namespace MyLean.HashMap
 
 namespace Raw
 
-theorem ext (m m' : Raw α β) : m.raw = m'.raw → m = m' := by
-  cases m; cases m'; rintro rfl; rfl
+variable (m : Raw α β) (h : m.WF)
 
-theorem findEntry?_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw α β) (h : m.WF) {a k : α} {b : β} :
+-- theorem ext (m m' : Raw α β) : m.raw = m'.raw → m = m' := by
+--   cases m; cases m'; rintro rfl; rfl
+
+theorem findEntry?_insert {a k : α} {b : β} :
     (m.insert a b).findEntry? k = bif a == k then some (a, b) else m.findEntry? k := by
-  rw [findEntry?, insert, findEntry?, DHashMap.Raw.findEntry?_insert _ h]
-  simp [apply_bif (Option.map Sigma.toProd)]
+  simp [findEntry?, insert, DHashMap.Raw.findEntry?_insert _ h, apply_bif (Option.map Sigma.toProd)]
 
 end Raw
 
-theorem findEntry?_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : HashMap α β) {a k : α} {b : β} :
+section
+
+variable (m : HashMap α β)
+
+theorem findEntry?_insert {a k : α} {b : β} :
     (m.insert a b).findEntry? k = bif a == k then some (a, b) else m.findEntry? k := by
   simp [findEntry?, insert, DHashMap.findEntry?_insert, apply_bif (Option.map Sigma.toProd)]
+
+end
 
 end MyLean.HashMap
