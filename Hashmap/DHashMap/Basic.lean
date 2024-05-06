@@ -118,27 +118,33 @@ namespace Raw
 
 section WF
 
-structure ActuallyWF [BEq α] [Hashable α] (m : Raw α β) : Prop where
+/--
+This is the actual well-formedness predicate for hash maps. Users should never need to interact with this and should use
+`WF` instead.
+-/
+structure WFImp [BEq α] [Hashable α] (m : Raw α β) : Prop where
   buckets_hash_self : IsHashSelf m.buckets
   buckets_size : 0 < m.buckets.size
   size_eq : m.size = (toListModel m.buckets).length
   distinct : (toListModel m.buckets).DistinctKeys
 
+/--
+Well-formedness predicate for hash maps. Users of `DHashMap` will not need to interact with this. Users of `HashMap.Raw`
+will need to provide proofs of `WF` to lemmas and should use the lemmas `WF.empty`, `WF.insert'` and `WF.insert` to show
+that map operations preserve well-formedness.
+-/
 inductive WF [BEq α] [Hashable α] : Raw α β → Prop where
-  | wf : ∀ m, m.ActuallyWF → WF m
-  | empty : ∀ c, WF (empty c)
-  | insert₀ : ∀ m h a b, WF m → WF (Raw₀.insert ⟨m, h⟩ a b).1.1
+  | wf {m} : m.WFImp → WF m
+  | empty {c} : WF (empty c)
+  | insert₀ {m h a b} : WF m → WF (Raw₀.insert ⟨m, h⟩ a b).1.1
 
 theorem WF.size_buckets_pos [BEq α] [Hashable α] (m : Raw α β) : WF m → 0 < m.buckets.size
-  | wf m h => h.buckets_size
-  | empty c => (Raw₀.empty _).2
-  | insert₀ m h a b _ => (Raw₀.insert ⟨m, h⟩ a b).1.2
+  | wf h => h.buckets_size
+  | empty => (Raw₀.empty _).2
+  | insert₀ _ => (Raw₀.insert ⟨_, _⟩ _ _).1.2
 
 theorem WF.insert' [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β a} (h : m.WF) : (m.insert' a b).1.WF := by
-  rw [Raw.insert']
-  split
-  · next h' => exact .insert₀ _ h' _ _ h
-  · exact h
+  simpa [Raw.insert', h.size_buckets_pos] using .insert₀ h
 
 theorem WF.insert [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β a} (h : m.WF) : (m.insert a b).WF :=
   WF.insert' h
@@ -154,12 +160,12 @@ def DHashMap (α : Type u) (β : α → Type v) [BEq α] [Hashable α] := { m : 
 
 namespace DHashMap
 
-@[inline] def emtpy [BEq α] [Hashable α] (capacity := 8) : DHashMap α β :=
-  ⟨Raw.empty capacity, .empty _⟩
+@[inline] def empty [BEq α] [Hashable α] (capacity := 8) : DHashMap α β :=
+  ⟨Raw.empty capacity, .empty⟩
 
 @[inline] def insert' [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
   let m' := Raw₀.insert ⟨m.1, m.2.size_buckets_pos⟩ a b
-  ⟨⟨m'.1.1, .insert₀ _ _ _ _ m.2⟩, m'.2⟩
+  ⟨⟨m'.1.1, .insert₀ m.2⟩, m'.2⟩
 
 @[inline] def insert [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
   (m.insert' a b).1

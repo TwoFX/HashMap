@@ -121,9 +121,9 @@ theorem size_empty {c} : (empty c : Raw₀ α β).1.size = 0 := rfl
 theorem toListModel_buckets_empty {c} : toListModel (empty c : Raw₀ α β).1.buckets = [] :=
   toListModel_mkArray_nil
 
-theorem ActuallyWF.empty [BEq α] [Hashable α] {c} : (empty c : Raw₀ α β).1.ActuallyWF where
+theorem WFImp.empty [BEq α] [Hashable α] {c} : (empty c : Raw₀ α β).1.WFImp where
   buckets_hash_self := by simp [Raw.empty, Raw₀.empty]
-  buckets_size := (Raw.WF.empty _).size_buckets_pos
+  buckets_size := Raw.WF.empty.size_buckets_pos
   size_eq := by simp
   distinct := by simp
 
@@ -224,8 +224,8 @@ theorem toListModel_expandIfNecessary [BEq α] [Hashable α] [EquivBEq α] [Lawf
   · dsimp
     exact expand_toListModel
 
-theorem ActuallyWF.expandIfNecessary [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
-    (h : m.1.ActuallyWF) : (expandIfNecessary m).1.ActuallyWF := by
+theorem WFImp.expandIfNecessary [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
+    (h : m.1.WFImp) : (expandIfNecessary m).1.WFImp := by
   rw [Raw₀.expandIfNecessary]
   dsimp
   split
@@ -245,7 +245,7 @@ end Raw₀
 namespace Model
 
 theorem toListModel_replace [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
-    (h : m.1.ActuallyWF) (a : α) (b : β a) : toListModel (replace m a b).1.buckets ~ (toListModel m.1.2).replaceEntry a b := by
+    (h : m.1.WFImp) (a : α) (b : β a) : toListModel (replace m a b).1.buckets ~ (toListModel m.1.2).replaceEntry a b := by
   rw [replace]
   dsimp only
   obtain ⟨l, h₁, h₂, h₃⟩ := exists_bucket_of_update m.1.buckets m.2 a (fun l => l.replace a b)
@@ -254,14 +254,14 @@ theorem toListModel_replace [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable
   apply h₃ h.buckets_hash_self _ rfl
 
 theorem isHashSelf_replace [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
-    (h : m.1.ActuallyWF) (a : α) (b : β a) : IsHashSelf (replace m a b).1.buckets := by
+    (h : m.1.WFImp) (a : α) (b : β a) : IsHashSelf (replace m a b).1.buckets := by
   rw [replace]
   dsimp only
   apply h.buckets_hash_self.updateBucket (fun l p hp => ?_)
   exact Or.inl (by simpa using containsKey_of_mem hp)
 
-theorem ActuallyWF_replace [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
-    (h : m.1.ActuallyWF) (a : α) (b : β a) : (replace m a b).1.ActuallyWF where
+theorem WFImp_replace [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
+    (h : m.1.WFImp) (a : α) (b : β a) : (replace m a b).1.WFImp where
   buckets_hash_self := isHashSelf_replace m h a b
   buckets_size := by simpa [replace] using h.buckets_size
   size_eq := h.size_eq.trans (Eq.trans length_replaceEntry.symm (toListModel_replace _ h _ _).length_eq.symm)
@@ -276,7 +276,7 @@ theorem toListModel_cons [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α
   rw [AssocList.toList_cons, cons_append]
 
 theorem isHashSelf_cons [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
-    (h : m.1.ActuallyWF) (a : α) (b : β a) : IsHashSelf (cons m a b).1.buckets := by
+    (h : m.1.WFImp) (a : α) (b : β a) : IsHashSelf (cons m a b).1.buckets := by
   rw [cons]
   dsimp only
   apply h.buckets_hash_self.updateBucket (fun l p hp => ?_)
@@ -286,15 +286,15 @@ theorem isHashSelf_cons [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
   · exact Or.inl (containsKey_of_mem hp)
 
 -- TODO: as stated, this is in the wrong namespace
-theorem bucket_contains_eq_containsKey [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw α β} (hm : m.ActuallyWF) {a : α} :
+theorem bucket_contains_eq_containsKey [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw α β} (hm : m.WFImp) {a : α} :
     (bucket m.buckets hm.buckets_size a).contains a = (toListModel m.buckets).containsKey a := by
   obtain ⟨l, hl, hlk⟩ := exists_bucket m.buckets hm.buckets_size a
   refine Eq.trans ?_ (List.containsKey_of_perm (hm.distinct.perm hl.symm) hl.symm)
   rw [AssocList.contains_eq, List.containsKey_append_of_not_contains_right]
   exact hlk hm.buckets_hash_self _ rfl
 
-theorem ActuallyWF_cons [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
-    (h : m.1.ActuallyWF) (a : α) (b : β a) (hc : (bucket m.1.buckets m.2 a).contains a = false) : (cons m a b).1.ActuallyWF where
+theorem WFImp_cons [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
+    (h : m.1.WFImp) (a : α) (b : β a) (hc : (bucket m.1.buckets m.2 a).contains a = false) : (cons m a b).1.WFImp where
   buckets_hash_self := isHashSelf_cons m h a b
   buckets_size := by simpa [cons] using h.buckets_size
   size_eq := by
@@ -305,7 +305,7 @@ theorem ActuallyWF_cons [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
     rwa [← bucket_contains_eq_containsKey h]
 
 theorem toListModel_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
-    (h : m.1.ActuallyWF) (a : α) (b : β a) : toListModel (insert m a b).1.2 ~ (toListModel m.1.2).insertEntry a b := by
+    (h : m.1.WFImp) (a : α) (b : β a) : toListModel (insert m a b).1.2 ~ (toListModel m.1.2).insertEntry a b := by
   rw [insert]
   split
   · next h' =>
@@ -318,16 +318,16 @@ theorem toListModel_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable 
     refine (Raw₀.toListModel_expandIfNecessary _).trans ?_
     exact toListModel_cons m a b
 
-theorem ActuallyWF_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
-    (h : m.1.ActuallyWF) (a : α) (b : β a) : (insert m a b).1.ActuallyWF := by
+theorem WFImp_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
+    (h : m.1.WFImp) (a : α) (b : β a) : (insert m a b).1.WFImp := by
   rw [insert]
   split
-  · apply ActuallyWF_replace _ h
-  · apply Raw₀.ActuallyWF.expandIfNecessary
-    apply ActuallyWF_cons _ h _ _ (by simp_all)
+  · apply WFImp_replace _ h
+  · apply Raw₀.WFImp.expandIfNecessary
+    apply WFImp_cons _ h _ _ (by simp_all)
 
 theorem findEntry?_eq_findEntry? [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable α]
-    (m : Raw₀ α β) (h : m.1.ActuallyWF) (a : α) :
+    (m : Raw₀ α β) (h : m.1.WFImp) (a : α) :
     Model.findEntry? m a = (toListModel m.1.buckets).findEntry? a := by
   obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets m.2 a
   refine Eq.trans ?_ (List.findEntry?_of_perm (h.distinct.perm hl.symm) hl.symm)
@@ -336,12 +336,12 @@ theorem findEntry?_eq_findEntry? [BEq α] [EquivBEq α] [Hashable α] [LawfulHas
 
 end Model
 
-theorem Raw.WF.out [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw α β} (h : m.WF) : m.ActuallyWF := by
+theorem Raw.WF.out [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw α β} (h : m.WF) : m.WFImp := by
   induction h
   · assumption
-  · exact Raw₀.ActuallyWF.empty
+  · exact Raw₀.WFImp.empty
   · rw [Raw₀.insert_eq_model]
-    exact Model.ActuallyWF_insert _ (by simpa) _ _
+    exact Model.WFImp_insert _ (by simpa) _ _
 
 
 end MyLean.DHashMap

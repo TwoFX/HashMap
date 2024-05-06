@@ -18,8 +18,8 @@ namespace Model
 theorem findEntry?_insert [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable α]
     (m : Raw₀ α β) (h : m.1.WF) (a k : α) (b : β a) :
     findEntry? (insert m a b) k = bif a == k then some ⟨a, b⟩ else findEntry? m k := by
-  rw [findEntry?_eq_findEntry? _ (ActuallyWF_insert _ h.out _ _), findEntry?_eq_findEntry? _ h.out,
-    List.findEntry?_of_perm (ActuallyWF_insert _ h.out _ _).distinct (toListModel_insert _ h.out _ _),
+  rw [findEntry?_eq_findEntry? _ (WFImp_insert _ h.out _ _), findEntry?_eq_findEntry? _ h.out,
+    List.findEntry?_of_perm (WFImp_insert _ h.out _ _).distinct (toListModel_insert _ h.out _ _),
     List.findEntry?_insertEntry]
 
 end Model
