@@ -280,11 +280,27 @@ theorem wfImp_insertₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
 
 end Raw₀
 
-theorem Raw.WF.out [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw α β} (h : m.WF) : m.WFImp := by
+namespace Raw
+
+theorem WF.out [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw α β} (h : m.WF) : m.WFImp := by
   induction h
   · assumption
   · exact Raw₀.wfImp_empty
   · rw [Raw₀.insert_eq_insertₘ]
     exact Raw₀.wfImp_insertₘ _ (by simpa) _ _
+
+theorem insert'_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
+    (m.insert' a b).1 = (Raw₀.insert ⟨m, h.size_buckets_pos⟩ a b).1.1 := by
+  simp [insert', h.size_buckets_pos]
+
+theorem insert_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
+    m.insert a b = (Raw₀.insert ⟨m, h.size_buckets_pos⟩ a b).1 := by
+  simp [insert, insert', h.size_buckets_pos]
+
+theorem findEntry?_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} :
+    m.findEntry? a = Raw₀.findEntry? ⟨m, h.size_buckets_pos⟩ a := by
+  simp [findEntry?, h.size_buckets_pos]
+
+end Raw
 
 end MyLean.DHashMap

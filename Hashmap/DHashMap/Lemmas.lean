@@ -29,6 +29,18 @@ theorem findEntry?_insert [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable �
 
 end Raw₀
 
+namespace Raw
+
+theorem findEntry?_insert [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable α]
+    (m : Raw α β) (h : m.WF) {a k : α} {b : β a} :
+    (m.insert a b).findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k := by
+  rw [insert_eq h, findEntry?_eq, findEntry?_eq, Raw₀.findEntry?_insert]
+  · exact h
+  · exact h
+  · exact h.insert₀
+
+end Raw
+
 theorem findEntry?_insert [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable α] (m : DHashMap α β) (a k : α) (b : β a) :
     (m.insert a b).findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k :=
   Raw₀.findEntry?_insert ⟨m.1, _⟩ m.2 a k b
