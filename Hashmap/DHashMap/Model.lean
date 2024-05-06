@@ -34,38 +34,34 @@ theorem size_updateBucket [Hashable α] {self : Array (AssocList α β)} {h : 0 
     {f : AssocList α β → AssocList α β} : (updateBucket self h k f).size = self.size := by
   simp [updateBucket]
 
-namespace Model
+namespace Raw₀
 
-def replace [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
+def replaceₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   ⟨⟨m.1.size, updateBucket m.1.buckets m.2 a (fun l => l.replace a b)⟩, by simpa using m.2⟩
 
-def cons [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
+def consₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   ⟨⟨m.1.size + 1, updateBucket m.1.buckets m.2 a (fun l => l.cons a b)⟩, by simpa using m.2⟩
 
-def insert [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
-  if (bucket m.1.buckets m.2 a).contains a then replace m a b else Raw₀.expandIfNecessary (cons m a b)
+def insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
+  if (bucket m.1.buckets m.2 a).contains a then replaceₘ m a b else Raw₀.expandIfNecessary (consₘ m a b)
 
-def findEntry? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
+def findEntry?ₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
   (bucket m.1.buckets m.2 a).findEntry? a
-
-end Model
-
-namespace Raw₀
 
 theorem reinsertAux_eq [Hashable α] (data : { d : Array (AssocList α β) // 0 < d.size }) (a : α) (b : β a) :
     (reinsertAux data a b).1 = updateBucket data.1 data.2 a (fun l => l.cons a b) := rfl
 
-theorem insert_eq_model [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) :
-    (insert m a b).1 = Model.insert m a b := by
-  rw [insert, Model.insert, bucket]
+theorem insert_eq_insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) :
+    (insert m a b).1 = insertₘ m a b := by
+  rw [insert, insertₘ, bucket]
   apply Subtype.eq
   dsimp
   split
   · rfl
   · rfl
 
-theorem findEntry?_eq_model [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
-    findEntry? m a = Model.findEntry? m a := rfl
+theorem findEntry?_eq_findEntry?ₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
+    findEntry? m a = findEntry?ₘ m a := rfl
 
 end Raw₀
 
