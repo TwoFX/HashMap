@@ -62,7 +62,7 @@ theorem size_empty {c} : (empty c : Raw₀ α β).1.size = 0 := rfl
 theorem toListModel_buckets_empty {c} : toListModel (empty c : Raw₀ α β).1.buckets = [] :=
   toListModel_mkArray_nil
 
-theorem WFImp.empty [BEq α] [Hashable α] {c} : (empty c : Raw₀ α β).1.WFImp where
+theorem wfImp_empty [BEq α] [Hashable α] {c} : (empty c : Raw₀ α β).1.WFImp where
   buckets_hash_self := by simp [Raw.empty, Raw₀.empty]
   buckets_size := Raw.WF.empty.size_buckets_pos
   size_eq := by simp
@@ -183,6 +183,25 @@ theorem WFImp.expandIfNecessary [BEq α] [Hashable α] [EquivBEq α] [LawfulHash
       simpa using this.symm.length_eq
     · simpa using h.distinct.perm this
 
+/-! # Access operations -/
+
+theorem containsₘ_eq_containsKey [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} :
+    m.containsₘ a = (toListModel m.1.buckets).containsKey a := by
+  obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets hm.buckets_size a
+  refine Eq.trans ?_ (List.containsKey_of_perm (hm.distinct.perm hl.symm) hl.symm)
+  rw [containsₘ, AssocList.contains_eq, List.containsKey_append_of_not_contains_right]
+  exact hlk hm.buckets_hash_self _ rfl
+
+theorem findEntry?ₘ_eq_findEntry? [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable α]
+    (m : Raw₀ α β) (h : m.1.WFImp) (a : α) :
+    findEntry?ₘ m a = (toListModel m.1.buckets).findEntry? a := by
+  obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets m.2 a
+  refine Eq.trans ?_ (List.findEntry?_of_perm (h.distinct.perm hl.symm) hl.symm)
+  rw [findEntry?ₘ, AssocList.findEntry?_eq, findEntry?_append_of_containsKey_eq_false]
+  exact hlk h.buckets_hash_self _ rfl
+
+/-! # `replaceₘ` -/
+
 theorem toListModel_replaceₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
     (h : m.1.WFImp) (a : α) (b : β a) : toListModel (m.replaceₘ a b).1.buckets ~ (toListModel m.1.2).replaceEntry a b := by
   rw [replaceₘ]
@@ -206,6 +225,8 @@ theorem wfImp_replaceₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α
   size_eq := h.size_eq.trans (Eq.trans length_replaceEntry.symm (toListModel_replaceₘ _ h _ _).length_eq.symm)
   distinct := h.distinct.replaceEntry.perm (toListModel_replaceₘ _ h _ _)
 
+/-! # `insertₘ` -/
+
 theorem toListModel_consₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
     (m : Raw₀ α β) (a : α) (b : β a) : toListModel (m.consₘ a b).1.buckets ~ ⟨a, b⟩ :: (toListModel m.1.2) := by
   rw [consₘ]
@@ -223,13 +244,6 @@ theorem isHashSelf_consₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable 
   rcases hp with (rfl|hp)
   · exact Or.inr rfl
   · exact Or.inl (containsKey_of_mem hp)
-
-theorem containsₘ_eq_containsKey [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} :
-    m.containsₘ a = (toListModel m.1.buckets).containsKey a := by
-  obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets hm.buckets_size a
-  refine Eq.trans ?_ (List.containsKey_of_perm (hm.distinct.perm hl.symm) hl.symm)
-  rw [containsₘ, AssocList.contains_eq, List.containsKey_append_of_not_contains_right]
-  exact hlk hm.buckets_hash_self _ rfl
 
 theorem wfImp_consₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
     (h : m.1.WFImp) (a : α) (b : β a) (hc : m.containsₘ a = false) : (m.consₘ a b).1.WFImp where
@@ -264,20 +278,12 @@ theorem wfImp_insertₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
   · apply Raw₀.WFImp.expandIfNecessary
     apply wfImp_consₘ _ h _ _ (by simp_all)
 
-theorem findEntry?ₘ_eq_findEntry? [BEq α] [EquivBEq α] [Hashable α] [LawfulHashable α]
-    (m : Raw₀ α β) (h : m.1.WFImp) (a : α) :
-    findEntry?ₘ m a = (toListModel m.1.buckets).findEntry? a := by
-  obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets m.2 a
-  refine Eq.trans ?_ (List.findEntry?_of_perm (h.distinct.perm hl.symm) hl.symm)
-  rw [findEntry?ₘ, AssocList.findEntry?_eq, findEntry?_append_of_containsKey_eq_false]
-  exact hlk h.buckets_hash_self _ rfl
-
 end Raw₀
 
 theorem Raw.WF.out [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw α β} (h : m.WF) : m.WFImp := by
   induction h
   · assumption
-  · exact Raw₀.WFImp.empty
+  · exact Raw₀.wfImp_empty
   · rw [Raw₀.insert_eq_insertₘ]
     exact Raw₀.wfImp_insertₘ _ (by simpa) _ _
 
