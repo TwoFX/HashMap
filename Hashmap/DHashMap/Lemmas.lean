@@ -9,7 +9,7 @@ set_option autoImplicit false
 
 universe u v
 
-variable {α : Type v} {β : α → Type v}
+variable {α : Type u} {β : α → Type v}
 
 namespace MyLean.DHashMap
 
