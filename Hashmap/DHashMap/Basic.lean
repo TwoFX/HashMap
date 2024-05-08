@@ -5,7 +5,7 @@ Authors: Leonardo de Moura, Mario Carneiro, Markus Himmel
 -/
 import Hashmap.AssocList.Basic
 import Hashmap.LawfulHashable
-import Std.Data.Array.Lemmas
+import Batteries.Data.Array.Lemmas
 import Hashmap.DHashMap.Index
 
 set_option autoImplicit false
@@ -45,11 +45,11 @@ def empty (capacity := 8) : Raw₀ α β :=
 @[inline] def reinsertAux [Hashable α]
     (data : { d : Array (AssocList α β) // 0 < d.size }) (a : α) (b : β a) : { d : Array (AssocList α β) // 0 < d.size } :=
   let ⟨data, hd⟩ := data
-  let ⟨i, h⟩ := mkIdx (hash a) hd
-  ⟨data.uset i (data[i].cons a b) h, by simpa⟩
+  let ⟨i, h⟩ := mkIdx data.size hd (hash a)
+  ⟨data.uset i (data[i].cons a b) h, by simpa [-List.length_pos]⟩
 
 /-- Copies all the entries from `buckets` into a new hash map with a larger capacity. -/
-def expand [Hashable α] (data : { d : Array (AssocList α β) // 0 < d.size }) : { d : Array (AssocList α β) // 0 < d.size } :=
+@[inline] def expand [Hashable α] (data : { d : Array (AssocList α β) // 0 < d.size }) : { d : Array (AssocList α β) // 0 < d.size } :=
   let ⟨data, hd⟩ := data
   let nbuckets := data.size * 2
   let ⟨newBuckets, hn⟩ := go 0 data ⟨mkArray nbuckets AssocList.nil, by simpa [nbuckets] using Nat.mul_pos hd Nat.two_pos⟩
@@ -75,29 +75,38 @@ where
   if numBucketsForCapacity size ≤ buckets.size then
     ⟨⟨size, buckets⟩, hm⟩
   else
-    let ⟨buckets', h'⟩ := expand ⟨buckets, by simpa⟩
+    let ⟨buckets', h'⟩ := expand ⟨buckets, by simpa [-List.length_pos]⟩
     ⟨⟨size, buckets'⟩, h'⟩
 
 @[inline] def insert [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β × Bool :=
   let ⟨⟨size, buckets⟩, hm⟩ := m
-  let ⟨i, h⟩ := mkIdx (hash a) hm
+  let ⟨i, h⟩ := mkIdx _ hm (hash a)
   let bkt := buckets[i]
   if bkt.contains a then
-    (⟨⟨size, buckets.uset i (bkt.replace a b) h⟩, by simpa⟩, true)
+    (⟨⟨size, buckets.uset i (bkt.replace a b) h⟩, by simpa [-List.length_pos]⟩, true)
   else
     let size'    := size + 1
     let buckets' := buckets.uset i (AssocList.cons a b bkt) h
-    (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, false)
+    (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets', -List.length_pos]⟩, false)
 
 @[inline] def findEntry? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
   let ⟨⟨_, buckets⟩, h⟩ := m
-  let ⟨i, h⟩ := mkIdx (hash a) h
+  let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
   buckets[i].findEntry? a
 
 @[inline] def contains [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Bool :=
   let ⟨⟨_, buckets⟩, h⟩ := m
-  let ⟨i, h⟩ := mkIdx (hash a) h
+  let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
   buckets[i].contains a
+
+def erase [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
+  let ⟨⟨size, buckets⟩, hb⟩ := m
+  let ⟨i, h⟩ := mkIdx buckets.size hb (hash a)
+  let bkt := buckets[i]
+  if bkt.contains a then
+    ⟨⟨size - 1, buckets.uset i (bkt.erase a) h⟩, by simpa [-List.length_pos]⟩
+  else
+    ⟨⟨size, buckets⟩, hb⟩
 
 section
 
@@ -105,7 +114,7 @@ variable {β : Type v}
 
 @[inline] def find? [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) : Option β :=
   let ⟨⟨_, buckets⟩, h⟩ := m
-  let ⟨i, h⟩ := mkIdx (hash a) h
+  let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
   buckets[i].find? a
 
 end

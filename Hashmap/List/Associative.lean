@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
 import Hashmap.BEq
-import Std.Data.List.Lemmas
-import Std.Data.List.Perm
+import Batteries.Data.List.Lemmas
+import Batteries.Data.List.Perm
 import Hashmap.LawfulHashable
 import Hashmap.Or
 

@@ -1,6 +1,6 @@
-import Std.Data.HashMap
+import Batteries.Data.HashMap
 
-open Std
+open Batteries
 
 def growInsert : Unit → Nat := fun _ => Id.run do
   let mut m : HashMap Nat Nat := HashMap.empty

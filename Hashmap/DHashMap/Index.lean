@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
 import Hashmap.PowerOfTwo
-import Std.Data.UInt
+import Batteries.Data.UInt
 import Hashmap.LawfulHashable
 
 -- This file needs a lot of clean-up, but I don't really want to get bogged down with this too much at the moment
@@ -38,47 +38,87 @@ theorem Nat.toUSize_one : (1 : Nat).toUSize = 1 := rfl
 theorem USize.toNat_lt' {a : USize} : a.toNat < USize.size :=
   a.1.2
 
--- structure IsGoodSize (sz : Nat) : Prop where
---   pos : 0 < sz
---   lt : sz < USize.size
-
--- theorem isGoodSize_iff {sz : Nat} : IsGoodSize sz ↔ 0 < sz ∧ sz < USize.size ∧ (sz.toUSize &&& (sz.toUSize - 1)) = 0 := by
---   refine ⟨?_, ?_⟩
---   · rintro ⟨h₁, h₂⟩
---     refine ⟨Nat.pos_of_isPowerOfTwo h₁, h₂, ?_⟩
---     rw [isPowerOfTwo_iff] at h₁
---     apply USize.ext
---     rw [USize.toNat_and, Nat.toNat_toUSize h₂, ← Nat.toUSize_one, USize.toNat_sub_le h₁.1, USize.zero_toNat, Nat.toNat_toUSize]
---     · exact h₁.2
---     · exact Nat.lt_of_le_of_lt (Nat.sub_le _ _) h₂
---   · rintro ⟨h₁, h₂, h₃⟩
---     refine ⟨?_, h₂⟩
---     rw [isPowerOfTwo_iff]
---     refine ⟨h₁, ?_⟩
---     have := congrArg USize.toNat h₃
---     rw [USize.toNat_and, Nat.toNat_toUSize h₂, ← Nat.toUSize_one, USize.toNat_sub_le h₁, USize.zero_toNat, Nat.toNat_toUSize] at this
---     · exact this
---     · exact Nat.lt_of_le_of_lt (Nat.sub_le _ _) h₂
-
--- @[inline] def checkSize (sz : Nat) : Bool :=
---   decide (0 < sz ∧ sz < USize.size)
-
--- theorem checkSize_eq_true {sz : Nat} : checkSize sz = true ↔ IsGoodSize sz := by
---   simp [checkSize]; exact ⟨fun ⟨h₁, h₂⟩ => ⟨h₁, h₂⟩, fun ⟨h₁, h₂⟩ => ⟨h₁, h₂⟩⟩
-
--- Double the size if it is not already huge
--- def nextSize (sz : { sz : Nat // IsGoodSize sz }) : { sz : Nat // IsGoodSize sz } :=
---   let ⟨n, ⟨h₁, h₂⟩⟩ := sz
---   if h : n * 2 < USize.size then
---     ⟨n * 2, ⟨Nat.mul_pos h₁ Nat.two_pos, h⟩⟩
---   else
---     ⟨n, ⟨h₁, h₂⟩⟩
-
 -- TODO: benchmark if we need a C implementation for this. Currently this still needs to do a scalar check for sz which we could
 -- maybe get rid of, if we changed to size condition in IsGoodSize to assert that sz is definitely a scalar.
--- Note that this indexing scheme always produces a valid index, but it has a chance of returning every index if sz is a power of two.
-@[irreducible]
-def mkIdx {sz : Nat} (hash : UInt64) (h : 0 < sz) : { u : USize // u.toNat < sz } :=
+
+-- Note that this indexing scheme always produces a valid index, but it only has a chance of returning every index if sz is a power of two.
+/--
+`sz` is an explicit parameter because having it inferred from `h` can lead to suboptimal IR.
+Consider this implementation of `erase`:
+
+```
+def erase [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
+  let ⟨⟨size, buckets⟩, hb⟩ := m
+  let ⟨i, h⟩ := mkIdx buckets.size hb (hash a)
+  let bkt := buckets[i]
+  if bkt.contains a then
+    ⟨⟨size - 1, buckets.uset i (bkt.erase a) h⟩, by simpa [-List.length_pos]⟩
+  else
+    ⟨⟨size, buckets⟩, hb⟩
+```
+
+If we do not explicitly provide `buckets.size` to `mkIdx`, then we actually infer
+`⟨size, buckets⟩.2.size` for the size argument, so the code generator thinks that we need
+the pair `⟨size, buckets⟩` regardless of which branch we take (because it appears as an
+argument to `mkIdx`) and it generates this IR:
+
+```
+[reset_reuse]
+def MyLean.DHashMap.Raw₀.erase._rarg (x_1 : obj) (x_2 : obj) (x_3 : obj) (x_4 : obj) : obj :=
+  case x_3 : obj of
+  MyLean.DHashMap.Raw.mk →
+    let x_5 : obj := proj[0] x_3;
+    let x_6 : obj := proj[1] x_3;
+    let x_18 : obj := reset[2] x_3;
+    let x_7 : obj := reuse x_18 in ctor_0[MyLean.DHashMap.Raw.mk] x_5 x_6;
+    let x_8 : obj := Array.size ◾ x_6;
+    let x_9 : u64 := app x_2 x_4;
+    let x_10 : usize := mkIdx x_8 ◾ x_9;
+    let x_11 : obj := Array.uget ◾ x_6 x_10 ◾;
+    let x_12 : u8 := MyLean.AssocList.contains._rarg x_1 x_4 x_11;
+    case x_12 : obj of
+    Bool.false →
+      ret x_7
+    Bool.true →
+      let x_13 : obj := 1;
+      let x_14 : obj := Nat.sub x_5 x_13;
+      let x_15 : obj := MyLean.AssocList.erase._rarg x_1 x_4 x_11;
+      let x_16 : obj := Array.uset ◾ x_6 x_10 x_15 ◾;
+      let x_17 : obj := ctor_0[MyLean.DHashMap.Raw.mk] x_14 x_16;
+      ret x_17
+```
+
+This is suboptimal, because it misses the opportunity to reuse the memory cell of the `Raw`
+in case we actually need to erase something. If we provide the argument `buckets.size`, then we
+get the better IR
+
+```
+[reset_reuse]
+def MyLean.DHashMap.Raw₀.erase._rarg (x_1 : obj) (x_2 : obj) (x_3 : obj) (x_4 : obj) : obj :=
+  case x_3 : obj of
+  MyLean.DHashMap.Raw.mk →
+    let x_5 : obj := proj[0] x_3;
+    let x_6 : obj := proj[1] x_3;
+    let x_18 : obj := reset[2] x_3;
+    let x_7 : obj := Array.size ◾ x_6;
+    let x_8 : u64 := app x_2 x_4;
+    let x_9 : usize := mkIdx x_7 ◾ x_8;
+    let x_10 : obj := Array.uget ◾ x_6 x_9 ◾;
+    let x_11 : u8 := MyLean.AssocList.contains._rarg x_1 x_4 x_10;
+    case x_11 : obj of
+    Bool.false →
+      let x_12 : obj := reuse x_18 in ctor_0[MyLean.DHashMap.Raw.mk] x_5 x_6;
+      ret x_12
+    Bool.true →
+      let x_13 : obj := 1;
+      let x_14 : obj := Nat.sub x_5 x_13;
+      let x_15 : obj := MyLean.AssocList.erase._rarg x_1 x_4 x_10;
+      let x_16 : obj := Array.uset ◾ x_6 x_9 x_15 ◾;
+      let x_17 : obj := reuse x_18 in ctor_0[MyLean.DHashMap.Raw.mk] x_14 x_16;
+      ret x_17
+```
+-/
+@[irreducible] def mkIdx (sz : Nat) (h : 0 < sz) (hash : UInt64) : { u : USize // u.toNat < sz } :=
   ⟨hash.toUSize &&& (sz.toUSize - 1), by
     by_cases h' : sz < USize.size
     · rw [USize.toNat_and, ← Nat.toUSize_one, USize.toNat_sub_le, Nat.toNat_toUSize]
@@ -88,25 +128,12 @@ def mkIdx {sz : Nat} (hash : UInt64) (h : 0 < sz) : { u : USize // u.toNat < sz 
       · exact h
     · exact Nat.lt_of_lt_of_le USize.toNat_lt' (Nat.le_of_not_lt h')⟩
 
--- @[simp]
--- theorem mkIdx_val {sz : Nat} {hash : UInt64} {h : IsGoodSize sz} : (mkIdx hash h).val = hash.toUSize % sz := by
---   rw [mkIdx]
---   simp
---   apply USize.ext
---   rw [USize.toNat_and, ← Nat.toUSize_one, USize.toNat_sub_le, Nat.toNat_toUSize]
---   · obtain ⟨k, rfl⟩ := h.isPowerOfTwo
---     simp
---     erw [USize.modn_toNat]
---   · have := h.lt
---     omega
---   · exact Nat.pos_of_isPowerOfTwo h.isPowerOfTwo
-
 namespace List
 
 variable {α : Type u} {β : α → Type v}
 
 structure HashesTo [BEq α] [Hashable α] (l : List (Σ a, β a)) (i : Nat) (size : Nat) : Prop where
-  hash_self : (h : 0 < size) → ∀ p, p ∈ l → (mkIdx (hash p.1) h).1.toNat = i
+  hash_self : (h : 0 < size) → ∀ p, p ∈ l → (mkIdx size h (hash p.1)).1.toNat = i
 
 @[simp]
 theorem hashesTo_nil [BEq α] [Hashable α] {i : Nat} {size : Nat} :
@@ -114,7 +141,7 @@ theorem hashesTo_nil [BEq α] [Hashable α] {i : Nat} {size : Nat} :
   hash_self := by simp
 
 theorem hashesTo_cons [BEq α] [Hashable α] [LawfulHashable α] {i : Nat} {size : Nat} {l : List (Σ a, β a)} {k : α}
-    {v : β k} (h : (h' : 0 < size) → (mkIdx (hash k) h').1.toNat = i) :
+    {v : β k} (h : (h' : 0 < size) → (mkIdx size h' (hash k)).1.toNat = i) :
     l.HashesTo i size → (⟨k, v⟩ :: l).HashesTo i size := by
   refine fun ⟨ih⟩ => ⟨fun h' k' hk => ?_⟩
   simp only [mem_cons] at hk

@@ -24,12 +24,12 @@ namespace MyLean.DHashMap
 /-! # Setting up the infrastructure -/
 
 def bucket [Hashable α] (self : Array (AssocList α β)) (h : 0 < self.size) (k : α) : AssocList α β :=
-  let ⟨i, h⟩ := mkIdx (hash k) h
+  let ⟨i, h⟩ := mkIdx self.size h (hash k)
   self[i]
 
 def updateBucket [Hashable α] (self : Array (AssocList α β)) (h : 0 < self.size) (k : α)
     (f : AssocList α β → AssocList α β) : Array (AssocList α β) :=
-  let ⟨i, h⟩ := mkIdx (hash k) h
+  let ⟨i, h⟩ := mkIdx self.size h (hash k)
   self.uset i (f self[i]) h
 
 @[simp]
@@ -44,7 +44,7 @@ theorem exists_bucket_of_uset [BEq α] [Hashable α]
     ∃ l, toListModel self ~ self[i.toNat].toList ++ l ∧
       toListModel (self.uset i d hi) ~ d.toList ++ l ∧
       (∀ [LawfulHashable α], IsHashSelf self →
-        ∀ k : α, (mkIdx (hash k) (show 0 < self.size by omega)).1.toNat = i.toNat → l.containsKey k = false) := by
+        ∀ k : α, (mkIdx self.size (by omega) (hash k)).1.toNat = i.toNat → l.containsKey k = false) := by
   have h₀ : 0 < self.size := by omega
   obtain ⟨l₁, l₂, h₁, h₂, h₃⟩ := Array.exists_of_update self i d hi
   refine ⟨l₁.bind AssocList.toList ++ l₂.bind AssocList.toList, ?_, ?_, ?_⟩
@@ -59,13 +59,13 @@ theorem exists_bucket_of_uset [BEq α] [Hashable α]
     obtain ⟨⟨k', v'⟩, ⟨(⟨a, ha₁, ha₂⟩|⟨a, ha₁, ha₂⟩), hk⟩⟩ := hk
     · obtain ⟨n, hn⟩ := List.get_of_mem ha₁
       rw [List.get_eq_get_append_right (self[i] :: l₂)] at hn
-      suffices (mkIdx (hash k') h₀).1.toNat = n from
+      suffices (mkIdx self.size h₀ (hash k')).1.toNat = n from
         Nat.ne_of_lt (Nat.lt_of_eq_of_lt (hash_eq hk ▸ this) (h₂ ▸ n.2))
       rw [List.get_congr h₁.symm, ← Array.getElem_eq_data_get] at hn
       exact (h.hashes_to n (by omega)).hash_self h₀ _ (hn.symm ▸ ha₂)
     · obtain ⟨n, hn⟩ := List.get_of_mem ha₁
       rw [List.get_eq_get_cons self[i], List.get_eq_get_append_left l₁] at hn
-      suffices (mkIdx (hash k') h₀).1.toNat = n + 1 + l₁.length by
+      suffices (mkIdx self.size h₀ (hash k')).1.toNat = n + 1 + l₁.length by
         refine Nat.ne_of_lt' ?_
         simp only [← hash_eq hk, this, h₂, Nat.lt_add_left_iff_pos, Nat.succ_pos]
       rw [List.get_congr h₁.symm, ← Array.getElem_eq_data_get] at hn
@@ -79,7 +79,7 @@ theorem exists_bucket_of_update [BEq α] [Hashable α] (m : Array (AssocList α 
       toListModel m ~ (bucket m h k).toList ++ l ∧
       toListModel (updateBucket m h k f) ~ (f (bucket m h k)).toList ++ l ∧
       (∀ [LawfulHashable α], IsHashSelf m → ∀ k', hash k = hash k' → l.containsKey k' = false) := by
-  let idx := mkIdx (hash k) h
+  let idx := mkIdx m.size h (hash k)
   obtain ⟨l, h₁, h₂, h₃⟩ := exists_bucket_of_uset m idx.1 idx.2 (f m[idx.1])
   exact ⟨l, h₁, h₂, fun h k' hk' => h₃ h _ (hk' ▸ rfl)⟩
 
@@ -87,7 +87,7 @@ theorem exists_bucket' [BEq α] [Hashable α]
     (self : Array (AssocList α β)) (i : USize) (hi : i.toNat < self.size) :
       ∃ l, self.data.bind AssocList.toList ~ self[i.toNat].toList ++ l ∧
         (∀ [LawfulHashable α], IsHashSelf self → ∀ k,
-          (mkIdx (hash k) (show 0 < self.size by omega)).1.toNat = i.toNat → l.containsKey k = false) := by
+          (mkIdx self.size (by omega) (hash k)).1.toNat = i.toNat → l.containsKey k = false) := by
   obtain ⟨l, h₁, -, h₂⟩ := exists_bucket_of_uset self i hi .nil
   exact ⟨l, h₁, h₂⟩
 
