@@ -8,7 +8,7 @@ import Hashmap.DHashMap.ForUpstream
 
 /-!
 In this file we define functions for manipulating a hash map based on operations defined in terms of their buckets.
-Then we give "model implementations" of the hash map operations in terms of the basic building blocks and show that
+Then we give "model implementations" of the hash map operations in terms of these basic building blocks and show that
 the actual operations are equal to the model implementations. This means that later we will be able to prove properties
 of the operations by proving general facts about the basic building blocks.
 -/
@@ -117,6 +117,12 @@ def containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Bool :=
 def insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   if m.containsₘ a then m.replaceₘ a b else Raw₀.expandIfNecessary (m.consₘ a b)
 
+def eraseₘaux [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
+  ⟨⟨m.1.size - 1, updateBucket m.1.buckets m.2 a (fun l => l.erase a)⟩, by simpa using m.2⟩
+
+def eraseₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
+  if m.containsₘ a then m.eraseₘaux a else m
+
 section
 
 variable {β : Type v}
@@ -138,9 +144,13 @@ theorem contains_eq_containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : �
     m.contains a = m.containsₘ a := rfl
 
 theorem insert_eq_insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) :
-    (insert m a b).1 = insertₘ m a b := by
+    (m.insert a b).1 = m.insertₘ a b := by
   rw [insert, insertₘ, containsₘ, bucket]
-  apply Subtype.eq
+  dsimp only [Array.ugetElem_eq_getElem, Array.uset]
+  split <;> rfl
+
+theorem erase_eq_eraseₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : m.erase a = m.eraseₘ a := by
+  rw [erase, eraseₘ, containsₘ, bucket]
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
   split <;> rfl
 

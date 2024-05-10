@@ -292,6 +292,55 @@ theorem wfImp_insertₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
   · apply Raw₀.WFImp.expandIfNecessary
     apply wfImp_consₘ _ h _ _ (by simp_all)
 
+/-! # `eraseₘ` -/
+
+theorem toListModel_eraseₘaux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β) (a : α)
+    (h : m.1.WFImp) : toListModel (m.eraseₘaux a).1.buckets ~ (toListModel m.1.buckets).eraseKey a := by
+  rw [eraseₘaux]
+  dsimp only
+  obtain ⟨l, h₁, h₂, hl⟩ := exists_bucket_of_update m.1.buckets m.2 a (fun l => l.erase a)
+  refine h₂.trans (Perm.trans ?_ (eraseKey_of_perm h.distinct h₁).symm)
+  rw [AssocList.toList_erase, erase_append_of_containsKey_right_eq_false]
+  exact hl h.buckets_hash_self _ rfl
+
+theorem isHashSelf_eraseₘaux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β) (a : α)
+    (h : m.1.WFImp) : IsHashSelf (m.eraseₘaux a).1.buckets := by
+  rw [eraseₘaux]
+  dsimp only
+  apply h.buckets_hash_self.updateBucket (fun l p hp => ?_)
+  rw [AssocList.toList_erase] at hp
+  exact Or.inl (containsKey_of_mem ((sublist_eraseKey.subset hp)))
+
+theorem wfImp_eraseₘaux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β) (a : α)
+    (h : m.1.WFImp) (h' : m.containsₘ a = true) : (m.eraseₘaux a).1.WFImp where
+  buckets_hash_self := isHashSelf_eraseₘaux m a h
+  buckets_size := by simpa [eraseₘaux] using h.buckets_size
+  size_eq := by
+    rw [(toListModel_eraseₘaux m a h).length_eq, eraseₘaux, length_eraseKey,
+      ← containsₘ_eq_containsKey h, h', cond_true, h.size_eq]
+  distinct := h.distinct.eraseKey.perm (toListModel_eraseₘaux m a h)
+
+theorem toListModel_perm_eraseKey_of_containsₘ_eq_false [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
+    (m : Raw₀ α β) (a : α) (h : m.1.WFImp) (h' : m.containsₘ a = false) :
+    toListModel m.1.buckets ~ (toListModel m.1.buckets).eraseKey a := by
+  rw [eraseKey_of_containsKey_eq_false]
+  rw [← containsₘ_eq_containsKey h, h']
+
+theorem toListModel_eraseₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β) (a : α)
+    (h : m.1.WFImp) : toListModel (m.eraseₘ a).1.buckets ~ (toListModel m.1.buckets).eraseKey a := by
+  rw [eraseₘ]
+  split
+  · exact toListModel_eraseₘaux m a h
+  · next h' =>
+    exact toListModel_perm_eraseKey_of_containsₘ_eq_false _ _ h (eq_false_of_ne_true h')
+
+theorem wfImp_eraseₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β) (a : α)
+    (h : m.1.WFImp) : (m.eraseₘ a).1.WFImp := by
+  rw [eraseₘ]
+  split
+  · next h' => exact wfImp_eraseₘaux m a h h'
+  · exact h
+
 end Raw₀
 
 namespace Raw
@@ -302,6 +351,8 @@ theorem WF.out [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw
   · exact Raw₀.wfImp_empty
   · rw [Raw₀.insert_eq_insertₘ]
     exact Raw₀.wfImp_insertₘ _ (by simpa) _ _
+  · rw [Raw₀.erase_eq_eraseₘ]
+    exact Raw₀.wfImp_eraseₘ _ _ (by simpa)
 
 theorem empty_eq [BEq α] [Hashable α] {c : Nat} : (empty c : Raw α β) = (Raw₀.empty c).1 := rfl
 

@@ -443,6 +443,41 @@ theorem eraseKey_cons_of_false [BEq α] {l : List (Σ a, β a)} {k a : α} {v : 
     (⟨k, v⟩ :: l).eraseKey a = ⟨k, v⟩ :: l.eraseKey a := by
   simp [eraseKey_cons, h]
 
+theorem eraseKey_of_containsKey_eq_false [BEq α] {l : List (Σ a, β a)} {k : α} (h : l.containsKey k = false) :
+    l.eraseKey k = l := by
+  induction l using assoc_induction
+  · simp
+  · next k' v' t ih =>
+    simp only [containsKey_cons, Bool.or_eq_false_iff] at h
+    rw [eraseKey_cons_of_false h.1, ih h.2]
+
+theorem sublist_eraseKey [BEq α] {l : List (Σ a, β a)} {k : α} : (l.eraseKey k).Sublist l := by
+  induction l using assoc_induction
+  · simp
+  · next k' v' t ih =>
+    rw [eraseKey_cons]
+    cases k' == k
+    · simpa
+    · simp
+
+theorem length_eraseKey [BEq α] {l : List (Σ a, β a)} {k : α} :
+    (l.eraseKey k).length = bif l.containsKey k then l.length - 1 else l.length := by
+  induction l using assoc_induction
+  · simp
+  · next k' v' t ih =>
+    skip
+    rw [eraseKey_cons, containsKey_cons]
+    cases k' == k
+    · rw [cond_false, Bool.false_or, length_cons, ih]
+      cases h : containsKey k t
+      · simp
+      · simp only [cond_true, Nat.succ_eq_add_one, length_cons, Nat.add_sub_cancel]
+        rw [Nat.sub_add_cancel]
+        cases t
+        · simp at h
+        · simp
+    · simp
+
 -- TODO: eraseKey+replaceEntry
 
 def keys : List (Σ a, β a) → List α
@@ -648,7 +683,7 @@ theorem keys_eraseKey [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k :
     · simp [ih]
     · simp [ih]
 
-theorem DistinctKeys_eraseKey [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k : α} : l.DistinctKeys → (l.eraseKey k).DistinctKeys := by
+theorem DistinctKeys.eraseKey [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k : α} : l.DistinctKeys → (l.eraseKey k).DistinctKeys := by
   apply distinctKeys_of_sublist_keys (by simpa using List.erase_sublist _ _)
 
 theorem findEntry?_eraseKey_self [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k : α} (h : l.DistinctKeys) :
@@ -823,6 +858,11 @@ theorem insertEntry_of_perm [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k
   apply findEntry?_ext hl.insertEntry (hl.perm h.symm).insertEntry
   simp [findEntry?_insertEntry, findEntry?_of_perm hl h]
 
+theorem eraseKey_of_perm [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k : α}
+    (hl : l.DistinctKeys) (h : l ~ l') : l.eraseKey k ~ l'.eraseKey k := by
+  apply findEntry?_ext hl.eraseKey (hl.perm h.symm).eraseKey
+  simp [findEntry?_eraseKey hl, findEntry?_eraseKey (hl.perm h.symm), findEntry?_of_perm hl h]
+
 @[simp]
 theorem findEntry?_append [BEq α] {l l' : List (Σ a, β a)} {k : α} :
     (l ++ l').findEntry? k = (l.findEntry? k).or (l'.findEntry? k) := by
@@ -893,6 +933,15 @@ theorem insert_append_of_not_contains_right [BEq α] {l l' : List (Σ a, β a)}
   · simp [insertEntry, containsKey_append, h, h']
   · simp [insertEntry, containsKey_append, h, h', replaceEntry_append_of_containsKey_left h]
 
+theorem erase_append_of_containsKey_right_eq_false [BEq α] {l l' : List (Σ a, β a)} {k : α}
+    (h : l'.containsKey k = false) : (l ++ l').eraseKey k = l.eraseKey k ++ l' := by
+  induction l using assoc_induction
+  · simp [eraseKey_of_containsKey_eq_false h]
+  · next k' v' t ih =>
+    rw [cons_append, eraseKey_cons, eraseKey_cons]
+    cases k' == k
+    · rw [cond_false, cond_false, ih, cons_append]
+    · rw [cond_true, cond_true]
 
 -- TODO: results about combining modification operations
 

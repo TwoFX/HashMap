@@ -80,7 +80,7 @@ where
 
 @[inline] def insert [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β × Bool :=
   let ⟨⟨size, buckets⟩, hm⟩ := m
-  let ⟨i, h⟩ := mkIdx _ hm (hash a)
+  let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
   let bkt := buckets[i]
   if bkt.contains a then
     (⟨⟨size, buckets.uset i (bkt.replace a b) h⟩, by simpa [-List.length_pos]⟩, true)
@@ -148,6 +148,11 @@ instance : EmptyCollection (Raw α β) where
     Raw₀.contains ⟨m, h⟩ a
   else false -- will never happen for well-formed inputs
 
+@[inline] def erase [BEq α] [Hashable α] (m : Raw α β) (a : α) : Raw α β :=
+  if h : 0 < m.buckets.size then
+    Raw₀.erase ⟨m, h⟩ a
+  else m -- will never happen for well-formed inputs
+
 section
 
 variable {β : Type v}
@@ -180,17 +185,22 @@ inductive WF [BEq α] [Hashable α] : Raw α β → Prop where
   | wf {m} : m.WFImp → WF m
   | empty {c} : WF (empty c)
   | insert₀ {m h a b} : WF m → WF (Raw₀.insert ⟨m, h⟩ a b).1.1
+  | erase₀ {m h a} : WF m → WF (Raw₀.erase ⟨m, h⟩ a).1
 
 theorem WF.size_buckets_pos [BEq α] [Hashable α] (m : Raw α β) : WF m → 0 < m.buckets.size
   | wf h => h.buckets_size
   | empty => (Raw₀.empty _).2
   | insert₀ _ => (Raw₀.insert ⟨_, _⟩ _ _).1.2
+  | erase₀ _ => (Raw₀.erase ⟨_, _⟩ _).2
 
 theorem WF.insert' [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β a} (h : m.WF) : (m.insert' a b).1.WF := by
   simpa [Raw.insert', h.size_buckets_pos] using .insert₀ h
 
 theorem WF.insert [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β a} (h : m.WF) : (m.insert a b).WF :=
   WF.insert' h
+
+theorem WF.erase [BEq α] [Hashable α] {m : Raw α β} {a : α} (h : m.WF) : (m.erase a).WF := by
+  simpa [Raw.erase, h.size_buckets_pos] using .erase₀ h
 
 end WF
 
@@ -221,6 +231,9 @@ instance [BEq α] [Hashable α] : EmptyCollection (DHashMap α β) where
 
 @[inline] def contains [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Bool :=
   Raw₀.contains ⟨m.1, m.2.size_buckets_pos⟩ a
+
+@[inline] def erase [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : DHashMap α β :=
+  ⟨Raw₀.erase ⟨m.1, m.2.size_buckets_pos⟩ a, .erase₀ m.2⟩
 
 section
 
