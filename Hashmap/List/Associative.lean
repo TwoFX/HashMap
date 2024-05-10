@@ -465,7 +465,6 @@ theorem length_eraseKey [BEq α] {l : List (Σ a, β a)} {k : α} :
   induction l using assoc_induction
   · simp
   · next k' v' t ih =>
-    skip
     rw [eraseKey_cons, containsKey_cons]
     cases k' == k
     · rw [cond_false, Bool.false_or, length_cons, ih]
@@ -490,7 +489,7 @@ def keys : List (Σ a, β a) → List α
 theorem keys_eq_map (l : List (Σ a, β a)) : l.keys = l.map (·.1) := by
   induction l using assoc_induction <;> simp_all
 
-theorem containsKey_eq_keys_containsKey [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {a : α} :
+theorem containsKey_eq_keys_contains [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {a : α} :
     l.containsKey a = l.keys.contains a := by
   induction l using assoc_induction
   · rfl
@@ -510,7 +509,7 @@ structure DistinctKeys [BEq α] (l : List (Σ a, β a)) : Prop where
   distinct : l.keys.Pairwise fun a b => (a == b) = false
 
 @[simp]
-theorem DistinctKeys.nil [BEq α] : (nil : List (Σ a, β a)).DistinctKeys :=
+theorem DistinctKeys.nil [BEq α] : ([] : List (Σ a, β a)).DistinctKeys :=
   ⟨by simp⟩
 
 open List
@@ -541,7 +540,7 @@ theorem List.contains_iff_exists_mem_beq [BEq α] (l : List α) (a : α) : l.con
 
 theorem containsKey_iff_exists [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {a : α} :
     l.containsKey a ↔ ∃ a' ∈ l.keys, a == a' := by
-  rw [containsKey_eq_keys_containsKey, List.contains_iff_exists_mem_beq]
+  rw [containsKey_eq_keys_contains, List.contains_iff_exists_mem_beq]
 
 theorem containsKey_eq_false_iff_forall_mem_keys [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {a : α} :
     (l.containsKey a) = false ↔ ∀ a' ∈ l.keys, (a == a') = false := by
@@ -568,7 +567,8 @@ theorem DistinctKeys.cons [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} 
     l.DistinctKeys → (⟨k, v⟩ :: l).DistinctKeys :=
   fun h' => distinctKeys_cons_iff.mpr ⟨h', h⟩
 
-theorem DistinctKeys.replaceEntry [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k : α} {v : β k} (h : l.DistinctKeys) : (l.replaceEntry k v).DistinctKeys := by
+theorem DistinctKeys.replaceEntry [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k : α} {v : β k} (h : l.DistinctKeys) :
+    (l.replaceEntry k v).DistinctKeys := by
   induction l using assoc_induction
   · simp
   · next k' v' l ih =>

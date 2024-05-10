@@ -219,10 +219,17 @@ namespace DHashMap
 instance [BEq α] [Hashable α] : EmptyCollection (DHashMap α β) where
   emptyCollection := empty
 
+/--
+Inserts the mapping into the map, replacing an existing mapping if there is one.
+Returns `true` if there was a previous mapping that was replaced.
+-/
 @[inline] def insert' [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
   let m' := Raw₀.insert ⟨m.1, m.2.size_buckets_pos⟩ a b
   ⟨⟨m'.1.1, .insert₀ m.2⟩, m'.2⟩
 
+/--
+Inserts the mapping into the map, replacing an existing mapping if there is one.
+-/
 @[inline] def insert [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
   (m.insert' a b).1
 
@@ -232,6 +239,9 @@ instance [BEq α] [Hashable α] : EmptyCollection (DHashMap α β) where
 @[inline] def contains [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Bool :=
   Raw₀.contains ⟨m.1, m.2.size_buckets_pos⟩ a
 
+/--
+Removes the mapping with the given key if it exists.
+-/
 @[inline] def erase [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : DHashMap α β :=
   ⟨Raw₀.erase ⟨m.1, m.2.size_buckets_pos⟩ a, .erase₀ m.2⟩
 
