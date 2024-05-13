@@ -38,7 +38,7 @@ abbrev Raw₀ (α : Type u) (β : α → Type v) :=
 
 namespace Raw₀
 
-def empty (capacity := 8) : Raw₀ α β :=
+@[inline] def empty (capacity := 8) : Raw₀ α β :=
   ⟨⟨0, mkArray (numBucketsForCapacity capacity).nextPowerOfTwo AssocList.nil⟩,
     by simpa using Nat.pos_of_isPowerOfTwo (Nat.isPowerOfTwo_nextPowerOfTwo _)⟩
 
@@ -213,6 +213,7 @@ def DHashMap (α : Type u) (β : α → Type v) [BEq α] [Hashable α] := { m : 
 
 namespace DHashMap
 
+/-- Constructs an empty hash map with a number of buckets appropriate for the given size. -/
 @[inline] def empty [BEq α] [Hashable α] (capacity := 8) : DHashMap α β :=
   ⟨Raw.empty capacity, .empty⟩
 

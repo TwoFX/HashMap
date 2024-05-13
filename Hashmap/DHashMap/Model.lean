@@ -15,9 +15,9 @@ of the operations by proving general facts about the basic building blocks.
 
 set_option autoImplicit false
 
-universe u v
+universe u v w
 
-variable {α : Type u} {β : α → Type v}
+variable {α : Type u} {β : α → Type v} {γ : Type w}
 
 namespace MyLean.DHashMap
 
@@ -97,6 +97,30 @@ theorem exists_bucket [BEq α] [Hashable α]
       (∀ [LawfulHashable α], IsHashSelf m → ∀ k', hash k = hash k' → l.containsKey k' = false) := by
   obtain ⟨l, h₁, -, h₂⟩ := exists_bucket_of_update m h k (fun _ => .nil)
   exact ⟨l, h₁, h₂⟩
+
+/--
+This is the general theorem used to show that access operations are correct.
+-/
+theorem apply_bucket [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α}
+    {f : AssocList α β → γ} {g : List (Σ a, β a) → γ} (hfg : ∀ {l}, f l = g l.toList)
+    (hg₁ : ∀ {l l'}, l.DistinctKeys → l ~ l' → g l = g l') (hg₂ : ∀ {l l'}, l'.containsKey a = false → g (l ++ l') = g l) :
+    f (bucket m.1.buckets m.2 a) = g (toListModel m.1.buckets) := by
+  obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets hm.buckets_size a
+  refine Eq.trans ?_ (hg₁ (hm.distinct.perm hl.symm) hl.symm)
+  rw [hfg, hg₂]
+  exact hlk hm.buckets_hash_self _ rfl
+
+/--
+This is the general theorem to show that modification operations are correct.
+-/
+theorem toListModel_updateBucket [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α}
+    {f : AssocList α β → AssocList α β} {g : List (Σ a, β a) → List (Σ a, β a)} (hfg : ∀ {l}, (f l).toList = g l.toList)
+    (hg₁ : ∀ {l l'}, l.DistinctKeys → l ~ l' → g l ~ g l') (hg₂ : ∀ {l l'}, l'.containsKey a = false → g (l ++ l') = g l ++ l') :
+    toListModel (updateBucket m.1.buckets m.2 a f) ~ g (toListModel m.1.2) := by
+  obtain ⟨l, h₁, h₂, h₃⟩ := exists_bucket_of_update m.1.buckets m.2 a f
+  refine h₂.trans (Perm.trans ?_ (hg₁ hm.distinct h₁).symm)
+  rw [hfg, hg₂]
+  exact h₃ hm.buckets_hash_self _ rfl
 
 namespace Raw₀
 

@@ -848,7 +848,7 @@ theorem findEntry?_ext [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} (hl : l
       rw [findEntry?_eq_none hl.containsKey_eq_false,
           findEntry?_eq_none (hl'.perm hl''.symm).containsKey_eq_false]
 
-theorem replaceEntry_of_perm [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} (k : α) (v : β k)
+theorem replaceEntry_of_perm [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k : α} {v : β k}
     (hl : l.DistinctKeys) (h : l ~ l') : l.replaceEntry k v ~ l'.replaceEntry k v := by
   apply findEntry?_ext hl.replaceEntry (hl.perm h.symm).replaceEntry
   simp [findEntry?_replaceEntry, findEntry?_of_perm hl h, containsKey_of_perm hl h]
@@ -926,14 +926,14 @@ theorem replaceEntry_append_of_containsKey_right_eq_false [BEq α] {l l' : List 
     simpa using ⟨h', h⟩
   · rw [replaceEntry_append_of_containsKey_left h']
 
-theorem insert_append_of_not_contains_right [BEq α] {l l' : List (Σ a, β a)}
+theorem insertEntry_append_of_not_contains_right [BEq α] {l l' : List (Σ a, β a)}
     {k : α} {v : β k} (h' : l'.containsKey k = false) :
     (l ++ l').insertEntry k v = l.insertEntry k v ++ l' := by
   cases h : l.containsKey k
   · simp [insertEntry, containsKey_append, h, h']
   · simp [insertEntry, containsKey_append, h, h', replaceEntry_append_of_containsKey_left h]
 
-theorem erase_append_of_containsKey_right_eq_false [BEq α] {l l' : List (Σ a, β a)} {k : α}
+theorem eraseKey_append_of_containsKey_right_eq_false [BEq α] {l l' : List (Σ a, β a)} {k : α}
     (h : l'.containsKey k = false) : (l ++ l').eraseKey k = l.eraseKey k ++ l' := by
   induction l using assoc_induction
   · simp [eraseKey_of_containsKey_eq_false h]
