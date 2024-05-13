@@ -122,6 +122,37 @@ theorem toListModel_updateBucket [BEq α] [Hashable α] [PartialEquivBEq α] [La
   rw [hfg, hg₂]
   exact h₃ hm.buckets_hash_self _ rfl
 
+/-! # IsHashSelf -/
+
+namespace IsHashSelf
+
+@[simp]
+theorem mkArray [BEq α] [Hashable α] {c : Nat} : IsHashSelf (mkArray c (AssocList.nil : AssocList α β)) :=
+  ⟨by simp⟩
+
+theorem uset [BEq α] [Hashable α] {m : Array (AssocList α β)} {i : USize} {h : i.toNat < m.size} {d : AssocList α β}
+    (hd : m[i].toList.HashesTo i.toNat m.size → d.toList.HashesTo i.toNat m.size) (hm : IsHashSelf m) : IsHashSelf (m.uset i d h) := by
+  refine ⟨fun j hj => ?_⟩
+  simp only [Array.uset, Array.getElem_set, Array.size_set]
+  split
+  · next hij => exact hij ▸ (hd (hm.hashes_to _ _))
+  · exact hm.hashes_to j (by simpa using hj)
+
+/--
+This is the general theorem to show that modification operations preserve well-formedness of buckets.
+-/
+theorem updateBucket [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Array (AssocList α β)} {h : 0 < m.size} {a : α} {f : AssocList α β → AssocList α β}
+    (hf : ∀ l p, p ∈ (f l).toList → l.toList.containsKey p.1 ∨ hash p.1 = hash a) (hm : IsHashSelf m) : IsHashSelf (updateBucket m h a f) := by
+  rw [DHashMap.updateBucket]
+  refine IsHashSelf.uset (fun h' => ⟨fun _ p hp => ?_⟩) hm
+  rcases hf _ _ hp with (hf|hf)
+  · rw [containsKey_eq_true_iff_exists_mem] at hf
+    rcases hf with ⟨q, hq₁, hq₂⟩
+    rw [← h'.hash_self h _ hq₁, hash_eq hq₂]
+  · rw [hf]
+
+end IsHashSelf
+
 namespace Raw₀
 
 /-! # Definition of model functions -/

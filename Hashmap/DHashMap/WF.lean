@@ -23,34 +23,6 @@ theorem toListModel_mkArray_nil {c} : toListModel (mkArray c (AssocList.nil : As
   intro d
   induction d <;> simp_all
 
-/-! # IsHashSelf -/
-
-namespace IsHashSelf
-
-@[simp]
-theorem mkArray [BEq α] [Hashable α] {c : Nat} : IsHashSelf (mkArray c (AssocList.nil : AssocList α β)) :=
-  ⟨by simp⟩
-
-theorem uset [BEq α] [Hashable α] {m : Array (AssocList α β)} {i : USize} {h : i.toNat < m.size} {d : AssocList α β}
-    (hd : m[i].toList.HashesTo i.toNat m.size → d.toList.HashesTo i.toNat m.size) (hm : IsHashSelf m) : IsHashSelf (m.uset i d h) := by
-  refine ⟨fun j hj => ?_⟩
-  simp only [Array.uset, Array.getElem_set, Array.size_set]
-  split
-  · next hij => exact hij ▸ (hd (hm.hashes_to _ _))
-  · exact hm.hashes_to j (by simpa using hj)
-
-theorem updateBucket [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Array (AssocList α β)} {h : 0 < m.size} {a : α} {f : AssocList α β → AssocList α β}
-    (hf : ∀ l p, p ∈ (f l).toList → l.toList.containsKey p.1 ∨ hash p.1 = hash a) (hm : IsHashSelf m) : IsHashSelf (updateBucket m h a f) := by
-  rw [DHashMap.updateBucket]
-  refine IsHashSelf.uset (fun h' => ⟨fun _ p hp => ?_⟩) hm
-  rcases hf _ _ hp with (hf|hf)
-  · rw [containsKey_eq_true_iff_exists_mem] at hf
-    rcases hf with ⟨q, hq₁, hq₂⟩
-    rw [← h'.hash_self h _ hq₁, hash_eq hq₂]
-  · rw [hf]
-
-end IsHashSelf
-
 namespace Raw₀
 
 /-! # Raw₀.empty -/
@@ -212,8 +184,6 @@ theorem toListModel_replaceₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHasha
 
 theorem isHashSelf_replaceₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
     (h : m.1.WFImp) (a : α) (b : β a) : IsHashSelf (m.replaceₘ a b).1.buckets := by
-  rw [replaceₘ]
-  dsimp only
   apply h.buckets_hash_self.updateBucket (fun l p hp => ?_)
   exact Or.inl (by simpa using containsKey_of_mem hp)
 
@@ -232,8 +202,6 @@ theorem toListModel_consₘ [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulH
 
 theorem isHashSelf_consₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
     (h : m.1.WFImp) (a : α) (b : β a) : IsHashSelf (m.consₘ a b).1.buckets := by
-  rw [consₘ]
-  dsimp only
   apply h.buckets_hash_self.updateBucket (fun l p hp => ?_)
   simp only [AssocList.toList_cons, mem_cons] at hp
   rcases hp with (rfl|hp)
@@ -281,8 +249,6 @@ theorem toListModel_eraseₘaux [BEq α] [Hashable α] [EquivBEq α] [LawfulHash
 
 theorem isHashSelf_eraseₘaux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β) (a : α)
     (h : m.1.WFImp) : IsHashSelf (m.eraseₘaux a).1.buckets := by
-  rw [eraseₘaux]
-  dsimp only
   apply h.buckets_hash_self.updateBucket (fun l p hp => ?_)
   rw [AssocList.toList_erase] at hp
   exact Or.inl (containsKey_of_mem ((sublist_eraseKey.subset hp)))
