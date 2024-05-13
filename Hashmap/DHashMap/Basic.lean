@@ -234,9 +234,13 @@ Inserts the mapping into the map, replacing an existing mapping if there is one.
 @[inline] def insert [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
   (m.insert' a b).1
 
+/--
+Retrieves the mapping associated with the given key, if it exists.
+-/
 @[inline] def findEntry? [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Option (Σ a, β a) :=
   Raw₀.findEntry? ⟨m.1, m.2.size_buckets_pos⟩ a
 
+/-- Returns true if the hash map contains a mapping with a key equal to the given key. -/
 @[inline] def contains [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Bool :=
   Raw₀.contains ⟨m.1, m.2.size_buckets_pos⟩ a
 

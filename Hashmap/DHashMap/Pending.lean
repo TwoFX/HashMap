@@ -154,6 +154,110 @@ end modification
 
 section query
 
+/--
+Returns the mapping associated with the given key as a dependent pair together with a proof that the returned key is
+equal to the given key.
+-/
+def findEntry?' (m : DHashMap α β) (a : α) : Option { p : Σ a, β a // p.1 == a } :=
+  sorry
+
+/--
+If the `BEq` instance is lawful, this function will query the dependent hash map and if a mapping with the given key is
+found, the associated value is cast to the required type.
+-/
+def find?' [LawfulBEq α] (m : DHashMap α β) (a : α) : Option (β a) :=
+  (findEntry?' m a).map fun p => cast (congrArg β (eq_of_beq p.2)) p.1.2
+
+-- We cannot provide a `find?'` version here because `GetElem` is not dependent!
+instance : GetElem (DHashMap α β) α (Option (Σ a, β a)) (fun _ _ => True) where
+  getElem m k _ := m.findEntry? k
+
+/--
+Returns the value associated with the given key, or the given default value if there is no such mapping.
+
+A dependent version of this would be possible, but doesn't sound very useful?
+A LawfulBEq dependent version of this would be possible, and is probably useful.
+-/
+def findD (m : DHashMap α (fun _ => γ)) (a : α) (b₀ : γ) : γ := sorry
+
+/--
+Returns the value associated with the given key, or panics if there is no such mapping.
+
+A dependent version of this would be possible, but doesn't sound very useful?
+A LawfulBEq dependent version of this would be possible, and is probably useful.
+-/
+def find! [Inhabited γ] (m : DHashMap α (fun _ => γ)) (a : α) : γ := sorry
+
+/--
+Returns the number of mappings contained in the hash map.
+-/
+def size (m : DHashMap α β) : Nat := sorry
+
+/--
+Returns true if there are no mappings contained in the hash map.
+
+Be warned: if your `BEq` instance is not reflexive, or your `Hashable` instance is not
+lawful, then it is possible that this function returns `false`, but it is not possible
+to get anything out of the hash map.
+-/
+def isEmpty (m : DHashMap α β) : Bool := sorry
+
+/--
+Performs a monadic fold over all mappings contained in the hash map, in some order.
+-/
+def foldM {m : Type w → Type w} [Monad m] (f : ε → (a : α) → β a → m ε) (init : ε) (h : DHashMap α β) : m ε := sorry
+
+/--
+Performs a fold over all mappings contained in the hash map, in some order.
+-/
+def fold (f : ε → (a : α) → β a → ε) (init : ε) (m : DHashMap α β) : ε := sorry
+
+/--
+Perform an action for each mapping contained in the hash map, in some order.
+-/
+def forM {m : Type w → Type w} [Monad m] (f : (a : α) → β a → m PUnit) (h : DHashMap α β) : m PUnit := sorry
+
+/--
+Create a list containing all mappings contained in the hash map, in some order.
+-/
+def toList (m : DHashMap α β) : List (Σ a, β a) := sorry
+
+/--
+Create a list containing all mappings contained in the hash map, in some order.
+-/
+def toList' (m : DHashMap α (fun _ => γ)) : List (α × γ) := sorry
+
+/--
+Create an array containing all mappings contained in the hash map, in some order.
+-/
+def toArray (m : DHashMap α β) : Array (Σ a, β a) := sorry
+
+/--
+Create an array containing all mappings contained in the hash map, in some order.
+-/
+def toArray' (m : DHashMap α (fun _ => γ)) : Array (α × γ) := sorry
+
+instance [∀ a, BEq (β a)] : BEq (DHashMap α β) := sorry
+
+/--
+Create a list containing all keys contained in the hash map, in some order.
+-/
+def keys (m : DHashMap α β) : List α := sorry
+
+/--
+Create a list containing all values contained in the hash map, in some order.
+-/
+def values (m : DHashMap α (fun _ => γ)) : List γ := sorry
+
+alias assocs := toList
+
+/--
+Returns the number of buckets in the internal representation of the hash map.
+It should generally not be necessary to call this function other than for things
+like monitoring system health.
+-/
+def numBuckets (m : DHashMap α β) : Nat := sorry
+
 end query
 
 end MyLean.DHashMap.Ops
