@@ -155,18 +155,11 @@ end modification
 section query
 
 /--
-Returns the mapping associated with the given key as a dependent pair together with a proof that the returned key is
-equal to the given key.
--/
-def findEntry?' (m : DHashMap α β) (a : α) : Option { p : Σ a, β a // p.1 == a } :=
-  sorry
-
-/--
 If the `BEq` instance is lawful, this function will query the dependent hash map and if a mapping with the given key is
 found, the associated value is cast to the required type.
 -/
 def find?' [LawfulBEq α] (m : DHashMap α β) (a : α) : Option (β a) :=
-  (findEntry?' m a).map fun p => cast (congrArg β (eq_of_beq p.2)) p.1.2
+  sorry
 
 -- We cannot provide a `find?'` version here because `GetElem` is not dependent!
 instance : GetElem (DHashMap α β) α (Option (Σ a, β a)) (fun _ _ => True) where
@@ -197,7 +190,7 @@ def size (m : DHashMap α β) : Nat := sorry
 Returns true if there are no mappings contained in the hash map.
 
 Be warned: if your `BEq` instance is not reflexive, or your `Hashable` instance is not
-lawful, then it is possible that this function returns `false`, but it is not possible
+lawful, then it is possible that this function returns `false` even though is not possible
 to get anything out of the hash map.
 -/
 def isEmpty (m : DHashMap α β) : Bool := sorry

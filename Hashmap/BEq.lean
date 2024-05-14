@@ -30,6 +30,9 @@ class EquivBEq (α) [BEq α] extends PartialEquivBEq α, ReflBEq α : Prop
 theorem BEq.refl [BEq α] [ReflBEq α] {a : α} : a == a :=
   ReflBEq.refl
 
+theorem beq_of_eq [BEq α] [ReflBEq α] {a b : α} : a = b → a == b
+  | rfl => BEq.refl
+
 theorem BEq.symm [BEq α] [PartialEquivBEq α] {a b : α} : a == b → b == a :=
   PartialEquivBEq.symm
 
