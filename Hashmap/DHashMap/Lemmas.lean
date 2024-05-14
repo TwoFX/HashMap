@@ -19,31 +19,26 @@ variable (m : Raw₀ α β) (h : m.1.WF)
 
 @[simp]
 theorem findEntry?_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).findEntry? a = none := by
-  rw [findEntry?_eq_findEntry?ₘ]
-  simp [findEntry?ₘ_eq_findEntry? _ Raw.WF.empty₀.out]
+  simp [findEntry?_eq_findEntry? Raw.WF.empty₀.out]
 
 @[simp]
 theorem find?_empty {β : Type v} {a : α} {c : Nat} : (empty c : Raw₀ α (fun _ => β)).find? a = none := by
-  rw [find?_eq_find?ₘ]
-  simp [find?ₘ_eq_findValue? _ Raw.WF.empty₀.out]
+  simp [find?_eq_findValue? Raw.WF.empty₀.out]
 
 theorem findEntry?_insert (a k : α) (b : β a) :
     (m.insert a b).1.findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k := by
-  rw [findEntry?_eq_findEntry?ₘ, insert_eq_insertₘ, findEntry?_eq_findEntry?ₘ]
-  rw [findEntry?ₘ_eq_findEntry? _ (wfImp_insertₘ _ h.out _ _), findEntry?ₘ_eq_findEntry? _ h.out,
-    List.findEntry?_of_perm (wfImp_insertₘ _ h.out _ _).distinct (toListModel_insertₘ _ h.out _ _),
+  rw [findEntry?_eq_findEntry? h.out.insert, findEntry?_eq_findEntry? h.out,
+    List.findEntry?_of_perm h.out.insert.distinct (toListModel_insert h.out),
     List.findEntry?_insertEntry]
 
 theorem find?_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) (a k : α) (b : β) :
     (m.insert a b).1.find? k = bif a == k then some b else m.find? k := by
-  rw [find?_eq_find?ₘ, insert_eq_insertₘ, find?_eq_find?ₘ]
-  rw [find?ₘ_eq_findValue? _ (wfImp_insertₘ _ h.out _ _), find?ₘ_eq_findValue? _ h.out,
-    List.findValue?_of_perm (wfImp_insertₘ _ h.out _ _).distinct (toListModel_insertₘ _ h.out _ _),
+  rw [find?_eq_findValue? h.out.insert, find?_eq_findValue? h.out,
+    List.findValue?_of_perm h.out.insert.distinct (toListModel_insert h.out),
     List.findValue?_insertEntry]
 
 theorem contains_eq_isSome_findEntry? {a : α} : m.contains a = (m.findEntry? a).isSome := by
-  rw [findEntry?_eq_findEntry?ₘ, contains_eq_containsₘ]
-  rw [findEntry?ₘ_eq_findEntry? _ h.out, containsₘ_eq_containsKey h.out, List.containsKey_eq_isSome_findEntry?]
+  rw [findEntry?_eq_findEntry? h.out, contains_eq_containsKey h.out, List.containsKey_eq_isSome_findEntry?]
 
 end Raw₀
 

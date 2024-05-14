@@ -21,9 +21,6 @@ variable (m : Raw α β) (h : m.WF)
 @[simp] theorem inner_emptyc : (∅ : Raw α β).inner = ∅ := rfl
 @[simp] theorem inner_empty {c : Nat} : (empty c : Raw α β).inner = DHashMap.Raw.empty c := rfl
 
--- theorem ext (m m' : Raw α β) : m.raw = m'.raw → m = m' := by
---   cases m; cases m'; rintro rfl; rfl
-
 @[simp]
 theorem findEntry?_empty {a : α} {c : Nat} : (empty c : Raw α β).findEntry? a = none := by
   simp [findEntry?]
