@@ -57,8 +57,8 @@ theorem findEntry?_cons_self [BEq α] [ReflBEq α] {l : List (Σ a, β a)} {k : 
     (⟨k, v⟩ :: l).findEntry? k = some ⟨k, v⟩ :=
   findEntry?_cons_of_true BEq.refl
 
-theorem findEntry?_eq_some [BEq α] {l : List (Σ a, β a)} {a k : α} {v : β k}
-    (h : l.findEntry? a = some ⟨k, v⟩) : k == a := by
+theorem findEntry?_eq_some [BEq α] {l : List (Σ a, β a)} {a : α} {p : Σ a, β a}
+    (h : l.findEntry? a = some p) : p.1 == a := by
   induction l using assoc_induction
   · simp at h
   · next k' v' t ih =>
@@ -118,6 +118,70 @@ theorem findValue?_eq_of_beq [BEq α] [PartialEquivBEq α] {l : List ((_ : α) �
   simp [findValue?_eq_findEntry?, findEntry?_eq_of_beq h]
 
 end
+
+def findValueCast? [BEq α] [LawfulBEq α] (a : α) : List (Σ a, β a) → Option (β a)
+  | [] => none
+  | ⟨k, v⟩ :: l => if h : k == a then some (cast (congrArg β (eq_of_beq h)) v) else l.findValueCast? a
+
+@[simp] theorem findValueCast?_nil [BEq α] [LawfulBEq α] {a : α} :
+    ([] : List (Σ a, β a)).findValueCast? a = none := rfl
+theorem findValueCast?_cons [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {k a : α} {v : β k} :
+    (⟨k, v⟩ :: l).findValueCast? a = if h : k == a then some (cast (congrArg β (eq_of_beq h)) v) else l.findValueCast? a := rfl
+
+theorem findValueCast?_cons_of_true [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {k a : α} {v : β k} (h : k == a) :
+    (⟨k, v⟩ :: l).findValueCast? a = some (cast (congrArg β (eq_of_beq h)) v) := by
+  simp [findValueCast?, h]
+
+theorem findValueCast?_cons_of_false [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {k a : α} {v : β k}
+    (h : (k == a) = false) : (⟨k, v⟩ :: l).findValueCast? a = l.findValueCast? a := by
+  simp [findValueCast?, h]
+
+@[simp]
+theorem findValueCast?_cons_self [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {k : α} {v : β k} :
+    (⟨k, v⟩ :: l).findValueCast? k = some v := by
+  rw [findValueCast?_cons_of_true BEq.refl, cast_eq]
+
+section
+
+variable {β : Type v}
+
+-- Wow, this function is a monster
+def _root_.Option.dmap : (o : Option α) → (f : (a : α) → (o = some a) → β) → Option β
+  | none, _ => none
+  | some _, f => some (f _ rfl)
+
+@[simp] theorem _root_.Option.dmap_none (f : (a : α) → (none = some a) → β) : none.dmap f = none := rfl
+
+theorem _root_.Option.dmap_eq_none (o : Option α) (f : (a : α) → (o = some a) → β)
+    (h : o = none) : o.dmap f = none := by
+  cases h; rfl
+
+end
+
+theorem findValueCast?_eq_findEntry? [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a : α} :
+    l.findValueCast? a = (l.findEntry? a).dmap (fun p h => cast (congrArg β (eq_of_beq (findEntry?_eq_some h))) p.2) := by
+  induction l using assoc_induction
+  · simp
+  · next k v t ih =>
+    skip
+    cases h : k == a
+    · rw [findValueCast?_cons_of_false h, ih]
+      congr 1
+      · rw [findEntry?_cons_of_false h]
+      · sorry
+    · rw [findValueCast?_cons_of_true h]
+      sorry
+
+-- TODO: is it possible to state this
+theorem isSome_findValueCast?_eq_isSome_findEntry? [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a : α} :
+    (l.findValueCast? a).isSome = (l.findEntry? a).isSome := by
+  induction l using assoc_induction
+  · simp
+  · next k v t ih =>
+    skip
+    cases h : k == a
+    · rw [findValueCast?_cons_of_false h, findEntry?_cons_of_false h, ih]
+    · rw [findValueCast?_cons_of_true h, findEntry?_cons_of_true h, Option.isSome_some, Option.isSome_some]
 
 def findKey? [BEq α] (a : α) : List (Σ a, β a) → Option α
   | nil => none
