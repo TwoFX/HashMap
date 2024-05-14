@@ -77,25 +77,6 @@ theorem find?_eq [BEq α] {l : AssocList α (fun _ => β)} {a : α} : l.find? a 
 
 end
 
-class PathLifting [BEq α] (β : α → Type v) where
-  lift {a b : α} : (a == b) → β a → β b
-  lift_rfl {a : α} : (h : a == a) → lift h = id
-
-instance [BEq α] [LawfulBEq α] {β : α → Type v} : PathLifting β where
-  lift h := cast (congrArg β (eq_of_beq h))
-  lift_rfl h := by ext; simp
-
-instance [BEq α] {β : Type v} : PathLifting (fun (_ : α) => β) where
-  lift _ := id
-  lift_rfl _ := rfl
-
-def find?Lift [BEq α] [PathLifting β] (a : α) : AssocList α β → Option (β a)
-  | nil => none
-  | cons k v es => if h : k == a then some (PathLifting.lift h v) else find?Lift a es
-
-def find?' [BEq α] [LawfulBEq α] (a : α) : AssocList α β → Option (β a) :=
-  find?Lift a
-
 def findKey? [BEq α] (a : α) : AssocList α β → Option α
   | nil => none
   | cons k _ es => bif k == a then some k else findKey? a es
