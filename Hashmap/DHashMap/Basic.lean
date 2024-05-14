@@ -183,13 +183,13 @@ that map operations preserve well-formedness.
 -/
 inductive WF [BEq α] [Hashable α] : Raw α β → Prop where
   | wf {m} : m.WFImp → WF m
-  | empty {c} : WF (empty c)
+  | empty₀ {c} : WF (Raw₀.empty c).1
   | insert₀ {m h a b} : WF m → WF (Raw₀.insert ⟨m, h⟩ a b).1.1
   | erase₀ {m h a} : WF m → WF (Raw₀.erase ⟨m, h⟩ a).1
 
 theorem WF.size_buckets_pos [BEq α] [Hashable α] (m : Raw α β) : WF m → 0 < m.buckets.size
   | wf h => h.buckets_size
-  | empty => (Raw₀.empty _).2
+  | empty₀ => (Raw₀.empty _).2
   | insert₀ _ => (Raw₀.insert ⟨_, _⟩ _ _).1.2
   | erase₀ _ => (Raw₀.erase ⟨_, _⟩ _).2
 
@@ -215,7 +215,7 @@ namespace DHashMap
 
 /-- Constructs an empty hash map with a number of buckets appropriate for the given size. -/
 @[inline] def empty [BEq α] [Hashable α] (capacity := 8) : DHashMap α β :=
-  ⟨Raw.empty capacity, .empty⟩
+  ⟨Raw.empty capacity, .empty₀⟩
 
 instance [BEq α] [Hashable α] : EmptyCollection (DHashMap α β) where
   emptyCollection := empty

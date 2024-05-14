@@ -36,7 +36,7 @@ theorem toListModel_buckets_empty {c} : toListModel (empty c : Raw₀ α β).1.b
 
 theorem wfImp_empty [BEq α] [Hashable α] {c} : (empty c : Raw₀ α β).1.WFImp where
   buckets_hash_self := by simp [Raw.empty, Raw₀.empty]
-  buckets_size := Raw.WF.empty.size_buckets_pos
+  buckets_size := Raw.WF.empty₀.size_buckets_pos
   size_eq := by simp
   distinct := by simp
 
@@ -139,7 +139,7 @@ theorem toListModel_expandIfNecessary [BEq α] [Hashable α] [PartialEquivBEq α
   · dsimp
     exact toListModel_expand
 
-theorem WFImp.expandIfNecessary [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
+theorem wfImp_expandIfNecessary [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
     (h : m.1.WFImp) : (expandIfNecessary m).1.WFImp := by
   rw [Raw₀.expandIfNecessary]
   dsimp
@@ -238,7 +238,7 @@ theorem wfImp_insertₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
   rw [insertₘ]
   split
   · apply wfImp_replaceₘ _ h
-  · apply Raw₀.WFImp.expandIfNecessary
+  · apply wfImp_expandIfNecessary
     apply wfImp_consₘ _ h _ _ (by simp_all)
 
 /-! # `eraseₘ` -/

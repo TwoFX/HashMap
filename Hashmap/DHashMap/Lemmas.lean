@@ -20,12 +20,12 @@ variable (m : Raw₀ α β) (h : m.1.WF)
 @[simp]
 theorem findEntry?_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).findEntry? a = none := by
   rw [findEntry?_eq_findEntry?ₘ]
-  simp [findEntry?ₘ_eq_findEntry? _ Raw.WF.empty.out]
+  simp [findEntry?ₘ_eq_findEntry? _ Raw.WF.empty₀.out]
 
 @[simp]
 theorem find?_empty {β : Type v} {a : α} {c : Nat} : (empty c : Raw₀ α (fun _ => β)).find? a = none := by
   rw [find?_eq_find?ₘ]
-  simp [find?ₘ_eq_findValue? _ Raw.WF.empty.out]
+  simp [find?ₘ_eq_findValue? _ Raw.WF.empty₀.out]
 
 theorem findEntry?_insert (a k : α) (b : β a) :
     (m.insert a b).1.findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k := by
@@ -53,8 +53,7 @@ variable (m : Raw α β) (h : m.WF)
 
 @[simp]
 theorem findEntry?_empty {a : α} {c : Nat} : (empty c : Raw α β).findEntry? a = none := by
-  rw [empty_eq, findEntry?_eq, Raw₀.findEntry?_empty]
-  exact WF.empty
+  rw [empty_eq, findEntry?_eq WF.empty₀, Raw₀.findEntry?_empty]
 
 @[simp]
 theorem findEntry?_emptyc {a : α} : (∅ : Raw α β).findEntry? a = none :=
@@ -62,8 +61,7 @@ theorem findEntry?_emptyc {a : α} : (∅ : Raw α β).findEntry? a = none :=
 
 @[simp]
 theorem find?_empty {β : Type v} {a : α} {c : Nat} : (empty c : Raw α (fun _ => β)).find? a = none := by
-  rw [empty_eq, find?_eq, Raw₀.find?_empty]
-  exact WF.empty
+  rw [empty_eq, find?_eq WF.empty₀, Raw₀.find?_empty]
 
 @[simp]
 theorem find?_emptyc {β : Type v} {a : α} : (∅ : Raw α (fun _ => β)).find? a = none :=
