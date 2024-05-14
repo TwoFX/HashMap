@@ -93,21 +93,6 @@ def contains [BEq α] (a : α) : AssocList α β → Bool
 theorem contains_eq [BEq α] {l : AssocList α β} {a : α} : l.contains a = l.toList.containsKey a := by
   induction l <;> simp_all [contains, List.containsKey]
 
--- def findEntry [BEq α] (l : AssocList α β) (a : α) (h : l.contains a) : Σ a, β a :=
---   (l.findEntry? a).get <| contains_eq_isSome_findEntry?.symm.trans h
-
--- def findKey [BEq α] (l : AssocList α β) (a : α) (h : l.contains a) : α :=
---   (l.findKey? a).get <| contains_eq_isSome_findKey?.symm.trans h
-
--- section
-
--- variable {β : Type v}
-
--- def find [BEq α] (l : AssocList' α β) (a : α) (h : l.contains a) : β :=
---   (l.find? a).get <| contains_eq_isSome_find?.symm.trans h
-
--- end
-
 def replace [BEq α] (a : α) (b : β a) : AssocList α β → AssocList α β
   | nil => nil
   | cons k v l => bif k == a then cons a b l else cons k v (replace a b l)
