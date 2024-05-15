@@ -77,6 +77,14 @@ theorem find?_eq [BEq α] {l : AssocList α (fun _ => β)} {a : α} : l.find? a 
 
 end
 
+def findCast? [BEq α] [LawfulBEq α] (a : α) : AssocList α β → Option (β a)
+  | nil => none
+  | cons k v es => if h : k == a then some (cast (congrArg β (eq_of_beq h)) v) else es.findCast? a
+
+@[simp]
+theorem findCast?_eq [BEq α] [LawfulBEq α] {l : AssocList α β} {a : α} : l.findCast? a = l.toList.findValueCast? a := by
+  induction l <;> simp_all [findCast?, List.findValueCast?]
+
 def findKey? [BEq α] (a : α) : AssocList α β → Option α
   | nil => none
   | cons k _ es => bif k == a then some k else findKey? a es

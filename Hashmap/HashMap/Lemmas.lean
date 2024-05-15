@@ -43,7 +43,7 @@ theorem findEntry?_insert {a k : α} {b : β} :
 
 theorem find?_insert {a k : α} {b : β} :
     (m.insert a b).find? k = bif a == k then some b else m.find? k := by
-  simp [find?, insert, DHashMap.Raw.find?_insert _ h]
+  simp [find?, insert, DHashMap.Raw.findConst?_insert _ h]
 
 end Raw
 
@@ -76,7 +76,7 @@ theorem findEntry?_insert {a k : α} {b : β} :
 
 theorem find?_insert {a k : α} {b : β} :
     (m.insert a b).find? k = bif a == k then some b else m.find? k := by
-  simp [find?, insert, DHashMap.find?_insert]
+  simp [find?, insert, DHashMap.findConst?_insert]
 
 end
 

@@ -38,7 +38,7 @@ instance : EmptyCollection (Raw α β) where
   m.inner.findEntry? a |> .map Sigma.toProd
 
 @[inline] def find? [BEq α] [Hashable α] (m : Raw α β) (a : α) : Option β :=
-  m.inner.find? a
+  m.inner.findConst? a
 
 def WF [BEq α] [Hashable α] : Raw α β → Prop :=
   fun r => r.inner.WF
@@ -69,6 +69,6 @@ instance [BEq α] [Hashable α] : EmptyCollection (HashMap α β) where
   m.inner.findEntry? a |> .map Sigma.toProd
 
 @[inline] def find? [BEq α] [Hashable α] (m : HashMap α β) (a : α) : Option β :=
-  m.inner.find? a
+  m.inner.findConst? a
 
 end MyLean.HashMap

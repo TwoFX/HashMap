@@ -22,8 +22,8 @@ theorem findEntry?_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).findEntry
   simp [findEntry?_eq_findEntry? Raw.WF.empty₀.out]
 
 @[simp]
-theorem find?_empty {β : Type v} {a : α} {c : Nat} : (empty c : Raw₀ α (fun _ => β)).find? a = none := by
-  simp [find?_eq_findValue? Raw.WF.empty₀.out]
+theorem findConst?_empty {β : Type v} {a : α} {c : Nat} : (empty c : Raw₀ α (fun _ => β)).findConst? a = none := by
+  simp [findConst?_eq_findValue? Raw.WF.empty₀.out]
 
 theorem findEntry?_insert (a k : α) (b : β a) :
     (m.insert a b).1.findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k := by
@@ -31,9 +31,9 @@ theorem findEntry?_insert (a k : α) (b : β a) :
     List.findEntry?_of_perm h.out.insert.distinct (toListModel_insert h.out),
     List.findEntry?_insertEntry]
 
-theorem find?_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) (a k : α) (b : β) :
-    (m.insert a b).1.find? k = bif a == k then some b else m.find? k := by
-  rw [find?_eq_findValue? h.out.insert, find?_eq_findValue? h.out,
+theorem findConst?_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) (a k : α) (b : β) :
+    (m.insert a b).1.findConst? k = bif a == k then some b else m.findConst? k := by
+  rw [findConst?_eq_findValue? h.out.insert, findConst?_eq_findValue? h.out,
     List.findValue?_of_perm h.out.insert.distinct (toListModel_insert h.out),
     List.findValue?_insertEntry]
 
@@ -55,20 +55,20 @@ theorem findEntry?_emptyc {a : α} : (∅ : Raw α β).findEntry? a = none :=
   findEntry?_empty
 
 @[simp]
-theorem find?_empty {β : Type v} {a : α} {c : Nat} : (empty c : Raw α (fun _ => β)).find? a = none := by
-  rw [empty_eq, find?_eq WF.empty₀, Raw₀.find?_empty]
+theorem findConst?_empty {β : Type v} {a : α} {c : Nat} : (empty c : Raw α (fun _ => β)).findConst? a = none := by
+  rw [empty_eq, findConst?_eq WF.empty₀, Raw₀.findConst?_empty]
 
 @[simp]
-theorem find?_emptyc {β : Type v} {a : α} : (∅ : Raw α (fun _ => β)).find? a = none :=
-  find?_empty
+theorem findConst?_emptyc {β : Type v} {a : α} : (∅ : Raw α (fun _ => β)).findConst? a = none :=
+  findConst?_empty
 
 theorem findEntry?_insert {a k : α} {b : β a} :
     (m.insert a b).findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k := by
   rw [insert_eq h, findEntry?_eq h, findEntry?_eq h.insert₀, Raw₀.findEntry?_insert ⟨m, _⟩ h]
 
-theorem find?_insert {β : Type v} (m : Raw α (fun _ => β)) (h : m.WF) (a k : α) (b : β) :
-    (m.insert a b).find? k = bif a == k then some b else m.find? k := by
-  rw [insert_eq h, find?_eq h, find?_eq h.insert₀, Raw₀.find?_insert ⟨m, _⟩ h]
+theorem findConst?_insert {β : Type v} (m : Raw α (fun _ => β)) (h : m.WF) (a k : α) (b : β) :
+    (m.insert a b).findConst? k = bif a == k then some b else m.findConst? k := by
+  rw [insert_eq h, findConst?_eq h, findConst?_eq h.insert₀, Raw₀.findConst?_insert ⟨m, _⟩ h]
 
 theorem contains_eq_isSome_findEntry? {a : α} : m.contains a = (m.findEntry? a).isSome := by
   rw [contains_eq h, findEntry?_eq h, Raw₀.contains_eq_isSome_findEntry? ⟨m, _⟩ h]
@@ -88,20 +88,20 @@ theorem findEntry?_emptyc {a : α} : (∅ : DHashMap α β).findEntry? a = none 
   Raw₀.findEntry?_empty
 
 @[simp]
-theorem find?_empty {β : Type v} {a : α} {c : Nat} : (empty c : DHashMap α (fun _ => β)).find? a = none :=
-  Raw₀.find?_empty
+theorem findConst?_empty {β : Type v} {a : α} {c : Nat} : (empty c : DHashMap α (fun _ => β)).findConst? a = none :=
+  Raw₀.findConst?_empty
 
 @[simp]
-theorem find?_emptyc {β : Type v} {a : α} : (∅ : DHashMap α (fun _ => β)).find? a = none :=
-  Raw₀.find?_empty
+theorem findConst?_emptyc {β : Type v} {a : α} : (∅ : DHashMap α (fun _ => β)).findConst? a = none :=
+  Raw₀.findConst?_empty
 
 theorem findEntry?_insert (a k : α) (b : β a) :
     (m.insert a b).findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k :=
   Raw₀.findEntry?_insert ⟨m.1, _⟩ m.2 a k b
 
-theorem find?_insert {β : Type v} (m : DHashMap α (fun _ => β)) (a k : α) (b : β) :
-    (m.insert a b).find? k = bif a == k then some b else m.find? k :=
-  Raw₀.find?_insert ⟨m.1, _⟩ m.2 _ _ _
+theorem findConst?_insert {β : Type v} (m : DHashMap α (fun _ => β)) (a k : α) (b : β) :
+    (m.insert a b).findConst? k = bif a == k then some b else m.findConst? k :=
+  Raw₀.findConst?_insert ⟨m.1, _⟩ m.2 _ _ _
 
 theorem contains_eq_isSome_findEntry? {a : α} : m.contains a = (m.findEntry? a).isSome :=
   Raw₀.contains_eq_isSome_findEntry? ⟨m.1, _⟩ m.2

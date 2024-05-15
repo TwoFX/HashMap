@@ -145,16 +145,37 @@ section
 
 variable {β : Type v}
 
--- Wow, this function is a monster
+/--
+This is a strange dependent version of `Option.map` in which the mapping function is allowed to "know" about the
+option that is being mapped...
+
+It is even possible for `β` to be a type family depending on `o`, which is even worse, but it hints that this function
+really isn't that different from `Option.rec` in some sense.
+-/
 def _root_.Option.dmap : (o : Option α) → (f : (a : α) → (o = some a) → β) → Option β
   | none, _ => none
-  | some _, f => some (f _ rfl)
+  | some a, f => some (f a rfl)
 
 @[simp] theorem _root_.Option.dmap_none (f : (a : α) → (none = some a) → β) : none.dmap f = none := rfl
 
-theorem _root_.Option.dmap_eq_none (o : Option α) (f : (a : α) → (o = some a) → β)
-    (h : o = none) : o.dmap f = none := by
+@[simp] theorem _root_.Option.dmap_some (a : α) (f : (a' : α) → (some a = some a') → β) :
+    (some a).dmap f = some (f a rfl) := rfl
+
+theorem _root_.Option.dmap_congr {o o' : Option α} {f : (a : α) → (o = some a) → β} (h : o = o') :
+    o.dmap f = o'.dmap (fun a h' => f a (h ▸ h')) := by
   cases h; rfl
+
+@[simp]
+theorem _root_.Option.isSome_dmap {o : Option α} {f : (a : α) → (o = some a) → β} :
+    (o.dmap f).isSome = o.isSome := by
+  cases o <;> rfl
+
+-- TODO: this is not needed
+theorem _root_.Option.dmap_or {o o' : Option α} (f : (a : α) → ((o.or o') = some a) → β) :
+    (o.or o').dmap f = (o.dmap fun a h => f a (by rw [h, Option.or_some])).or (o'.dmap fun a h => match o with
+      | none => f a (by rw [Option.none_or, h])
+      | some a' => f a' (by rw [Option.or_some])) := by
+  cases o <;> rfl
 
 end
 
@@ -163,25 +184,18 @@ theorem findValueCast?_eq_findEntry? [BEq α] [LawfulBEq α] {l : List (Σ a, β
   induction l using assoc_induction
   · simp
   · next k v t ih =>
-    skip
     cases h : k == a
-    · rw [findValueCast?_cons_of_false h, ih]
-      congr 1
-      · rw [findEntry?_cons_of_false h]
-      · sorry
-    · rw [findValueCast?_cons_of_true h]
-      sorry
+    · rw [findValueCast?_cons_of_false h, ih, Option.dmap_congr (findEntry?_cons_of_false h)]
+    · rw [findValueCast?_cons_of_true h, Option.dmap_congr (findEntry?_cons_of_true h), Option.dmap_some]
 
--- TODO: is it possible to state this
 theorem isSome_findValueCast?_eq_isSome_findEntry? [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a : α} :
     (l.findValueCast? a).isSome = (l.findEntry? a).isSome := by
-  induction l using assoc_induction
-  · simp
-  · next k v t ih =>
-    skip
-    cases h : k == a
-    · rw [findValueCast?_cons_of_false h, findEntry?_cons_of_false h, ih]
-    · rw [findValueCast?_cons_of_true h, findEntry?_cons_of_true h, Option.isSome_some, Option.isSome_some]
+  rw [findValueCast?_eq_findEntry?, Option.isSome_dmap]
+
+theorem findValueCast?_congr [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a a' : α} (h : a == a') :
+    l.findValueCast? a = cast (congrArg _ (congrArg _ (eq_of_beq h).symm)) (l.findValueCast? a') := by
+  obtain rfl := eq_of_beq h
+  rw [cast_eq]
 
 def findKey? [BEq α] (a : α) : List (Σ a, β a) → Option α
   | nil => none
@@ -868,6 +882,10 @@ theorem containsKey_of_perm [BEq α] [PartialEquivBEq α] {l l' : List (Σ a, β
     (h : l ~ l') : l.containsKey k = l'.containsKey k := by
   simp only [containsKey_eq_isSome_findEntry?, findEntry?_of_perm hl h]
 
+theorem findValueCast?_of_perm [BEq α] [LawfulBEq α] {l l' : List (Σ a, β a)} {k : α} (hl : l.DistinctKeys)
+    (h : l ~ l') : l.findValueCast? k = l'.findValueCast? k := by
+  rw [findValueCast?_eq_findEntry?, findValueCast?_eq_findEntry?, Option.dmap_congr (findEntry?_of_perm hl h)]
+
 section
 
 variable {β : Type v}
@@ -955,6 +973,11 @@ theorem findValue?_append {β : Type v} [BEq α] {l l' : List ((_ : α) × β)} 
 theorem findValue?_append_of_containsKey_eq_false {β : Type v} [BEq α] {l l' : List ((_ : α) × β)} {k : α}
     (h : l'.containsKey k = false) : (l ++ l').findValue? k = l.findValue? k := by
   rw [findValue?_append, findValue?_eq_none.2 h, Option.or_none]
+
+theorem findValueCast?_append_of_containsKey_eq_false [BEq α] [LawfulBEq α] {l l' : List (Σ a, β a)} {k : α}
+    (hl' : l'.containsKey k = false) : (l ++ l').findValueCast? k = l.findValueCast? k := by
+  rw [findValueCast?_eq_findEntry?, findValueCast?_eq_findEntry?, Option.dmap_congr findEntry?_append,
+    Option.dmap_congr (by rw [findEntry?_eq_none.2 hl']), Option.dmap_congr (by rw [Option.or_none])]
 
 @[simp]
 theorem findKey?_append [BEq α] {l l' : List (Σ a, β a)} {k : α} :

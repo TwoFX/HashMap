@@ -94,6 +94,11 @@ where
   let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
   buckets[i].findEntry? a
 
+@[inline] def find? [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (β a) :=
+  let ⟨⟨_, buckets⟩, h⟩ := m
+  let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
+  buckets[i].findCast? a
+
 @[inline] def contains [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Bool :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
@@ -112,7 +117,7 @@ section
 
 variable {β : Type v}
 
-@[inline] def find? [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) : Option β :=
+@[inline] def findConst? [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) : Option β :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
   buckets[i].find? a
@@ -143,6 +148,11 @@ instance : EmptyCollection (Raw α β) where
     Raw₀.findEntry? ⟨m, h⟩ a
   else none -- will never happen for well-formed inputs
 
+@[inline] def find? [BEq α] [LawfulBEq α] [Hashable α] (m : Raw α β) (a : α) : Option (β a) :=
+  if h : 0 < m.buckets.size then
+    Raw₀.find? ⟨m, h⟩ a
+  else none -- will never happen for well-formed inputs
+
 @[inline] def contains [BEq α] [Hashable α] (m : Raw α β) (a : α) : Bool :=
   if h : 0 < m.buckets.size then
     Raw₀.contains ⟨m, h⟩ a
@@ -157,9 +167,9 @@ section
 
 variable {β : Type v}
 
-@[inline] def find? [BEq α] [Hashable α] (m : Raw α (fun _ => β)) (a : α) : Option β :=
+@[inline] def findConst? [BEq α] [Hashable α] (m : Raw α (fun _ => β)) (a : α) : Option β :=
   if h : 0 < m.buckets.size then
-    Raw₀.find? ⟨m, h⟩ a
+    Raw₀.findConst? ⟨m, h⟩ a
   else none -- will never happen for well-formed inputs
 
 end
@@ -240,6 +250,14 @@ Retrieves the mapping associated with the given key, if it exists.
 @[inline] def findEntry? [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Option (Σ a, β a) :=
   Raw₀.findEntry? ⟨m.1, m.2.size_buckets_pos⟩ a
 
+/--
+Retrieves the value associated with the given key, if it exists. This function requires a `LawfulBEq` instance
+to be able to cast the value to the correct type. If no such instance is available, you can use `findEntry?`
+or switch to a non-dependent `HashMap`.
+-/
+@[inline] def find? [BEq α] [LawfulBEq α] [Hashable α] (m : DHashMap α β) (a : α) : Option (β a) :=
+  Raw₀.find? ⟨m.1, m.2.size_buckets_pos⟩ a
+
 /-- Returns true if the hash map contains a mapping with a key equal to the given key. -/
 @[inline] def contains [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Bool :=
   Raw₀.contains ⟨m.1, m.2.size_buckets_pos⟩ a
@@ -254,8 +272,10 @@ section
 
 variable {β : Type v}
 
-@[inline] def find? [BEq α] [Hashable α] (m : DHashMap α (fun _ => β)) (a : α) : Option β :=
-  Raw₀.find? ⟨m.1, m.2.size_buckets_pos⟩ a
+/--
+Retrieves the value associated with the given key, if it exists. -/
+@[inline] def findConst? [BEq α] [Hashable α] (m : DHashMap α (fun _ => β)) (a : α) : Option β :=
+  Raw₀.findConst? ⟨m.1, m.2.size_buckets_pos⟩ a
 
 end
 

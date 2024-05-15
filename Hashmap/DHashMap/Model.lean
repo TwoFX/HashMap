@@ -166,6 +166,9 @@ def consₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw�
 def findEntry?ₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
   (bucket m.1.buckets m.2 a).findEntry? a
 
+def find?ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (β a) :=
+  (bucket m.1.buckets m.2 a).findCast? a
+
 def containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Bool :=
   (bucket m.1.buckets m.2 a).contains a
 
@@ -182,7 +185,7 @@ section
 
 variable {β : Type v}
 
-def find?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) : Option β :=
+def findConst?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) : Option β :=
   (bucket m.1.buckets m.2 a).find? a
 
 end
@@ -194,6 +197,9 @@ theorem reinsertAux_eq [Hashable α] (data : { d : Array (AssocList α β) // 0 
 
 theorem findEntry?_eq_findEntry?ₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
     findEntry? m a = findEntry?ₘ m a := rfl
+
+theorem find?_eq_find?ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
+    find? m a = find?ₘ m a := rfl
 
 theorem contains_eq_containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
     m.contains a = m.containsₘ a := rfl
@@ -213,8 +219,8 @@ section
 
 variable {β : Type v}
 
-theorem find?_eq_find?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) :
-    m.find? a = m.find?ₘ a := rfl
+theorem findConst?_eq_findConst?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) :
+    m.findConst? a = m.findConst?ₘ a := rfl
 
 end
 

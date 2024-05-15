@@ -175,17 +175,25 @@ theorem findEntry?_eq_findEntry? [BEq α] [Hashable α] [PartialEquivBEq α] [La
     findEntry? m a = (toListModel m.1.buckets).findEntry? a := by
   rw [findEntry?_eq_findEntry?ₘ, findEntry?ₘ_eq_findEntry? hm]
 
+theorem find?ₘ_eq_findValueCast? [BEq α] [Hashable α] [LawfulBEq α] [LawfulHashable α]
+    {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} : m.find?ₘ a = (toListModel m.1.buckets).findValueCast? a :=
+  apply_bucket hm AssocList.findCast?_eq List.findValueCast?_of_perm List.findValueCast?_append_of_containsKey_eq_false
+
+theorem find?_eq_findValueCast? [BEq α] [Hashable α] [LawfulBEq α] [LawfulHashable α]
+    {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} : m.find? a = (toListModel m.1.buckets).findValueCast? a := by
+  rw [find?_eq_find?ₘ, find?ₘ_eq_findValueCast? hm]
+
 section
 
 variable {β : Type v}
 
-theorem find?ₘ_eq_findValue? [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
-    (hm : m.1.WFImp) {a : α} : m.find?ₘ a = (toListModel m.1.buckets).findValue? a :=
+theorem findConst?ₘ_eq_findValue? [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
+    (hm : m.1.WFImp) {a : α} : m.findConst?ₘ a = (toListModel m.1.buckets).findValue? a :=
   apply_bucket hm AssocList.find?_eq List.findValue?_of_perm findValue?_append_of_containsKey_eq_false
 
-theorem find?_eq_findValue? [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
-    (hm : m.1.WFImp) {a : α} : m.find? a = (toListModel m.1.buckets).findValue? a := by
-  rw [find?_eq_find?ₘ, find?ₘ_eq_findValue? hm]
+theorem findConst?_eq_findValue? [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
+    (hm : m.1.WFImp) {a : α} : m.findConst? a = (toListModel m.1.buckets).findValue? a := by
+  rw [findConst?_eq_findConst?ₘ, findConst?ₘ_eq_findValue? hm]
 
 end
 
@@ -363,9 +371,9 @@ section
 
 variable {β : Type v}
 
-theorem find?_eq [BEq α] [Hashable α] {m : Raw α (fun _ => β)} (h : m.WF) {a : α} :
-    m.find? a = Raw₀.find? ⟨m, h.size_buckets_pos⟩ a := by
-  simp [find?, h.size_buckets_pos]
+theorem findConst?_eq [BEq α] [Hashable α] {m : Raw α (fun _ => β)} (h : m.WF) {a : α} :
+    m.findConst? a = Raw₀.findConst? ⟨m, h.size_buckets_pos⟩ a := by
+  simp [findConst?, h.size_buckets_pos]
 
 end
 
