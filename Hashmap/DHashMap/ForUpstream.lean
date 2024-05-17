@@ -52,3 +52,10 @@ theorem List.get_congr {l₁ l₂ : List α} {n : Fin l₁.length} (h : l₁ = l
 -- TODO
 theorem Nat.lt_of_eq_of_lt {n m k : Nat} : n = m → m < k → n < k :=
   fun h₁ h₂ => h₁ ▸ h₂
+
+-- From mathlib
+theorem List.Sublist.map (f : α → β) {l₁ l₂ : List α} (h : l₁.Sublist l₂) : (List.map f l₁).Sublist (List.map f l₂) := by
+  induction h
+  · simp
+  · exact Sublist.cons _ (by assumption)
+  · exact Sublist.cons₂ _ (by assumption)

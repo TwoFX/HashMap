@@ -117,7 +117,9 @@ def erase [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
   else
     ⟨⟨size, buckets⟩, hb⟩
 
-@[specialize] def filterMap₁ {γ : α → Type w} (f : (a : α) → β a → Option (γ a))
+-- Computing the size after the fact was determined to be faster than computing it inline,
+-- see Benchmark/FilterMap.lean
+@[specialize] def filterMap {γ : α → Type w} (f : (a : α) → β a → Option (γ a))
     (m : Raw₀ α β) : Raw₀ α γ :=
   let ⟨⟨_, buckets⟩, hb⟩ := m
   let newBuckets := buckets.map (AssocList.filterMap f)

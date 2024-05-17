@@ -12,7 +12,7 @@ set_option autoImplicit false
 
 universe u v w
 
-variable {α : Type u} {β : α → Type v} {γ : Type w}
+variable {α : Type u} {β : α → Type v} {γ : Type w} {δ : α → Type w}
 
 open List
 
@@ -339,6 +339,39 @@ theorem wfImp_erase [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m 
   rw [erase_eq_eraseₘ]
   exact wfImp_eraseₘ h
 
+/-! # `filterMapₘ` -/
+
+theorem toListModel_filterMapₘ {m : Raw₀ α β} {f : (a : α) → β a → Option (δ a)} :
+    toListModel (m.filterMapₘ f).1.buckets ~ (toListModel m.1.buckets).filterMap fun p => (f p.1 p.2).map (⟨p.1, ·⟩) :=
+  toListModel_updateAllBuckets AssocList.toList_filterMap (by simp [List.filterMap_append])
+
+theorem isHashSelf_filterMapₘ [BEq α] [Hashable α] [ReflBEq α] [LawfulHashable α] {m : Raw₀ α β} {f : (a : α) → β a → Option (δ a)} (h : m.1.WFImp) :
+    IsHashSelf (m.filterMapₘ f).1.buckets := by
+  refine h.buckets_hash_self.updateAllBuckets (fun l p hp => ?_)
+  have hp := AssocList.toList_filterMap.mem_iff.1 hp
+  simp only [mem_filterMap, Option.map_eq_some'] at hp
+  obtain ⟨p, ⟨hkv, ⟨d, ⟨-, rfl⟩⟩⟩⟩ := hp
+  exact containsKey_of_mem hkv
+
+theorem wfImp_filterMapₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} {f : (a : α) → β a → Option (δ a)} (h : m.1.WFImp) :
+    (m.filterMapₘ f).1.WFImp where
+  buckets_hash_self := isHashSelf_filterMapₘ h
+  buckets_size := by simpa [filterMapₘ] using h.buckets_size
+  size_eq := by simp [filterMapₘ]
+  distinct := h.distinct.filterMap.perm toListModel_filterMapₘ
+
+/-! # `filterMap` -/
+
+theorem toListModel_filterMap {m : Raw₀ α β} {f : (a : α) → β a → Option (δ a)} :
+    toListModel (m.filterMap f).1.buckets ~ (toListModel m.1.buckets).filterMap fun p => (f p.1 p.2).map (⟨p.1, ·⟩) := by
+  rw [filterMap_eq_filterMapₘ]
+  exact toListModel_filterMapₘ
+
+theorem wfImp_filterMap [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} {f : (a : α) → β a → Option (δ a)} (h : m.1.WFImp) :
+    (m.filterMap f).1.WFImp := by
+  rw [filterMap_eq_filterMapₘ]
+  exact wfImp_filterMapₘ h
+
 end Raw₀
 
 namespace Raw
@@ -348,6 +381,7 @@ namespace WFImp
 alias empty := Raw₀.wfImp_empty
 alias insert := Raw₀.wfImp_insert
 alias erase := Raw₀.wfImp_erase
+alias filterMap := Raw₀.wfImp_filterMap
 
 end WFImp
 
@@ -393,5 +427,10 @@ end Raw
 theorem empty_eq [BEq α] [Hashable α] {c : Nat} : (empty c : DHashMap α β).1 = (Raw₀.empty c).1 := rfl
 
 theorem emptyc_eq [BEq α] [Hashable α] : (∅ : DHashMap α β).1 = Raw₀.empty.1 := rfl
+
+-- TODO: push proofs into WF so that we can call this method without `EquivBEq` and `LawfulHashable`.
+def filterMap [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : DHashMap α β) (f : (a : α) → β a → Option (δ a)) :
+    DHashMap α δ :=
+  ⟨Raw₀.filterMap f ⟨m.1, m.2.size_buckets_pos⟩, .wf m.2.out.filterMap⟩
 
 end MyLean.DHashMap

@@ -5,6 +5,7 @@ Authors: Markus Himmel
 -/
 import Hashmap.DHashMap.Basic
 import Hashmap.DHashMap.ForUpstream
+import Hashmap.Leftovers
 
 /-!
 In this file we define functions for manipulating a hash map based on operations defined in terms of their buckets.
@@ -17,7 +18,7 @@ set_option autoImplicit false
 
 universe u v w
 
-variable {α : Type u} {β : α → Type v} {γ : Type w}
+variable {α : Type u} {β : α → Type v} {γ : Type w} {δ : α → Type w}
 
 namespace MyLean.DHashMap
 
@@ -32,10 +33,35 @@ def updateBucket [Hashable α] (self : Array (AssocList α β)) (h : 0 < self.si
   let ⟨i, h⟩ := mkIdx self.size h (hash k)
   self.uset i (f self[i]) h
 
+def updateAllBuckets (self : Array (AssocList α β)) (f : AssocList α β → AssocList α δ) :
+    Array (AssocList α δ) :=
+  self.map f
+
+def withComputedSize (self : Array (AssocList α β)) : Raw α β :=
+  ⟨computeSize self, self⟩
+
 @[simp]
 theorem size_updateBucket [Hashable α] {self : Array (AssocList α β)} {h : 0 < self.size} {k : α}
     {f : AssocList α β → AssocList α β} : (updateBucket self h k f).size = self.size := by
   simp [updateBucket]
+
+@[simp]
+theorem size_updateAllBuckets {self : Array (AssocList α β)} {f : AssocList α β → AssocList α δ} :
+    (updateAllBuckets self f).size = self.size := by
+  simp [updateAllBuckets]
+
+@[simp]
+theorem buckets_size_withComputedSize {self : Array (AssocList α β)} :
+    (withComputedSize self).2.size = self.size := by
+  simp [withComputedSize]
+
+@[simp]
+theorem size_withComputedSize {self : Array (AssocList α β)} :
+    (withComputedSize self).size = computeSize self := rfl
+
+@[simp]
+theorem buckets_withComputedSize {self : Array (AssocList α β)} :
+    (withComputedSize self).buckets = self := rfl
 
 open List
 
@@ -122,6 +148,27 @@ theorem toListModel_updateBucket [BEq α] [Hashable α] [PartialEquivBEq α] [La
   rw [hfg, hg₂]
   exact h₃ hm.buckets_hash_self _ rfl
 
+-- TODO: clean up this proof
+theorem toListModel_updateAllBuckets {m : Raw₀ α β} {f : AssocList α β → AssocList α δ} {g : List (Σ a, β a) → List (Σ a, δ a)}
+    (hfg : ∀ {l}, (f l).toList ~ g l.toList) (hg : ∀ {l l'}, g (l ++ l') ~ g l ++ g l') :
+    toListModel (updateAllBuckets m.1.buckets f) ~ g (toListModel m.1.2) := by
+  have hg₀ : g [] = [] := by
+    rw [← List.length_eq_zero]
+    have := (hg (l := []) (l' := [])).length_eq
+    rw [List.length_append, List.append_nil] at this
+    omega
+  rw [updateAllBuckets, toListModel, Array.map_data, List.bind_eq_foldl, List.foldl_map, toListModel, List.bind_eq_foldl]
+  suffices ∀ (l : List (AssocList α β)) (l' : List (Σ a, δ a)) (l'' : List (Σ a, β a)), g l'' ~ l' →
+      l.foldl (fun acc a => acc ++ (f a).toList) l' ~ g (l.foldl (fun acc a => acc ++ a.toList) l'') by
+    simpa using this m.1.buckets.data [] [] (by simp [hg₀])
+  rintro l l' l'' h
+  induction l generalizing l' l''
+  · simpa using h.symm
+  · next l t ih =>
+    simp only [foldl_cons]
+    apply ih
+    exact hg.trans (Perm.append h hfg.symm)
+
 /-! # IsHashSelf -/
 
 namespace IsHashSelf
@@ -150,6 +197,15 @@ theorem updateBucket [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable
     rcases hf with ⟨q, hq₁, hq₂⟩
     rw [← h'.hash_self h _ hq₁, hash_eq hq₂]
   · rw [hf]
+
+theorem updateAllBuckets [BEq α] [Hashable α] [LawfulHashable α] {m : Array (AssocList α β)} {f : AssocList α β → AssocList α δ}
+    (hf : ∀ l p, p ∈ (f l).toList → l.toList.containsKey p.1) (hm : IsHashSelf m) : IsHashSelf (updateAllBuckets m f) := by
+  rw [DHashMap.updateAllBuckets]
+  refine ⟨fun j hj => ?_⟩
+  simp only [Array.getElem_map, Array.size_map]
+  refine ⟨fun h p hp => ?_⟩
+  rcases containsKey_eq_true_iff_exists_mem.1 (hf _ _ hp) with ⟨q, hq₁, hq₂⟩
+  rw [← hash_eq hq₂, (hm.hashes_to _ _).hash_self _ _ hq₁]
 
 end IsHashSelf
 
@@ -180,6 +236,9 @@ def eraseₘaux [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α �
 
 def eraseₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
   if m.containsₘ a then m.eraseₘaux a else m
+
+def filterMapₘ (m : Raw₀ α β) (f : (a : α) → β a → Option (δ a)) : Raw₀ α δ :=
+  ⟨withComputedSize (updateAllBuckets m.1.buckets fun l => l.filterMap f), by simpa using m.2⟩
 
 section
 
@@ -214,6 +273,9 @@ theorem erase_eq_eraseₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : m
   rw [erase, eraseₘ, containsₘ, bucket]
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
   split <;> rfl
+
+theorem filterMap_eq_filterMapₘ (m : Raw₀ α β) (f : (a : α) → β a → Option (δ a)) :
+    m.filterMap f = m.filterMapₘ f := rfl
 
 section
 

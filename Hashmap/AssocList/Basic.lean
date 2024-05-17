@@ -11,7 +11,7 @@ universe w v u
 
 namespace MyLean
 
-variable {α : Type u} {β : α → Type v} {δ : Type w} {m : Type w → Type w} [Monad m]
+variable {α : Type u} {β : α → Type v} {γ : α → Type w} {δ : Type w} {m : Type w → Type w} [Monad m]
 
 /--
 `AssocList α β` is "the same as" `List (α × β)`, but flattening the structure
@@ -143,15 +143,34 @@ theorem toList_insert [BEq α] {l : AssocList α β} {k : α} {v : β k} :
     (l.insert k v).toList = l.toList.insertEntry k v := by
   simp [insert, List.insertEntry, apply_bif toList]
 
-@[specialize] def filterMap {γ : α → Type w} (f : (a : α) → β a → Option (γ a)) :
+@[specialize] def filterMap (f : (a : α) → β a → Option (γ a)) :
     AssocList α β → AssocList α γ :=
   go .nil
 where
   @[specialize] go (acc : AssocList α γ) : AssocList α β → AssocList α γ
   | nil => acc
   | cons k v t => match f k v with
-      | none => go acc t
-      | some v' => go (cons k v' acc) t
+    | none => go acc t
+    | some v' => go (cons k v' acc) t
+
+open List
+
+theorem toList_filterMap {f : (a : α) → β a → Option (γ a)} {l : AssocList α β} :
+    (l.filterMap f).toList ~ l.toList.filterMap fun p => (f p.1 p.2).map (⟨p.1, ·⟩) := by
+  rw [filterMap]
+  suffices ∀ l l', (filterMap.go f l l').toList ~ l.toList ++ l'.toList.filterMap fun p => (f p.1 p.2).map (⟨p.1, ·⟩) by
+    simpa using this .nil l
+  intros l l'
+  induction l' generalizing l
+  · simp [filterMap.go]
+  · next k v t ih =>
+    simp only [filterMap.go, toList_cons, filterMap_cons]
+    split
+    · next h => exact (ih _).trans (by simp [h])
+    · next h =>
+      refine (ih _).trans ?_
+      simp only [toList_cons, cons_append]
+      exact perm_middle.symm.trans (by simp [h])
 
 end AssocList
 

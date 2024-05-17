@@ -8,10 +8,11 @@ import Batteries.Data.List.Lemmas
 import Batteries.Data.List.Perm
 import Hashmap.LawfulHashable
 import Hashmap.Or
+import Hashmap.DHashMap.ForUpstream
 
-universe v u
+universe u v w
 
-variable {α : Type u} {β : α → Type v}
+variable {α : Type u} {β : α → Type v} {γ : α → Type w}
 
 section
 variable {α : Type u} {β : Type v}
@@ -606,7 +607,7 @@ theorem DistinctKeys.congr [BEq α] [PartialEquivBEq α] {l l' : List (Σ a, β 
     l.DistinctKeys ↔ l'.DistinctKeys :=
   ⟨fun h' => h'.perm h.symm, fun h' => h'.perm h⟩
 
-theorem distinctKeys_of_sublist_keys [BEq α] {l l' : List (Σ a, β a)} (h : l'.keys <+ l.keys) : l.DistinctKeys → l'.DistinctKeys :=
+theorem distinctKeys_of_sublist_keys [BEq α] {l : List (Σ a, β a)} {l' : List (Σ a, γ a)} (h : l'.keys <+ l.keys) : l.DistinctKeys → l'.DistinctKeys :=
   fun ⟨h'⟩ => ⟨h'.sublist h⟩
 
 theorem DistinctKeys.of_keys_eq [BEq α] {l l' : List (Σ a, β a)} (h : l.keys = l'.keys) : l.DistinctKeys → l'.DistinctKeys :=
@@ -799,6 +800,21 @@ theorem findEntry?_eraseKey [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)
   cases h : k == a
   · simp [findEntry?_eraseKey_of_false h, h]
   · simp [findEntry?_eraseKey_of_beq hl h, h]
+
+theorem keys_filterMap [BEq α] {l : List (Σ a, β a)} {f : (a : α) → β a → Option (γ a)} :
+    (l.filterMap fun p => (f p.1 p.2).map (⟨p.1, ·⟩)).keys = (l.filter fun p => (f p.1 p.2).isSome).keys := by
+  induction l using assoc_induction
+  · simp
+  · next k v t ih =>
+    simp only [filterMap_cons, filter_cons]
+    cases f k v <;> simp [ih]
+
+theorem DistinctKeys.filterMap [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {f : (a : α) → β a → Option (γ a)} :
+    l.DistinctKeys → (l.filterMap fun p => (f p.1 p.2).map (⟨p.1, ·⟩)).DistinctKeys := by
+  apply distinctKeys_of_sublist_keys
+  rw [keys_filterMap, keys_eq_map, keys_eq_map]
+  apply Sublist.map
+  exact filter_sublist l
 
 section
 
