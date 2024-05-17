@@ -1,6 +1,10 @@
 import Hashmap.DHashMap.Basic
 
 /-!
+
+If you want to run this benchmark, go back to cb4414789b5addafb2418678b118348944a85cdf where all the necessary
+functions on the hash map are implemented.
+
 Example run below. This benchmark tests three different implementations of the `filterMap` operation.
 
 * `filterMap₁` filters the buckets using a non-tail-recursive filterMap operation on AssocLists and computes the

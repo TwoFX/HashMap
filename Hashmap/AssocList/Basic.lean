@@ -143,13 +143,8 @@ theorem toList_insert [BEq α] {l : AssocList α β} {k : α} {v : β k} :
     (l.insert k v).toList = l.toList.insertEntry k v := by
   simp [insert, List.insertEntry, apply_bif toList]
 
-@[specialize] def filterMap {γ : α → Type w} (f : (a : α) → β a → Option (γ a)) : AssocList α β → AssocList α γ
-  | nil => nil
-  | cons k v t => match f k v with
-      | none => filterMap f t
-      | some v' => cons k v' (filterMap f t)
-
-@[specialize] def filterMapTR {γ : α → Type w} (f : (a : α) → β a → Option (γ a)) : AssocList α β → AssocList α γ :=
+@[specialize] def filterMap {γ : α → Type w} (f : (a : α) → β a → Option (γ a)) :
+    AssocList α β → AssocList α γ :=
   go .nil
 where
   @[specialize] go (acc : AssocList α γ) : AssocList α β → AssocList α γ
