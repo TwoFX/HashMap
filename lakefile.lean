@@ -11,4 +11,11 @@ lean_lib «Hashmap» where
 lean_exe «hashmap» where
   root := `Main
 
+@[default_target]
+lean_exe «insert» where
+  root := `Hashmap.Benchmark.Insert
+
+lean_exe «filtermap» where
+  root := `Hashmap.Benchmark.FilterMap
+
 require batteries from git "https://github.com/leanprover-community/batteries" @ "main"

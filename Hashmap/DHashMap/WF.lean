@@ -6,6 +6,7 @@ Authors: Markus Himmel
 import Hashmap.DHashMap.Basic
 import Hashmap.DHashMap.ForUpstream
 import Hashmap.DHashMap.Model
+import Hashmap.Leftovers
 
 set_option autoImplicit false
 
@@ -23,6 +24,16 @@ theorem toListModel_mkArray_nil {c} : toListModel (mkArray c (AssocList.nil : As
   intro d
   induction d <;> simp_all
 
+@[simp]
+theorem computeSize_eq {buckets : Array (AssocList α β)} : computeSize buckets = (toListModel buckets).length := by
+  rw [computeSize, toListModel, List.bind_eq_foldl, Array.foldl_eq_foldl_data]
+  suffices ∀ (l : List (AssocList α β)) (l' : List (Σ a, β a)),
+      l.foldl (fun d b => d + b.toList.length) l'.length = (l.foldl (fun acc a => acc ++ a.toList) l').length
+    by simpa using this buckets.data []
+  intro l l'
+  induction l generalizing l'
+  · simp
+  · next l₂ t ih => rw [foldl_cons, ← List.length_append, ih, foldl_cons]
 namespace Raw₀
 
 /-! # Raw₀.empty -/
@@ -42,7 +53,7 @@ theorem wfImp_empty [BEq α] [Hashable α] {c} : (empty c : Raw₀ α β).1.WFIm
 
 theorem isHashSelf_reinsertAux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
     (data : {d : Array (AssocList α β) // 0 < d.size}) (a : α) (b : β a) (h : IsHashSelf data.1) :
-    IsHashSelf (reinsertAux data a b).1 := by
+    IsHashSelf (reinsertAux hash data a b).1 := by
   rw [reinsertAux_eq]
   refine h.updateBucket (fun l p hp => ?_)
   simp only [AssocList.toList_cons, mem_cons] at hp
@@ -54,20 +65,20 @@ theorem isHashSelf_reinsertAux [BEq α] [Hashable α] [EquivBEq α] [LawfulHasha
 
 theorem toListModel_reinsertAux [BEq α] [Hashable α] [PartialEquivBEq α]
     (data : {d : Array (AssocList α β) // 0 < d.size}) (a : α) (b : β a) :
-    toListModel (reinsertAux data a b).1 ~ ⟨a, b⟩ :: toListModel data.1 := by
+    toListModel (reinsertAux hash data a b).1 ~ ⟨a, b⟩ :: toListModel data.1 := by
   rw [reinsertAux_eq]
   obtain ⟨l, h₁, h₂, -⟩ := exists_bucket_of_update data.1 data.2 a (fun l => l.cons a b)
   exact h₂.trans (by simpa using h₁.symm)
 
 theorem isHashSelf_foldl_reinsertAux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (l : AssocList α β) (target : { d : Array (AssocList α β) // 0 < d.size }) :
-    IsHashSelf target.1 → IsHashSelf (l.foldl reinsertAux target).1 := by
+    IsHashSelf target.1 → IsHashSelf (l.foldl (reinsertAux hash) target).1 := by
   induction l generalizing target
   · simp [AssocList.foldl, AssocList.foldlM, Id.run]
   · next k v _ ih => exact fun h => ih _ (isHashSelf_reinsertAux _ _ _ h)
 
 theorem toListModel_foldl_reinsertAux [BEq α] [Hashable α] [PartialEquivBEq α] (l : AssocList α β)
     (target : { d : Array (AssocList α β) // 0 < d.size }) :
-    toListModel (l.foldl reinsertAux target).1 ~ l.toList ++ toListModel target.1 := by
+    toListModel (l.foldl (reinsertAux hash) target).1 ~ l.toList ++ toListModel target.1 := by
   induction l generalizing target
   · simp
   · next k v t ih =>
@@ -79,7 +90,7 @@ theorem toListModel_foldl_reinsertAux [BEq α] [Hashable α] [PartialEquivBEq α
 
 theorem expand.go_pos [Hashable α] {i : Nat} {source : Array (AssocList α β)} {target : { d : Array (AssocList α β) // 0 < d.size }}
     (h : i < source.size) : expand.go i source target =
-      go (i + 1) (source.set ⟨i, h⟩ .nil) ((source.get ⟨i, h⟩).foldl reinsertAux target) := by
+      go (i + 1) (source.set ⟨i, h⟩ .nil) ((source.get ⟨i, h⟩).foldl (reinsertAux hash) target) := by
   rw [expand.go]
   simp only [h, dite_true]
 

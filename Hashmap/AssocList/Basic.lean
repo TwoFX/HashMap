@@ -50,9 +50,22 @@ def toList : AssocList α β → List (Σ a, β a)
 @[simp] theorem toList_cons {l : AssocList α β} {a : α} {b : β a} : (l.cons a b).toList = ⟨a, b⟩ :: l.toList := rfl
 
 @[simp]
-theorem foldl_eq [BEq α] {f : δ → (a : α) → β a → δ} {init : δ} {l : AssocList α β} :
+theorem foldl_eq {f : δ → (a : α) → β a → δ} {init : δ} {l : AssocList α β} :
     l.foldl f init = l.toList.foldl (fun d p => f d p.1 p.2) init := by
   induction l generalizing init <;> simp_all [foldl, Id.run, foldlM]
+
+def length (l : AssocList α β) : Nat :=
+  l.foldl (fun n _ _ => n + 1) 0
+
+@[simp]
+theorem length_eq {l : AssocList α β} : l.length = l.toList.length := by
+  rw [length, foldl_eq]
+  suffices ∀ n, l.toList.foldl (fun d _ => d + 1) n = l.toList.length + n by simpa using this 0
+  induction l
+  · simp
+  · next _ _ t ih =>
+    intro n
+    simp [ih, Nat.add_assoc, Nat.add_comm n 1]
 
 /-- `O(n)`. Returns the first entry in the list whose key is equal to `a`. -/
 def findEntry? [BEq α] (a : α) : AssocList α β → Option (Σ a, β a)
@@ -129,6 +142,21 @@ def insert [BEq α] (l : AssocList α β) (k : α) (v : β k) : AssocList α β 
 theorem toList_insert [BEq α] {l : AssocList α β} {k : α} {v : β k} :
     (l.insert k v).toList = l.toList.insertEntry k v := by
   simp [insert, List.insertEntry, apply_bif toList]
+
+@[specialize] def filterMap {γ : α → Type w} (f : (a : α) → β a → Option (γ a)) : AssocList α β → AssocList α γ
+  | nil => nil
+  | cons k v t => match f k v with
+      | none => filterMap f t
+      | some v' => cons k v' (filterMap f t)
+
+@[specialize] def filterMapTR {γ : α → Type w} (f : (a : α) → β a → Option (γ a)) : AssocList α β → AssocList α γ :=
+  go .nil
+where
+  @[specialize] go (acc : AssocList α γ) : AssocList α β → AssocList α γ
+  | nil => acc
+  | cons k v t => match f k v with
+      | none => go acc t
+      | some v' => go (cons k v' acc) t
 
 end AssocList
 

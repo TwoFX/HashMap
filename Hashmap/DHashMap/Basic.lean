@@ -10,7 +10,7 @@ import Hashmap.DHashMap.Index
 
 set_option autoImplicit false
 
-universe u v
+universe u v w
 
 variable {α : Type u} {β : α → Type v}
 
@@ -29,6 +29,9 @@ private def numBucketsForCapacity (capacity : Nat) : Nat :=
 def toListModel (buckets : Array (AssocList α β)) : List (Σ a, β a) :=
   buckets.data.bind AssocList.toList
 
+def computeSize (buckets : Array (AssocList α β)) : Nat :=
+  buckets.foldl (fun d b => d + b.length) 0
+
 structure Raw (α : Type u) (β : α → Type v) where
   size : Nat
   buckets : Array (AssocList α β)
@@ -42,14 +45,15 @@ namespace Raw₀
   ⟨⟨0, mkArray (numBucketsForCapacity capacity).nextPowerOfTwo AssocList.nil⟩,
     by simpa using Nat.pos_of_isPowerOfTwo (Nat.isPowerOfTwo_nextPowerOfTwo _)⟩
 
-@[inline] def reinsertAux [Hashable α]
+-- Take `hash` as a function instead of `Hashable α` as per https://github.com/leanprover/lean4/issues/4191
+@[inline] def reinsertAux (hash : α → UInt64)
     (data : { d : Array (AssocList α β) // 0 < d.size }) (a : α) (b : β a) : { d : Array (AssocList α β) // 0 < d.size } :=
   let ⟨data, hd⟩ := data
   let ⟨i, h⟩ := mkIdx data.size hd (hash a)
   ⟨data.uset i (data[i].cons a b) h, by simpa [-List.length_pos]⟩
 
 /-- Copies all the entries from `buckets` into a new hash map with a larger capacity. -/
-@[inline] def expand [Hashable α] (data : { d : Array (AssocList α β) // 0 < d.size }) : { d : Array (AssocList α β) // 0 < d.size } :=
+def expand [Hashable α] (data : { d : Array (AssocList α β) // 0 < d.size }) : { d : Array (AssocList α β) // 0 < d.size } :=
   let ⟨data, hd⟩ := data
   let nbuckets := data.size * 2
   let ⟨newBuckets, hn⟩ := go 0 data ⟨mkArray nbuckets AssocList.nil, by simpa [nbuckets] using Nat.mul_pos hd Nat.two_pos⟩
@@ -65,7 +69,7 @@ where
       -- We remove `es` from `source` to make sure we can reuse its memory cells
       -- when performing es.foldl
       let source := source.set idx .nil
-      let target := es.foldl reinsertAux target
+      let target := es.foldl (reinsertAux hash) target
       go (i+1) source target
     else target
   termination_by source.size - i
@@ -88,6 +92,14 @@ where
     let size'    := size + 1
     let buckets' := buckets.uset i (AssocList.cons a b bkt) h
     (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets', -List.length_pos]⟩, false)
+
+@[inline] def insertUnsafe [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β × Bool :=
+  let ⟨⟨size, buckets⟩, hm⟩ := m
+  let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
+  let bkt := buckets[i]
+  let size'    := size + 1
+  let buckets' := buckets.uset i (AssocList.cons a b bkt) h
+  (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets', -List.length_pos]⟩, false)
 
 @[inline] def findEntry? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
   let ⟨⟨_, buckets⟩, h⟩ := m
@@ -112,6 +124,43 @@ def erase [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
     ⟨⟨size - 1, buckets.uset i (bkt.erase a) h⟩, by simpa [-List.length_pos]⟩
   else
     ⟨⟨size, buckets⟩, hb⟩
+
+@[specialize] def filterMap₁ {γ : α → Type w} (f : (a : α) → β a → Option (γ a))
+    (m : Raw₀ α β) : Raw₀ α γ :=
+  let ⟨⟨_, buckets⟩, hb⟩ := m
+  let newBuckets := buckets.map (AssocList.filterMap f)
+  ⟨⟨computeSize newBuckets, newBuckets⟩, by simpa [-List.length_pos, newBuckets] using hb⟩
+
+@[specialize] def filterMap₂ {γ : α → Type w} (f : (a : α) → β a → Option (γ a))
+    (m : Raw₀ α β) : Raw₀ α γ :=
+  let ⟨⟨_, buckets⟩, hb⟩ := m
+  let ⟨newBuckets, ⟨newSize⟩⟩ := buckets.mapM (m := StateM (ULift Nat)) (go .nil) |>.run ⟨0⟩ |>.run
+  ⟨⟨newSize, newBuckets⟩, sorry⟩
+where
+  -- The two implementations of `go` below yield identical IR as expected.
+
+  /-- Inner loop of `filterMap`. Note that this reverses the bucket lists,
+  but this is fine since bucket lists are unordered. -/
+  @[specialize] go (acc : AssocList α γ) : AssocList α β → ULift Nat → AssocList α γ × ULift Nat
+  | .nil, n => (acc, n)
+  | .cons a b l, n => match f a b with
+    | none => go acc l n
+    | some c => go (.cons a c acc) l ⟨n.1 + 1⟩
+  -- @[specialize] go (acc : AssocList α γ) : AssocList α β → StateM (ULift Nat) (AssocList α γ)
+  --   | .nil => pure acc
+  --   | .cons a b l => match f a b with
+  --     | none => go acc l
+  --     | some c => do
+  --         let ⟨n⟩ ← get
+  --         set (ULift.up (n + 1))
+  --         go (.cons a c acc) l
+
+
+@[specialize] def filterMap₃ {γ : α → Type w} (f : (a : α) → β a → Option (γ a))
+    (m : Raw₀ α β) : Raw₀ α γ :=
+  let ⟨⟨_, buckets⟩, hb⟩ := m
+  let newBuckets := buckets.map (AssocList.filterMapTR f)
+  ⟨⟨computeSize newBuckets, newBuckets⟩, by simpa [-List.length_pos, newBuckets] using hb⟩
 
 section
 
@@ -238,6 +287,10 @@ Returns `true` if there was a previous mapping that was replaced.
   let m' := Raw₀.insert ⟨m.1, m.2.size_buckets_pos⟩ a b
   ⟨⟨m'.1.1, .insert₀ m.2⟩, m'.2⟩
 
+@[inline] def insertUnsafe [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
+  let m' := Raw₀.insertUnsafe ⟨m.1, m.2.size_buckets_pos⟩ a b
+  ⟨m'.1.1, sorry⟩
+
 /--
 Inserts the mapping into the map, replacing an existing mapping if there is one.
 -/
@@ -278,5 +331,20 @@ Retrieves the value associated with the given key, if it exists. -/
   Raw₀.findConst? ⟨m.1, m.2.size_buckets_pos⟩ a
 
 end
+
+def size [BEq α] [Hashable α] (m : DHashMap α β) : Nat :=
+  m.1.size
+
+@[inline] def filterMap₁ {γ : α → Type w} [BEq α] [Hashable α] (m : DHashMap α β) (f : (a : α) → β a → Option (γ a)) :
+    DHashMap α γ :=
+  ⟨Raw₀.filterMap₁ f ⟨m.1, m.2.size_buckets_pos⟩, sorry⟩
+
+@[inline] def filterMap₂ {γ : α → Type w} [BEq α] [Hashable α] (m : DHashMap α β) (f : (a : α) → β a → Option (γ a)) :
+    DHashMap α γ :=
+  ⟨Raw₀.filterMap₂ f ⟨m.1, m.2.size_buckets_pos⟩, sorry⟩
+
+@[inline] def filterMap₃ {γ : α → Type w} [BEq α] [Hashable α] (m : DHashMap α β) (f : (a : α) → β a → Option (γ a)) :
+    DHashMap α γ :=
+  ⟨Raw₀.filterMap₃ f ⟨m.1, m.2.size_buckets_pos⟩, sorry⟩
 
 end MyLean.DHashMap

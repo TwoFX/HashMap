@@ -193,7 +193,7 @@ end
 /-! # Equivalence between model functions and real implementations -/
 
 theorem reinsertAux_eq [Hashable α] (data : { d : Array (AssocList α β) // 0 < d.size }) (a : α) (b : β a) :
-    (reinsertAux data a b).1 = updateBucket data.1 data.2 a (fun l => l.cons a b) := rfl
+    (reinsertAux hash data a b).1 = updateBucket data.1 data.2 a (fun l => l.cons a b) := rfl
 
 theorem findEntry?_eq_findEntry?ₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
     findEntry? m a = findEntry?ₘ m a := rfl
