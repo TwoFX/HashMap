@@ -387,7 +387,7 @@ end WFImp
 
 theorem WF.out [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw α β} (h : m.WF) : m.WFImp := by
   induction h
-  · assumption
+  · next h => exact h
   · exact WFImp.empty
   · exact WFImp.insert (by assumption)
   · exact WFImp.erase (by assumption)
@@ -428,9 +428,8 @@ theorem empty_eq [BEq α] [Hashable α] {c : Nat} : (empty c : DHashMap α β).1
 
 theorem emptyc_eq [BEq α] [Hashable α] : (∅ : DHashMap α β).1 = Raw₀.empty.1 := rfl
 
--- TODO: push proofs into WF so that we can call this method without `EquivBEq` and `LawfulHashable`.
-def filterMap [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : DHashMap α β) (f : (a : α) → β a → Option (δ a)) :
+def filterMap [BEq α] [Hashable α] (m : DHashMap α β) (f : (a : α) → β a → Option (δ a)) :
     DHashMap α δ :=
-  ⟨Raw₀.filterMap f ⟨m.1, m.2.size_buckets_pos⟩, .wf m.2.out.filterMap⟩
+  ⟨Raw₀.filterMap f ⟨m.1, m.2.size_buckets_pos⟩, .wf (Raw₀.filterMap f ⟨m.1, m.2.size_buckets_pos⟩).2 m.2.out.filterMap⟩
 
 end MyLean.DHashMap

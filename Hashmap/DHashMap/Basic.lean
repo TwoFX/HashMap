@@ -204,13 +204,13 @@ will need to provide proofs of `WF` to lemmas and should use the lemmas `WF.empt
 that map operations preserve well-formedness.
 -/
 inductive WF [BEq α] [Hashable α] : Raw α β → Prop where
-  | wf {m} : m.WFImp → WF m
+  | wf {m} : 0 < m.buckets.size → (∀ [EquivBEq α] [LawfulHashable α], m.WFImp) → WF m
   | empty₀ {c} : WF (Raw₀.empty c).1
   | insert₀ {m h a b} : WF m → WF (Raw₀.insert ⟨m, h⟩ a b).1.1
   | erase₀ {m h a} : WF m → WF (Raw₀.erase ⟨m, h⟩ a).1
 
 theorem WF.size_buckets_pos [BEq α] [Hashable α] (m : Raw α β) : WF m → 0 < m.buckets.size
-  | wf h => h.buckets_size
+  | wf h₁ _ => h₁
   | empty₀ => (Raw₀.empty _).2
   | insert₀ _ => (Raw₀.insert ⟨_, _⟩ _ _).1.2
   | erase₀ _ => (Raw₀.erase ⟨_, _⟩ _).2
