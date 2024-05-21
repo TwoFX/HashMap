@@ -7,6 +7,7 @@ import Hashmap.DHashMap.Basic
 import Hashmap.DHashMap.ForUpstream
 import Hashmap.DHashMap.Model
 import Hashmap.Leftovers
+import Hashmap.AssocList.Lemmas
 
 set_option autoImplicit false
 

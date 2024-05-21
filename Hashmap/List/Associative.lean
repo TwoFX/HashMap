@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
 import Hashmap.BEq
+import Hashmap.List.Defs
 import Batteries.Data.List.Lemmas
 import Batteries.Data.List.Perm
 import Hashmap.LawfulHashable
@@ -558,10 +559,6 @@ theorem length_eraseKey [BEq α] {l : List (Σ a, β a)} {k : α} :
 
 -- TODO: eraseKey+replaceEntry
 
-def keys : List (Σ a, β a) → List α
-  | nil => []
-  | ⟨k, _⟩ :: l => k :: (keys l)
-
 @[simp] theorem keys_nil : (nil : List (Σ a, β a)).keys = [] := rfl
 @[simp] theorem keys_cons {l : List (Σ a, β a)} {k : α} {v : β k} : (⟨k, v⟩ :: l).keys = k :: l.keys := rfl
 
@@ -582,10 +579,6 @@ theorem containsKey_eq_true_iff_exists_mem [BEq α] {l : List (Σ a, β a)} {a :
 theorem containsKey_of_mem [BEq α] [ReflBEq α] {l : List (Σ a, β a)} {p : Σ a, β a} (hp : p ∈ l) :
     l.containsKey p.1 :=
   containsKey_eq_true_iff_exists_mem.2 ⟨p, ⟨hp, BEq.refl⟩⟩
-
-/-- The well-formedness predicate for `AssocList` says that keys are pairwise distinct. -/
-structure DistinctKeys [BEq α] (l : List (Σ a, β a)) : Prop where
-  distinct : l.keys.Pairwise fun a b => (a == b) = false
 
 @[simp]
 theorem DistinctKeys.nil [BEq α] : ([] : List (Σ a, β a)).DistinctKeys :=
