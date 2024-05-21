@@ -15,6 +15,10 @@ lean_exe «hashmap» where
 lean_exe «insert» where
   root := `Hashmap.Benchmark.Insert
 
+@[default_target]
+lean_exe «empty» where
+  root := `Hashmap.Benchmark.Empty
+
 lean_exe «filtermap» where
   root := `Hashmap.Benchmark.FilterMap
 
