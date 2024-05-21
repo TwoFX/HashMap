@@ -372,6 +372,38 @@ theorem wfImp_filterMap [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
   rw [filterMap_eq_filterMapₘ]
   exact wfImp_filterMapₘ h
 
+/-! # `mapₘ` -/
+
+theorem toListModel_mapₘ {m : Raw₀ α β} {f : (a : α) → β a → δ a} :
+    toListModel (m.mapₘ f).1.buckets ~ (toListModel m.1.buckets).map fun p => ⟨p.1, f p.1 p.2⟩ :=
+  toListModel_updateAllBuckets AssocList.toList_map (by simp)
+
+theorem isHashSelf_mapₘ [BEq α] [Hashable α] [ReflBEq α] [LawfulHashable α] {m : Raw₀ α β} {f : (a : α) → β a → δ a}
+    (h : m.1.WFImp) : IsHashSelf (m.mapₘ f).1.buckets := by
+  refine h.buckets_hash_self.updateAllBuckets (fun l p hp => ?_)
+  have hp := AssocList.toList_map.mem_iff.1 hp
+  obtain ⟨p, hp₁, rfl⟩ := mem_map.1 hp
+  exact containsKey_of_mem hp₁
+
+theorem wfImp_mapₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} {f : (a : α) → β a → δ a}
+    (h : m.1.WFImp) : (m.mapₘ f).1.WFImp where
+  buckets_hash_self := isHashSelf_mapₘ h
+  buckets_size := by simpa [mapₘ] using h.buckets_size
+  size_eq := by rw [toListModel_mapₘ.length_eq, List.length_map, ← h.size_eq, mapₘ]
+  distinct := h.distinct.map.perm toListModel_mapₘ
+
+/-! # `map` -/
+
+theorem toListModel_map {m : Raw₀ α β} {f : (a : α) → β a → δ a} :
+    toListModel (m.map f).1.buckets ~ (toListModel m.1.buckets).map fun p => ⟨p.1, f p.1 p.2⟩ := by
+  rw [map_eq_mapₘ]
+  exact toListModel_mapₘ
+
+theorem wfImp_map [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} {f : (a : α) → β a → δ a}
+    (h : m.1.WFImp) : (m.map f).1.WFImp := by
+  rw [map_eq_mapₘ]
+  exact wfImp_mapₘ h
+
 end Raw₀
 
 namespace Raw
@@ -382,6 +414,7 @@ alias empty := Raw₀.wfImp_empty
 alias insert := Raw₀.wfImp_insert
 alias erase := Raw₀.wfImp_erase
 alias filterMap := Raw₀.wfImp_filterMap
+alias map := Raw₀.wfImp_map
 
 end WFImp
 
@@ -427,9 +460,5 @@ end Raw
 theorem empty_eq [BEq α] [Hashable α] {c : Nat} : (empty c : DHashMap α β).1 = (Raw₀.empty c).1 := rfl
 
 theorem emptyc_eq [BEq α] [Hashable α] : (∅ : DHashMap α β).1 = Raw₀.empty.1 := rfl
-
-def filterMap [BEq α] [Hashable α] (m : DHashMap α β) (f : (a : α) → β a → Option (δ a)) :
-    DHashMap α δ :=
-  ⟨Raw₀.filterMap f ⟨m.1, m.2.size_buckets_pos⟩, .wf (Raw₀.filterMap f ⟨m.1, m.2.size_buckets_pos⟩).2 m.2.out.filterMap⟩
 
 end MyLean.DHashMap

@@ -56,8 +56,7 @@ namespace Raw₀
 def expand [Hashable α] (data : { d : Array (AssocList α β) // 0 < d.size }) : { d : Array (AssocList α β) // 0 < d.size } :=
   let ⟨data, hd⟩ := data
   let nbuckets := data.size * 2
-  let ⟨newBuckets, hn⟩ := go 0 data ⟨mkArray nbuckets AssocList.nil, by simpa [nbuckets] using Nat.mul_pos hd Nat.two_pos⟩
-  ⟨newBuckets, hn⟩
+  go 0 data ⟨mkArray nbuckets AssocList.nil, by simpa [nbuckets] using Nat.mul_pos hd Nat.two_pos⟩
 where
   /-- Inner loop of `expand`. Copies elements `source[i:]` into `target`,
   destroying `source` in the process. -/
@@ -125,6 +124,11 @@ def erase [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
   let newBuckets := buckets.map (AssocList.filterMap f)
   ⟨⟨computeSize newBuckets, newBuckets⟩, by simpa [-List.length_pos, newBuckets] using hb⟩
 
+@[specialize] def map {γ : α → Type w} (f : (a : α) → β a → γ a) (m : Raw₀ α β) : Raw₀ α γ :=
+  let ⟨⟨size, buckets⟩, hb⟩ := m
+  let newBuckets := buckets.map (AssocList.map f)
+  ⟨⟨size, newBuckets⟩, by simpa [-List.length_pos, newBuckets] using hb⟩
+
 section
 
 variable {β : Type v}
@@ -174,6 +178,16 @@ instance : EmptyCollection (Raw α β) where
   if h : 0 < m.buckets.size then
     Raw₀.erase ⟨m, h⟩ a
   else m -- will never happen for well-formed inputs
+
+@[inline] def filterMap {γ : α → Type w} (f : (a : α) → β a → Option (γ a)) (m : Raw α β) : Raw α γ :=
+  if h : 0 < m.buckets.size then
+    Raw₀.filterMap f ⟨m, h⟩
+  else ∅ -- will never happen for well-formed inputs
+
+@[inline] def map {γ : α → Type w} (f : (a : α) → β a → γ a) (m : Raw α β) : Raw α γ :=
+  if h : 0 < m.buckets.size then
+    Raw₀.map f ⟨m, h⟩
+  else ∅ -- will never happen for well-formed inputs
 
 section
 

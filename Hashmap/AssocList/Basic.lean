@@ -172,6 +172,26 @@ theorem toList_filterMap {f : (a : α) → β a → Option (γ a)} {l : AssocLis
       simp only [toList_cons, cons_append]
       exact perm_middle.symm.trans (by simp [h])
 
+@[specialize] def map (f : (a : α) → β a → γ a) : AssocList α β → AssocList α γ :=
+  go .nil
+where
+  @[specialize] go (acc : AssocList α γ) : AssocList α β → AssocList α γ
+  | nil => acc
+  | cons k v t => go (cons k (f k v) acc) t
+
+theorem toList_map {f : (a : α) → β a → γ a} {l : AssocList α β} :
+    (l.map f).toList ~ l.toList.map fun p => ⟨p.1, f p.1 p.2⟩ := by
+  rw [map]
+  suffices ∀ l l', (map.go f l l').toList ~ l.toList ++ l'.toList.map fun p => ⟨p.1, f p.1 p.2⟩ by
+    simpa using this .nil l
+  intros l l'
+  induction l' generalizing l
+  · simp [map.go]
+  · next k v t ih =>
+    simp only [map.go, toList_cons, map_cons]
+    refine (ih _).trans ?_
+    simpa using perm_middle.symm
+
 end AssocList
 
 end MyLean

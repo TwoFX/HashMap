@@ -610,7 +610,7 @@ theorem DistinctKeys.congr [BEq α] [PartialEquivBEq α] {l l' : List (Σ a, β 
 theorem distinctKeys_of_sublist_keys [BEq α] {l : List (Σ a, β a)} {l' : List (Σ a, γ a)} (h : l'.keys <+ l.keys) : l.DistinctKeys → l'.DistinctKeys :=
   fun ⟨h'⟩ => ⟨h'.sublist h⟩
 
-theorem DistinctKeys.of_keys_eq [BEq α] {l l' : List (Σ a, β a)} (h : l.keys = l'.keys) : l.DistinctKeys → l'.DistinctKeys :=
+theorem DistinctKeys.of_keys_eq [BEq α] {l : List (Σ a, β a)} {l' : List (Σ a, γ a)} (h : l.keys = l'.keys) : l.DistinctKeys → l'.DistinctKeys :=
   distinctKeys_of_sublist_keys (h ▸ Sublist.refl _)
 
 -- TODO
@@ -809,12 +809,21 @@ theorem keys_filterMap [BEq α] {l : List (Σ a, β a)} {f : (a : α) → β a �
     simp only [filterMap_cons, filter_cons]
     cases f k v <;> simp [ih]
 
+@[simp]
+theorem keys_map [BEq α] {l : List (Σ a, β a)} {f : (a : α) → β a → γ a} :
+    (l.map fun p => ⟨p.1, f p.1 p.2⟩).keys = l.keys := by
+  induction l using assoc_induction <;> simp_all
+
 theorem DistinctKeys.filterMap [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {f : (a : α) → β a → Option (γ a)} :
     l.DistinctKeys → (l.filterMap fun p => (f p.1 p.2).map (⟨p.1, ·⟩)).DistinctKeys := by
   apply distinctKeys_of_sublist_keys
   rw [keys_filterMap, keys_eq_map, keys_eq_map]
   apply Sublist.map
   exact filter_sublist l
+
+theorem DistinctKeys.map [BEq α] {l : List (Σ a, β a)} {f : (a : α) → β a → γ a}
+    (h : l.DistinctKeys) : (l.map fun p => ⟨p.1, f p.1 p.2⟩).DistinctKeys :=
+  h.of_keys_eq keys_map.symm
 
 section
 

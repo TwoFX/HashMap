@@ -240,6 +240,9 @@ def eraseₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :
 def filterMapₘ (m : Raw₀ α β) (f : (a : α) → β a → Option (δ a)) : Raw₀ α δ :=
   ⟨withComputedSize (updateAllBuckets m.1.buckets fun l => l.filterMap f), by simpa using m.2⟩
 
+def mapₘ (m : Raw₀ α β) (f : (a : α) → β a → δ a) : Raw₀ α δ :=
+  ⟨⟨m.1.size, updateAllBuckets m.1.buckets (AssocList.map f)⟩, by simpa using m.2⟩
+
 section
 
 variable {β : Type v}
@@ -276,6 +279,9 @@ theorem erase_eq_eraseₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : m
 
 theorem filterMap_eq_filterMapₘ (m : Raw₀ α β) (f : (a : α) → β a → Option (δ a)) :
     m.filterMap f = m.filterMapₘ f := rfl
+
+theorem map_eq_mapₘ (m : Raw₀ α β) (f : (a : α) → β a → δ a) :
+    m.map f = m.mapₘ f := rfl
 
 section
 
