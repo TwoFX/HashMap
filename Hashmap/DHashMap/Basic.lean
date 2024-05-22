@@ -14,7 +14,7 @@ set_option autoImplicit false
 
 universe u v w
 
-variable {α : Type u} {β : α → Type v}
+variable {α : Type u} {β : α → Type v} {δ : Type w} {m : Type w → Type w} [Monad m]
 
 namespace MyLean
 
@@ -109,6 +109,16 @@ where
   let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
   buckets[i].contains a
 
+@[inline] def findEntry [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (hma : m.contains a) : Σ a, β a :=
+  let ⟨⟨_, buckets⟩, h⟩ := m
+  let idx := mkIdx buckets.size h (hash a)
+  buckets[idx.1].findEntry a hma
+
+@[inline] def find [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) (hma : m.contains a) : β a :=
+  let ⟨⟨_, buckets⟩, h⟩ := m
+  let idx := mkIdx buckets.size h (hash a)
+  buckets[idx.1].findCast a hma
+
 def erase [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
   let ⟨⟨size, buckets⟩, hb⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size hb (hash a)
@@ -139,6 +149,11 @@ variable {β : Type v}
   let ⟨⟨_, buckets⟩, h⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
   buckets[i].find? a
+
+@[inline] def findConst [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (hma : m.contains a) : β :=
+  let ⟨⟨_, buckets⟩, h⟩ := m
+  let idx := mkIdx buckets.size h (hash a)
+  buckets[idx.1].find a hma
 
 end
 
@@ -201,6 +216,22 @@ variable {β : Type v}
   else none -- will never happen for well-formed inputs
 
 end
+
+/-- Folds the given function over the mappings in the hash map in some order. -/
+def foldlM (f : δ → (a : α) → β a → m δ) (init : δ) (b : Raw α β) : m δ :=
+  b.buckets.foldlM (fun acc l => l.foldlM f acc) init
+
+/-- Folds the given function over the mappings in the hash map in some order. -/
+def foldl (f : δ → (a : α) → β a → δ) (init : δ) (b : Raw α β) : δ :=
+  Id.run (b.foldlM f init)
+
+def beq [BEq α] [Hashable α] [LawfulBEq α] [∀ k, BEq (β k)] (m₁ m₂ : Raw α β) : Bool :=
+  m₁.size = m₂.size && (m₁.foldl fun acc k v => acc && match m₂.find? k with
+  | none => false
+  | some v' => v == v') true
+
+instance [BEq α] [Hashable α] [LawfulBEq α] [∀ k, BEq (β k)] : BEq (Raw α β) where
+  beq := beq
 
 section WF
 
@@ -290,6 +321,9 @@ or switch to a non-dependent `HashMap`.
 @[inline] def contains [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Bool :=
   Raw₀.contains ⟨m.1, m.2.size_buckets_pos⟩ a
 
+-- instance [BEq α] [Hashable α] : GetElem (DHashMap α β) α (Σ a, β a) fun m a => m.contains a := sorry
+-- instance [BEq α] [LawfulBEq α] [Hashable α] : DGetElem (DHashMap α β) α β fun m a => m.contains a := sorry
+
 /--
 Removes the mapping with the given key if it exists.
 -/
@@ -309,5 +343,8 @@ end
 
 def size [BEq α] [Hashable α] (m : DHashMap α β) : Nat :=
   m.1.size
+
+instance [BEq α] [Hashable α] [LawfulBEq α] [∀ k, BEq (β k)] : BEq (DHashMap α β) where
+  beq m₁ m₂ := m₁.1 == m₂.1
 
 end MyLean.DHashMap

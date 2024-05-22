@@ -83,6 +83,21 @@ def contains [BEq α] (a : α) : AssocList α β → Bool
   | nil => false
   | cons k _ l => k == a || l.contains a
 
+def findEntry [BEq α] (a : α) : (l : AssocList α β) → l.contains a → Σ a, β a
+  | nil, h => absurd h Bool.false_ne_true
+  | cons k v es, h => if hka : k == a then ⟨k, v⟩ else findEntry a es
+      (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
+
+def find {β : Type v} [BEq α] (a : α) : (l : AssocList α (fun _ => β)) → l.contains a → β
+  | nil, h => absurd h Bool.false_ne_true
+  | cons k v es, h => if hka : k == a then v else find a es
+      (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
+
+def findCast [BEq α] [LawfulBEq α] (a : α) : (l : AssocList α β) → l.contains a → β a
+  | nil, h => absurd h Bool.false_ne_true
+  | cons k v es, h => if hka : k == a then cast (congrArg β (eq_of_beq hka)) v else es.findCast a
+      (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
+
 def replace [BEq α] (a : α) (b : β a) : AssocList α β → AssocList α β
   | nil => nil
   | cons k v l => bif k == a then cons a b l else cons k v (replace a b l)
