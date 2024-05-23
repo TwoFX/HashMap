@@ -40,6 +40,9 @@ theorem findConst?_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.W
 theorem contains_eq_isSome_findEntry? {a : α} : m.contains a = (m.findEntry? a).isSome := by
   rw [findEntry?_eq_findEntry? h.out, contains_eq_containsKey h.out, List.containsKey_eq_isSome_findEntry?]
 
+theorem findEntry?_eq_some (a : α) (p : Σ a, β a) (h : m.findEntry? a = some p) : p.1 == a :=
+  AssocList.findEntry?_eq_some h
+
 end Raw₀
 
 namespace Raw
@@ -105,6 +108,9 @@ theorem findConst?_insert {β : Type v} (m : DHashMap α (fun _ => β)) (a k : �
 
 theorem contains_eq_isSome_findEntry? {a : α} : m.contains a = (m.findEntry? a).isSome :=
   Raw₀.contains_eq_isSome_findEntry? ⟨m.1, _⟩ m.2
+
+theorem findEntry?_eq_some {a : α} {p : Σ a, β a} (h : m.findEntry? a = some p) : p.1 == a :=
+  Raw₀.findEntry?_eq_some ⟨m.1, _⟩ _ _ h
 
 end
 

@@ -94,4 +94,8 @@ theorem toList_map {f : (a : α) → β a → γ a} {l : AssocList α β} :
     refine (ih _).trans ?_
     simpa using perm_middle.symm
 
+theorem findEntry?_eq_some [BEq α] {l : AssocList α β} {a : α} {p : Σ a, β a}
+    (h : l.findEntry? a = some p) : p.1 == a :=
+  List.findEntry?_eq_some (findEntry?_eq (l := l) ▸ h)
+
 end MyLean.AssocList

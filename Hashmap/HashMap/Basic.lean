@@ -74,6 +74,4 @@ instance [BEq α] [Hashable α] : EmptyCollection (HashMap α β) where
 @[inline] def contains [BEq α] [Hashable α] (m : HashMap α β) (a : α) : Bool :=
   m.inner.contains a
 
-instance [BEq α] [Hashable α] : GetElem (HashMap α β) α β fun m a => m.contains a := sorry
-
 end MyLean.HashMap

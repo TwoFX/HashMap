@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2024 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Markus Himmel
+-/
 import Hashmap.DHashMap.Basic
 
 /-!
@@ -34,8 +39,6 @@ theorem IsSmallestPrimeFactor.prime {n d : Nat} (h : IsSmallestPrimeFactor n d) 
   rw [← hij, Nat.mod_mul] at this
   exact Nat.eq_zero_of_add_eq_zero_right this
 
-abbrev M := StateM (DHashMap Nat fun n => { d : Nat // IsSmallestPrimeFactor n d })
-
 inductive FindFactorState (n : Nat) (d : Nat) where
   | found : (d' : Nat) → IsSmallestPrimeFactor n d' → FindFactorState n d
   | notFound : (∀ d', 1 < d' → d' ≤ d → n % d' ≠ 0) → FindFactorState n d
@@ -60,6 +63,8 @@ theorem Nat.div_pos (hba : b ≤ a) (hb : 0 < b) : 0 < a / b :=
       a = a % b := by simpa [h] using (mod_add_div a b).symm
       _ < b := mod_lt a hb
       _ ≤ a := hba
+
+abbrev M := StateM (DHashMap Nat fun n => { d : Nat // IsSmallestPrimeFactor n d })
 
 def findFactor (n : Nat) (hn : 1 < n) : M { d : Nat // IsSmallestPrimeFactor n d } := do
   let cache ← get

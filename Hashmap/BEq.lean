@@ -57,3 +57,14 @@ instance (priority := low) [BEq α] [LawfulBEq α] : EquivBEq α where
   refl := LawfulBEq.rfl
   symm h := (beq_iff_eq _ _).2 <| Eq.symm <| (beq_iff_eq _ _).1 h
   trans hab hbc := (beq_iff_eq _ _).2 <| ((beq_iff_eq _ _).1 hab).trans <| (beq_iff_eq _ _).1 hbc
+
+theorem ReflBEq.of_injective [BEq α] [BEq β] [ReflBEq β] (f : α → β) (hf : ∀ {a b}, f a == f b → a == b) : ReflBEq α where
+  refl {_} := hf BEq.refl
+
+theorem PartialEquivBEq.of_embedding [BEq α] [BEq β] [PartialEquivBEq β] (f : α → β) (hf : ∀ {a b}, f a == f b ↔ a == b) : PartialEquivBEq α where
+  symm h := hf.1 <| BEq.symm <| hf.2 h
+  trans h₁ h₂ := hf.1 <| BEq.trans (hf.2 h₁) (hf.2 h₂)
+
+theorem EquivBEq.of_embedding [BEq α] [BEq β] [EquivBEq β] (f : α → β) (hf : ∀ {a b}, f a == f b ↔ a == b) : EquivBEq α :=
+  { PartialEquivBEq.of_embedding f hf with
+    refl := hf.1 BEq.refl }
