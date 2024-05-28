@@ -43,6 +43,24 @@ instance : EmptyCollection (Raw α β) where
 def WF [BEq α] [Hashable α] : Raw α β → Prop :=
   fun r => r.inner.WF
 
+theorem WF.empty [BEq α] [Hashable α] {c} : (empty c : Raw α β).WF :=
+  DHashMap.Raw.WF.empty
+
+theorem WF.emptyc [BEq α] [Hashable α] : (∅ : Raw α β).WF :=
+  WF.empty
+
+theorem WF.insert' [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β} (h : m.WF) : (m.insert' a b).1.WF :=
+  DHashMap.Raw.WF.insert' h
+
+theorem WF.insert [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β} (h : m.WF) : (m.insert a b).WF :=
+  DHashMap.Raw.WF.insert h
+
+section
+
+
+
+end
+
 end Raw
 
 end HashMap

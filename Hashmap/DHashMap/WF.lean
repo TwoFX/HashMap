@@ -446,6 +446,22 @@ theorem contains_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} :
     m.contains a = Raw₀.contains ⟨m, h.size_buckets_pos⟩ a := by
   simp [contains, h.size_buckets_pos]
 
+theorem filterMap_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a : α) → β a → Option (δ a)} :
+    m.filterMap f = Raw₀.filterMap f ⟨m, h.size_buckets_pos⟩ := by
+  simp [filterMap, h.size_buckets_pos]
+
+theorem map_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a : α) → β a → δ a} :
+    m.map f = Raw₀.map f ⟨m, h.size_buckets_pos⟩ := by
+  simp [map, h.size_buckets_pos]
+
+theorem WF.filterMap [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a : α) → β a → Option (δ a)} :
+    (m.filterMap f).WF := by
+  simpa only [filterMap_eq h] using .wf (Raw₀.filterMap f ⟨m, h.size_buckets_pos⟩).2 (.filterMap h.out)
+
+theorem WF.map [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a : α) → β a → δ a} :
+    (m.map f).WF := by
+  simpa only [map_eq h] using .wf (Raw₀.map f ⟨m, h.size_buckets_pos⟩).2 (.map h.out)
+
 section
 
 variable {β : Type v}

@@ -262,6 +262,14 @@ theorem WF.size_buckets_pos [BEq α] [Hashable α] (m : Raw α β) : WF m → 0 
   | insert₀ _ => (Raw₀.insert ⟨_, _⟩ _ _).1.2
   | erase₀ _ => (Raw₀.erase ⟨_, _⟩ _).2
 
+@[simp]
+theorem WF.empty [BEq α] [Hashable α] {c : Nat} : (Raw.empty c : Raw α β).WF :=
+  .empty₀
+
+@[simp]
+theorem WF.emptyc [BEq α] [Hashable α] : (∅ : Raw α β).WF :=
+  .empty
+
 theorem WF.insert' [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β a} (h : m.WF) : (m.insert' a b).1.WF := by
   simpa [Raw.insert', h.size_buckets_pos] using .insert₀ h
 

@@ -117,15 +117,11 @@ def getPartitionAsDepList (t : Range) : M <| Option <| List <| {s : Nat // t.sta
   -- but this doesn't work because the type doesn't match. Instead we have to cast, but that doesn't work easily either,
   -- because we don't have easy access to the fact that the returned key is `BEq` to the key we searched for:
   -- return ((← read).findEntry? t).map fun ⟨t', partition⟩ => (partition.cast _).asDepList
-  -- Hence, we have to do this annoying dance:
+  -- Hence, we have to do this slightly annoying dance:
   let cache ← read
-  let entry := cache.findEntry? t
-  if h : entry.isSome then
-    have hs : cache.findEntry? t = some (entry.get h) := Option.eq_some_of_isSome h
-    have ht : (entry.get h).1 == t := cache.findEntry?_eq_some hs
-    return some ((entry.get h).2.cast ht).asDepList
-  else
-    return none
+  match h : cache.findEntry? t with
+  | some p => return some (p.2.cast (cache.findEntry?_eq_some h)).asDepList
+  | none => return none
 
 
 /-!
