@@ -114,10 +114,9 @@ theorem WF.empty [BEq α] [Hashable α] : (RawTrie.empty : RawTrie α).WF :=
 theorem WF.emptyc [BEq α] [Hashable α] : (∅ : RawTrie α).WF :=
   WF.empty
 
-theorem WF.child? [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {r : RawTrie α} (h : r.WF) {c : α} {s : RawTrie α} (h₂ : r.child? c = some s) :
-    s.WF := by
-  rcases h with ⟨-, h⟩
-  exact h _ ⟨_, h₂⟩
+theorem WF.child? [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {r : RawTrie α} (h : r.WF) {c : α}
+    {s : RawTrie α} (h₂ : r.child? c = some s) : s.WF :=
+  h.WF_of_hasValue _ ⟨_, h₂⟩
 
 theorem WF.child [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {r : RawTrie α} (h : r.WF) {c : α} : (r.child c).WF := by
   rw [RawTrie.child]
@@ -145,8 +144,6 @@ theorem contains_empty [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] 
 theorem contains_emptyc [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {l : List α} :
     (∅ : RawTrie α).contains l = false :=
   contains_empty
-
-example [BEq α] : BEq (List α) := by exact inferInstance
 
 theorem contains_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {l m : List α} {t : RawTrie α} (h : t.WF) :
     (t.insert l).contains m = ((l == m) || t.contains m) := by

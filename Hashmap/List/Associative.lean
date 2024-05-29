@@ -143,6 +143,28 @@ theorem findValueCast?_cons_self [BEq α] [LawfulBEq α] {l : List (Σ a, β a)}
     (⟨k, v⟩ :: l).findValueCast? k = some v := by
   rw [findValueCast?_cons_of_true BEq.refl, cast_eq]
 
+def findValueWithCast? [BEq α] (a : α) (cast : ∀ {b}, b == a → β b → β a) : List (Σ a, β a) → Option (β a)
+  | [] => none
+  | ⟨k, v⟩ :: l => if h : k == a then some (cast h v) else l.findValueWithCast? a cast
+
+@[simp] theorem findValueWithCast?_nil [BEq α] {a : α} {cast : ∀ {b}, b == a → β b → β a} :
+    ([] : List (Σ a, β a)).findValueWithCast? a cast = none := rfl
+theorem findValueWithCast?_cons [BEq α] {l : List (Σ a, β a)} {k a : α} {v : β k} {cast : ∀ {b}, b == a → β b → β a} :
+    (⟨k, v⟩ :: l).findValueWithCast? a cast = if h : k == a then some (cast h v) else l.findValueWithCast? a cast := rfl
+
+theorem findValueWithCast?_cons_of_true [BEq α] {l : List (Σ a, β a)} {k a : α} {v : β k} {cast : ∀ {b}, b == a → β b → β a} (h : k == a) :
+    (⟨k, v⟩ :: l).findValueWithCast? a cast = some (cast h v) := by
+  simp [findValueWithCast?, h]
+
+theorem findValueWithCast?_cons_of_false [BEq α] {l : List (Σ a, β a)} {k a : α} {v : β k} {cast : ∀ {b}, b == a → β b → β a}
+    (h : (k == a) = false) : (⟨k, v⟩ :: l).findValueWithCast? a cast = l.findValueWithCast? a cast := by
+  simp [findValueWithCast?, h]
+
+@[simp]
+theorem findValueWithCast?_cons_self [BEq α] [ReflBEq α] {l : List (Σ a, β a)} {k : α} {v : β k} {cast : ∀ {b}, b == k → β b → β k} :
+    (⟨k, v⟩ :: l).findValueWithCast? k cast = some (cast BEq.refl v) := by
+  rw [findValueWithCast?_cons_of_true BEq.refl]
+
 section
 
 variable {β : Type v}

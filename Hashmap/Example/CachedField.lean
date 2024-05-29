@@ -110,19 +110,10 @@ def hasLargePartition (t : Range) : M Bool := do
 def Partition.cast : {t t' : Range} → t == t' → Partition t → Partition t'
   | ⟨_, _, _⟩, ⟨_, _, _⟩, h, ⟨l, hl⟩ => ⟨l, by obtain ⟨rfl, rfl⟩ := Range.beq_iff.1 h; assumption⟩
 
-/-- This is the painful case, where we want information about the key we are searching for: -/
+/-- This is the painful case, where we want information about the key we are searching for. But `findWithCast?` makes
+    this quite feasible. -/
 def getPartitionAsDepList (t : Range) : M <| Option <| List <| {s : Nat // t.start ≤ s ∧ s ≤ t.stop } := do
-  -- we want to do:
-  -- return ((← read).findEntry? t).map fun ⟨t', partition⟩ => partition.asDepList
-  -- but this doesn't work because the type doesn't match. Instead we have to cast, but that doesn't work easily either,
-  -- because we don't have easy access to the fact that the returned key is `BEq` to the key we searched for:
-  -- return ((← read).findEntry? t).map fun ⟨t', partition⟩ => (partition.cast _).asDepList
-  -- Hence, we have to do this slightly annoying dance:
-  let cache ← read
-  match h : cache.findEntry? t with
-  | some p => return some (p.2.cast (cache.findEntry?_eq_some h)).asDepList
-  | none => return none
-
+  return (← read).findWithCast? t Partition.cast |>.map Partition.asDepList
 
 /-!
 On a completely unrelated note, some observations about the IR of alternative implementations of `getSize`.

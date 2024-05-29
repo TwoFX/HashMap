@@ -75,6 +75,11 @@ def findCast? [BEq α] [LawfulBEq α] (a : α) : AssocList α β → Option (β 
   | nil => none
   | cons k v es => if h : k == a then some (cast (congrArg β (eq_of_beq h)) v) else es.findCast? a
 
+@[specialize]
+def findWithCast? [BEq α] (a : α) (cast : ∀ {b}, b == a → β b → β a) : AssocList α β → Option (β a)
+  | nil => none
+  | cons k v es => if h : k == a then some (cast h v) else es.findWithCast? a cast
+
 def findKey? [BEq α] (a : α) : AssocList α β → Option α
   | nil => none
   | cons k _ es => bif k == a then some k else findKey? a es
@@ -84,18 +89,20 @@ def contains [BEq α] (a : α) : AssocList α β → Bool
   | cons k _ l => k == a || l.contains a
 
 def findEntry [BEq α] (a : α) : (l : AssocList α β) → l.contains a → Σ a, β a
-  | nil, h => absurd h Bool.false_ne_true
   | cons k v es, h => if hka : k == a then ⟨k, v⟩ else findEntry a es
       (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
 
 def find {β : Type v} [BEq α] (a : α) : (l : AssocList α (fun _ => β)) → l.contains a → β
-  | nil, h => absurd h Bool.false_ne_true
   | cons k v es, h => if hka : k == a then v else find a es
       (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
 
 def findCast [BEq α] [LawfulBEq α] (a : α) : (l : AssocList α β) → l.contains a → β a
-  | nil, h => absurd h Bool.false_ne_true
   | cons k v es, h => if hka : k == a then cast (congrArg β (eq_of_beq hka)) v else es.findCast a
+      (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
+
+@[specialize]
+def findWithCast [BEq α] (a : α) (cast : ∀ {b}, b == a → β b → β a) : (l : AssocList α β) → l.contains a → β a
+  | cons k v es, h => if hka : k == a then cast hka v else es.findWithCast a cast
       (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
 
 def replace [BEq α] (a : α) (b : β a) : AssocList α β → AssocList α β

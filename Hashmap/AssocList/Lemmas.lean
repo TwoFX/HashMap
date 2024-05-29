@@ -37,6 +37,11 @@ theorem findCast?_eq [BEq α] [LawfulBEq α] {l : AssocList α β} {a : α} : l.
   induction l <;> simp_all [findCast?, List.findValueCast?]
 
 @[simp]
+theorem findWithCast?_eq [BEq α] {l : AssocList α β} {a : α} {cast : ∀ {b}, b == a → β b → β a} :
+    l.findWithCast? a cast = l.toList.findValueWithCast? a cast := by
+  induction l <;> simp_all [findWithCast?, List.findValueWithCast?]
+
+@[simp]
 theorem findKey?_eq [BEq α] {l : AssocList α β} {a : α} : l.findKey? a = l.toList.findKey? a := by
   induction l <;> simp_all [findKey?, List.findKey?]
 
