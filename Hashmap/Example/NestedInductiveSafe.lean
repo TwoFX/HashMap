@@ -7,6 +7,8 @@ In this file, we give an example of a verified algorithm containing a nested ind
 nested inductive types must satisfy a "positivity condition", we cannot use the normal hash map with
 its bundled well-formedness. Instead, we need to put the raw data into the actual inductive, and
 declare an inductive predicate for the well-formedness.
+
+Our chosen example is a (non-path-compressing) trie that stores child nodes in a hash map.
 -/
 
 open MyLean
@@ -33,6 +35,15 @@ theorem hasValue_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
   · rintro (rfl|⟨a', h₁, h₂⟩)
     · exact ⟨a, by simp⟩
     · exact ⟨a', by simp_all⟩
+
+namespace List
+
+@[simp] theorem nil_beq_cons [BEq α] {a : α} {as : List α} : ([] == a::as) = false := rfl
+@[simp] theorem nil_beq_nil [BEq α] : ([] : List α) == [] := rfl
+@[simp] theorem cons_beq_nil [BEq α] {a : α} {as : List α} : (a::as == []) = false := rfl
+@[simp] theorem cons_beq_cons [BEq α] {a b : α} {as bs : List α} : (a::as == b::bs) = ((a == b) && as == bs) := rfl
+
+end List
 
 instance : Hashable Char where
   hash c := hash c.val
@@ -145,31 +156,19 @@ theorem contains_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
     · simp only [contains_nil_mk, Bool.cond_true_left, Bool.true_eq, Bool.or_eq_true]
       exact Or.inl rfl
     · next a as =>
-      have : ([] == (a :: as)) = false := rfl
-      rw [contains, contains, this, Bool.false_or]
+      rw [contains, contains, List.nil_beq_cons, Bool.false_or]
       congr
   · next a as u ih =>
     rw [insert]
     cases m
-    · have : ((a :: as) == []) = false := rfl
-      rw [contains_nil_mk, this, Bool.false_or, contains]
+    · rw [contains_nil_mk, List.cons_beq_nil, Bool.false_or, contains]
     · next b bs =>
       rw [contains, child?, children_mk, HashMap.Raw.find?_insert _ h.WF_children]
       cases hab : a == b
-      · rw [cond_false]
-        have : (a :: as == b :: bs) = false := by
-          change (a == b && _) = false -- TODO: BEq List lemmas
-          rw [hab, Bool.false_and]
-        rw [this, Bool.false_or, contains]
-        rfl
+      · rw [cond_false, List.cons_beq_cons, hab, Bool.false_and, contains, Bool.false_or, child?]
       · rw [cond_true]
         dsimp only
-        rw [ih h.child]
-        have : (a :: as == b :: bs) = (as == bs) := by
-          change (a == b && _) = (as == bs)
-          rw [hab, Bool.true_and]
-          rfl
-        rw [this]
+        rw [ih h.child, List.cons_beq_cons, hab, Bool.true_and]
         congr 1
         rw [contains, child]
         have hch : child? a u = child? b u := by
