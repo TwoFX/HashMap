@@ -37,6 +37,10 @@ theorem findConst?_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.W
     List.findValue?_of_perm h.out.insert.distinct (toListModel_insert h.out),
     List.findValue?_insertEntry]
 
+theorem findConst?_congr {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) {a b : α} (hab : a == b) :
+    m.findConst? a = m.findConst? b := by
+  rw [findConst?_eq_findValue? h.out, findConst?_eq_findValue? h.out, List.findValue?_eq_of_beq hab]
+
 theorem contains_eq_isSome_findEntry? {a : α} : m.contains a = (m.findEntry? a).isSome := by
   rw [findEntry?_eq_findEntry? h.out, contains_eq_containsKey h.out, List.containsKey_eq_isSome_findEntry?]
 
@@ -72,6 +76,10 @@ theorem findEntry?_insert {a k : α} {b : β a} :
 theorem findConst?_insert {β : Type v} (m : Raw α (fun _ => β)) (h : m.WF) (a k : α) (b : β) :
     (m.insert a b).findConst? k = bif a == k then some b else m.findConst? k := by
   rw [insert_eq h, findConst?_eq h, findConst?_eq h.insert₀, Raw₀.findConst?_insert ⟨m, _⟩ h]
+
+theorem findConst?_congr {β : Type v} (m : Raw α (fun _ => β)) (h : m.WF) {a b : α} (hab : a == b) :
+    m.findConst? a = m.findConst? b := by
+  rw [findConst?_eq h, findConst?_eq h, Raw₀.findConst?_congr ⟨m, _⟩ h hab]
 
 theorem contains_eq_isSome_findEntry? {a : α} : m.contains a = (m.findEntry? a).isSome := by
   rw [contains_eq h, findEntry?_eq h, Raw₀.contains_eq_isSome_findEntry? ⟨m, _⟩ h]

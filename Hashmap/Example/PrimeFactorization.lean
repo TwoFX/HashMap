@@ -6,10 +6,10 @@ Authors: Markus Himmel
 import Hashmap.DHashMap.Basic
 
 /-!
-# Dependent hash map showcase: intrinsically verified prime factorization
+# Dependent hash map showcase: prime factorization with refinement-style verification and caching
 
 In this file we give an example use case for a dependent hash map in the form of a prime factorization
-routine verified using the "intrinsic" verification style, where proofs are bundled directly with the data.
+routine verified using refinement types.
 
 The factorization routine works by repeatedly finding the smallest remaining prime factor using trial divison up to the
 square root of the number.
