@@ -48,6 +48,22 @@ theorem find?_insert {a k : α} {b : β} :
 theorem find?_congr {a b : α} (hab : a == b) : m.find? a = m.find? b := by
   simp [find?, DHashMap.Raw.findConst?_congr _ h hab]
 
+theorem mem_values_iff_exists_find?_eq_some {β : Type v} (m : Raw α β) (h : m.WF) {v : β} :
+    v ∈ m.values ↔ ∃ k, m.find? k = some v := by
+  simp [values, find?, DHashMap.Raw.mem_values_iff_exists_findConst?_eq_some _ h]
+
+@[simp]
+theorem values_empty {β : Type v} {c} : (empty c : Raw α β).values = [] := by
+  simp [values]
+
+@[simp]
+theorem values_emptyc {β : Type v} : (∅ : Raw α β).values = [] := by
+  simp [values]
+
+theorem mem_values_insert {β : Type v} {m : Raw α β} (h : m.WF) {a : α} {b v : β} :
+    v ∈ (m.insert a b).values ↔ b = v ∨ ∃ k, (a == k) = false ∧ m.find? k = some v := by
+  simp [values, find?, insert, DHashMap.Raw.mem_values_insert h]
+
 end Raw
 
 section
@@ -80,6 +96,22 @@ theorem findEntry?_insert {a k : α} {b : β} :
 theorem find?_insert {a k : α} {b : β} :
     (m.insert a b).find? k = bif a == k then some b else m.find? k := by
   simp [find?, insert, DHashMap.findConst?_insert]
+
+theorem mem_values_iff_exists_find?_eq_some {β : Type v} (m : HashMap α β) {v : β} :
+    v ∈ m.values ↔ ∃ k, m.find? k = some v := by
+  simp [values, find?, DHashMap.mem_values_iff_exists_findConst?_eq_some]
+
+@[simp]
+theorem values_empty {β : Type v} {c} : (empty c : HashMap α β).values = [] := by
+  simp [values]
+
+@[simp]
+theorem values_emptyc {β : Type v} : (∅ : HashMap α β).values = [] := by
+  simp [values]
+
+theorem mem_values_insert {β : Type v} {m : HashMap α β} {a : α} {b v : β} :
+    v ∈ (m.insert a b).values ↔ b = v ∨ ∃ k, (a == k) = false ∧ m.find? k = some v := by
+  simp [values, find?, insert, DHashMap.mem_values_insert]
 
 end
 

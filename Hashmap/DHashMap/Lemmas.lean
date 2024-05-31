@@ -47,6 +47,21 @@ theorem contains_eq_isSome_findEntry? {a : α} : m.contains a = (m.findEntry? a)
 theorem findEntry?_eq_some (a : α) (p : Σ a, β a) (h : m.findEntry? a = some p) : p.1 == a :=
   AssocList.findEntry?_eq_some h
 
+theorem mem_values_iff_exists_findConst?_eq_some {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) {v : β} :
+    v ∈ m.1.values ↔ ∃ k, m.findConst? k = some v := by
+  rw [mem_values_iff_mem_values_toListModel, List.mem_values_iff_exists_findValue?_eq_some h.out.distinct]
+  simp only [findConst?_eq_findValue? h.out]
+
+@[simp]
+theorem values_empty {β : Type v} {c} : (empty c : Raw₀ α (fun _ => β)).1.values = [] := by
+  simpa using Raw.values_perm_values_toListModel (m := (empty c : Raw₀ α (fun _ => β)).1)
+
+theorem mem_values_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) {a : α} {b v : β} :
+    v ∈ (m.insert a b).1.1.values ↔ b = v ∨ ∃ k, (a == k) = false ∧ m.findConst? k = some v := by
+  rw [mem_values_iff_mem_values_toListModel, List.mem_values_of_perm h.out.insert.distinct (toListModel_insert h.out),
+    List.mem_values_insertEntry h.out.distinct]
+  simp only [findConst?_eq_findValue? h.out]
+
 end Raw₀
 
 namespace Raw
@@ -84,6 +99,24 @@ theorem findConst?_congr {β : Type v} (m : Raw α (fun _ => β)) (h : m.WF) {a 
 theorem contains_eq_isSome_findEntry? {a : α} : m.contains a = (m.findEntry? a).isSome := by
   rw [contains_eq h, findEntry?_eq h, Raw₀.contains_eq_isSome_findEntry? ⟨m, _⟩ h]
 
+theorem mem_values_iff_exists_findConst?_eq_some {β : Type v} (m : Raw α (fun _ => β)) (h : m.WF) {v : β} :
+    v ∈ m.values ↔ ∃ k, m.findConst? k = some v := by
+  rw [Raw₀.mem_values_iff_exists_findConst?_eq_some ⟨m, h.size_buckets_pos⟩ h]
+  simp only [findConst?_eq h]
+
+@[simp]
+theorem values_empty {β : Type v} {c} : (empty c : Raw α (fun _ => β)).values = [] :=
+  Raw₀.values_empty
+
+@[simp]
+theorem values_emptyc {β : Type v} : (∅ : Raw α (fun _ => β)).values = [] :=
+  values_empty
+
+theorem mem_values_insert {β : Type v} {m : Raw α (fun _ => β)} (h : m.WF) {a : α} {b v : β} :
+    v ∈ (m.insert a b).values ↔ b = v ∨ ∃ k, (a == k) = false ∧ m.findConst? k = some v := by
+  rw [insert_eq h, Raw₀.mem_values_insert ⟨m, h.size_buckets_pos⟩ h]
+  simp only [findConst?_eq h]
+
 end Raw
 
 section
@@ -119,6 +152,22 @@ theorem contains_eq_isSome_findEntry? {a : α} : m.contains a = (m.findEntry? a)
 
 theorem findEntry?_eq_some {a : α} {p : Σ a, β a} (h : m.findEntry? a = some p) : p.1 == a :=
   Raw₀.findEntry?_eq_some ⟨m.1, _⟩ _ _ h
+
+theorem mem_values_iff_exists_findConst?_eq_some {β : Type v} (m : DHashMap α (fun _ => β)) {v : β} :
+    v ∈ m.values ↔ ∃ k, m.findConst? k = some v :=
+  Raw₀.mem_values_iff_exists_findConst?_eq_some ⟨m.1, _⟩ m.2
+
+@[simp]
+theorem values_empty {β : Type v} {c} : (empty c : DHashMap α (fun _ => β)).values = [] :=
+  Raw₀.values_empty
+
+@[simp]
+theorem values_emptyc {β : Type v} : (∅ : DHashMap α (fun _ => β)).values = [] :=
+  values_empty
+
+theorem mem_values_insert {β : Type v} {m : DHashMap α (fun _ => β)} {a : α} {b v : β} :
+    v ∈ (m.insert a b).values ↔ b = v ∨ ∃ k, (a == k) = false ∧ m.findConst? k = some v :=
+  Raw₀.mem_values_insert ⟨m.1, _⟩ m.2
 
 end
 

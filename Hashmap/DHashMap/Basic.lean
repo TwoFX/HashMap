@@ -263,7 +263,8 @@ def toListConst {β : Type v} (m : Raw α (fun _ => β)) : List (α × β) :=
 def toArrayConst {β : Type v} (m : Raw α (fun _ => β)) : Array (α × β) :=
   m.foldl (fun acc k v => acc.push ⟨k, v⟩) #[]
 
--- def containsValue
+def values {β : Type v} (m : Raw α (fun _ => β)) : List β :=
+  m.foldl (fun acc _ v => v :: acc) []
 
 section WF
 
@@ -400,5 +401,8 @@ def toList [BEq α] [Hashable α] (m : DHashMap α β) : List (Σ a, β a) :=
 
 def toArray [BEq α] [Hashable α] (m : DHashMap α β) : Array (Σ a, β a) :=
   m.1.toArray
+
+def values {β : Type v} [BEq α] [Hashable α] (m : DHashMap α (fun _ => β)) : List β :=
+  m.1.values
 
 end MyLean.DHashMap

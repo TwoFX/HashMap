@@ -35,6 +35,51 @@ theorem computeSize_eq {buckets : Array (AssocList α β)} : computeSize buckets
   induction l generalizing l'
   · simp
   · next l₂ t ih => rw [foldl_cons, ← List.length_append, ih, foldl_cons]
+
+-- TODO: find a home and clean up
+theorem Raw.toList_perm_toListModel {m : Raw α β} : m.toList ~ toListModel m.buckets := by
+  rw [Raw.toList, toListModel, List.bind_eq_foldl, Raw.foldl, Raw.foldlM, Array.foldlM_eq_foldlM_data, ← List.foldl_eq_foldlM, Id.run]
+  have h₁ : ∀ {l : AssocList α β} {acc : List (Σ a, β a)}, l.foldlM (m := Id) (fun acc k v => ⟨k, v⟩ :: acc) acc =
+      l.toList.reverse ++ acc := by
+    intro l acc
+    induction l generalizing acc
+    · simp [AssocList.foldlM]
+    · simp_all [AssocList.foldlM]
+  simp only [h₁]
+  suffices ∀ (l : List (AssocList α β)) (l₁ l₂), l₁ ~ l₂ →
+      l.foldl (fun acc m => m.toList.reverse ++ acc) l₁ ~ l.foldl (fun acc m => acc ++ m.toList) l₂ by
+    simpa using this m.buckets.data [] []
+  intros l l₁ l₂ h
+  induction l generalizing l₁ l₂
+  · simpa
+  · next l t ih =>
+    simp only [foldl_cons]
+    apply ih
+    refine (List.reverse_perm _).append_right _ |>.trans List.perm_append_comm |>.trans ?_
+    exact h.append_right l.toList
+
+-- TODO: find a home and clean up
+theorem Raw.values_eq_values_toList {β : Type v} {m : Raw α (fun _ => β)} : m.values = m.toList.values := by
+  simp only [Raw.toList, List.values_eq_map, Raw.values, Raw.foldl, Raw.foldlM, Array.foldlM_eq_foldlM_data, ← List.foldl_eq_foldlM, Id.run]
+  suffices ∀ (l : List (AssocList α (fun _ => β))) (l' : List ((_ : α) × β)),
+      List.foldl (fun acc l => AssocList.foldlM (m := Id) (fun acc _ v => v :: acc) acc l) (l'.map (·.2)) l =
+      List.map (fun x => x.snd) (List.foldl (fun acc l => AssocList.foldlM (m := Id) (fun acc k v => ⟨k, v⟩ :: acc) acc l) l' l) by
+    simpa using this m.buckets.data []
+  intros l l'
+  induction l generalizing l'
+  · simp
+  · next h t ih =>
+    simp only [foldl_cons]
+    rw [← ih]
+    congr
+    induction h generalizing l'
+    · simp [AssocList.foldlM]
+    · next k v t ih' => simp [AssocList.foldlM, ← ih']
+
+theorem Raw.values_perm_values_toListModel {β : Type v} {m : Raw α (fun _ => β)} : m.values ~ (toListModel m.buckets).values := by
+  rw [values_eq_values_toList, values_eq_map, values_eq_map]
+  exact (toList_perm_toListModel (m := m)).map _
+
 namespace Raw₀
 
 /-! # Raw₀.empty -/
@@ -206,6 +251,10 @@ theorem findConst?ₘ_eq_findValue? [BEq α] [Hashable α] [PartialEquivBEq α] 
 theorem findConst?_eq_findValue? [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
     (hm : m.1.WFImp) {a : α} : m.findConst? a = (toListModel m.1.buckets).findValue? a := by
   rw [findConst?_eq_findConst?ₘ, findConst?ₘ_eq_findValue? hm]
+
+theorem mem_values_iff_mem_values_toListModel {m : Raw₀ α (fun _ => β)} {b : β} :
+    b ∈ m.1.values ↔ b ∈ (toListModel m.1.buckets).values :=
+  Raw.values_perm_values_toListModel.mem_iff
 
 end
 

@@ -3,7 +3,7 @@ Copyright (c) 2024 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
-import Hashmap.HashMap.Properties
+import Hashmap.HashMap.Lemmas
 import Hashmap.List.BEq
 
 /-!
@@ -69,17 +69,17 @@ def insert [BEq α] [Hashable α] : List α → RawTrie α → RawTrie α
   | (a::as), t => ⟨t.contained, t.children.insert a ((t.child a).insert as)⟩
 
 inductive WF [BEq α] [Hashable α] : RawTrie α → Prop where
-  | mk {t : RawTrie α} : t.children.WF → (∀ c [EquivBEq α] [LawfulHashable α], t.children.hasValue c → c.WF) → t.WF
+  | mk {t : RawTrie α} : t.children.WF → (∀ [EquivBEq α] [LawfulHashable α] c, c ∈ t.children.values → c.WF) → t.WF
 
 theorem WF.WF_children [BEq α] [Hashable α] {t : RawTrie α} : t.WF → t.children.WF
   | ⟨h, _⟩ => h
 
-theorem WF.WF_of_hasValue [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {t : RawTrie α} : t.WF → ∀ c, t.children.hasValue c → c.WF
+theorem WF.WF_of_hasValue [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {t : RawTrie α} : t.WF → ∀ c, c ∈ t.children.values → c.WF
   | ⟨_, h⟩ => fun c => h c
 
 @[simp]
 theorem WF.empty [BEq α] [Hashable α] : (RawTrie.empty : RawTrie α).WF :=
-  ⟨by simpa using HashMap.Raw.WF.emptyc, fun _ _ _ => by simp⟩
+  ⟨by simpa using HashMap.Raw.WF.emptyc, fun _ => by simp⟩
 
 @[simp]
 theorem WF.emptyc [BEq α] [Hashable α] : (∅ : RawTrie α).WF :=
@@ -87,7 +87,7 @@ theorem WF.emptyc [BEq α] [Hashable α] : (∅ : RawTrie α).WF :=
 
 theorem WF.child? [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {r : RawTrie α} (h : r.WF) {c : α}
     {s : RawTrie α} (h₂ : r.child? c = some s) : s.WF :=
-  h.WF_of_hasValue _ ⟨_, h₂⟩
+  h.WF_of_hasValue _ ((HashMap.Raw.mem_values_iff_exists_find?_eq_some _ h.WF_children).2 ⟨_, h₂⟩)
 
 theorem WF.child [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {r : RawTrie α} (h : r.WF) {c : α} : (r.child c).WF := by
   rw [RawTrie.child]
@@ -98,18 +98,18 @@ theorem WF.child [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {r : R
 theorem WF.insert [BEq α] [Hashable α] {l : List α} {t : RawTrie α} (h : t.WF) : (t.insert l).WF := by
   induction l, t using insert.induct
   · rw [RawTrie.insert]
-    exact ⟨by simpa using h.WF_children, fun _ _ _ => by simpa using h.WF_of_hasValue _⟩
+    exact ⟨by simpa using h.WF_children, fun _ => by simpa using h.WF_of_hasValue _⟩
   · next a as u ih =>
     rw [RawTrie.insert]
-    refine ⟨h.WF_children.insert, fun v _ _ hv => ((HashMap.Raw.hasValue_insert h.WF_children).1 hv).elim ?_ ?_⟩
+    refine ⟨h.WF_children.insert, fun v hv => ((HashMap.Raw.mem_values_insert h.WF_children).1 hv).elim ?_ ?_⟩
     · exact fun hx => hx ▸ ih h.child
     · rintro ⟨a', -, ha'₂⟩
-      exact h.WF_of_hasValue _ ⟨a', ha'₂⟩
+      exact h.WF_of_hasValue _ ((HashMap.Raw.mem_values_iff_exists_find?_eq_some _ h.WF_children).2 ⟨a', ha'₂⟩)
 
 @[simp]
 theorem contains_empty [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {l : List α} :
     (RawTrie.empty : RawTrie α).contains l = false := by
-  induction l <;> simp [contains]
+  cases l <;> simp [contains]
 
 @[simp]
 theorem contains_emptyc [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {l : List α} :

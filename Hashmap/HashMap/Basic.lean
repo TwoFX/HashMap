@@ -40,6 +40,9 @@ instance : EmptyCollection (Raw α β) where
 @[inline] def find? [BEq α] [Hashable α] (m : Raw α β) (a : α) : Option β :=
   m.inner.findConst? a
 
+@[inline] def values (m : Raw α β) : List β :=
+  m.inner.values
+
 def WF [BEq α] [Hashable α] : Raw α β → Prop :=
   fun r => r.inner.WF
 
@@ -91,5 +94,8 @@ instance [BEq α] [Hashable α] : EmptyCollection (HashMap α β) where
 
 @[inline] def contains [BEq α] [Hashable α] (m : HashMap α β) (a : α) : Bool :=
   m.inner.contains a
+
+@[inline] def values [BEq α] [Hashable α] (m : HashMap α β) : List β :=
+  m.inner.values
 
 end MyLean.HashMap

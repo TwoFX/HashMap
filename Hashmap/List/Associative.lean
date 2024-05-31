@@ -581,7 +581,7 @@ theorem length_eraseKey [BEq α] {l : List (Σ a, β a)} {k : α} :
 
 -- TODO: eraseKey+replaceEntry
 
-@[simp] theorem keys_nil : (nil : List (Σ a, β a)).keys = [] := rfl
+@[simp] theorem keys_nil : ([] : List (Σ a, β a)).keys = [] := rfl
 @[simp] theorem keys_cons {l : List (Σ a, β a)} {k : α} {v : β k} : (⟨k, v⟩ :: l).keys = k :: l.keys := rfl
 
 theorem keys_eq_map (l : List (Σ a, β a)) : l.keys = l.map (·.1) := by
@@ -661,6 +661,48 @@ theorem DistinctKeys.cons [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} 
     l.DistinctKeys → (⟨k, v⟩ :: l).DistinctKeys :=
   fun h' => distinctKeys_cons_iff.mpr ⟨h', h⟩
 
+theorem mem_iff_findEntry?_eq_some [BEq α] [EquivBEq α] {l : List (Σ a, β a)} {p : Σ a, β a} (h : l.DistinctKeys) :
+    p ∈ l ↔ l.findEntry? p.1 = some p := by
+  induction l using assoc_induction
+  · simp_all
+  · next k v t ih =>
+    simp only [mem_cons, findEntry?_cons, ih h.tail]
+    refine ⟨?_, ?_⟩
+    · rintro (rfl|hk)
+      · simp
+      · suffices (k == p.fst) = false by simp_all
+        refine Bool.eq_false_iff.2 fun hcon => Bool.false_ne_true ?_
+        rw [← h.containsKey_eq_false, containsKey_eq_of_beq hcon,
+          containsKey_eq_isSome_findEntry?, hk, Option.isSome_some]
+    · cases k == p.fst
+      · rw [cond_false]
+        exact Or.inr
+      · rw [cond_true, Option.some.injEq]
+        exact Or.inl ∘ Eq.symm
+
+section
+variable {β : Type v}
+
+@[simp] theorem values_nil : ([] : List ((_ : α) × β)).values = [] := rfl
+@[simp] theorem values_cons {l : List ((_ : α) × β)} {k : α} {v : β} : (⟨k, v⟩ :: l).values = v :: l.values := rfl
+
+theorem values_eq_map {l : List ((_ : α) × β)} : l.values = l.map (·.2) := by
+  induction l using assoc_induction <;> simp_all
+
+theorem mem_values_iff_exists_findValue?_eq_some [BEq α] [EquivBEq α] {l : List ((_ : α) × β)} {v : β} (h : l.DistinctKeys) :
+    v ∈ l.values ↔ ∃ k, l.findValue? k = some v := by
+  simp only [values_eq_map, List.mem_map, mem_iff_findEntry?_eq_some h, findValue?_eq_findEntry?]
+  refine ⟨?_, ?_⟩
+  · rintro ⟨p, hp, rfl⟩
+    exact ⟨p.1, by simp_all⟩
+  · rintro ⟨k, hk⟩
+    simp only [Option.map_eq_some'] at hk
+    rcases hk with ⟨a, ha, rfl⟩
+    refine ⟨a, ⟨?_, rfl⟩⟩
+    rw [findEntry?_eq_of_beq (findEntry?_eq_some ha), ha]
+
+end
+
 theorem DistinctKeys.replaceEntry [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k : α} {v : β k} (h : l.DistinctKeys) :
     (l.replaceEntry k v).DistinctKeys := by
   induction l using assoc_induction
@@ -722,6 +764,36 @@ theorem findValue?_insertEntry [BEq α] [PartialEquivBEq α] {l : List ((_ : α)
   cases h : k == a
   · simp [findValue?_insertEntry_of_false h, h]
   · simp [findValue?_insertEntry_of_beq h, h]
+
+theorem mem_values_insertEntry [BEq α] [EquivBEq α] {l : List ((_ : α) × β)} {a : α} {b v : β}
+    (h : l.DistinctKeys) : v ∈ (l.insertEntry a b).values ↔ b = v ∨ ∃ k, (a == k) = false ∧ l.findValue? k = some v := by
+  simp only [mem_values_iff_exists_findValue?_eq_some h.insertEntry, findValue?_insertEntry, cond_eq_if]
+  refine ⟨?_, ?_⟩
+  · simp only [forall_exists_index]
+    intro a'
+    split
+    · rintro ⟨rfl⟩
+      exact Or.inl rfl
+    · exact fun h => Or.inr ⟨a', ⟨by simp_all, h⟩⟩
+  · rintro (rfl|⟨a', h₁, h₂⟩)
+    · exact ⟨a, by simp⟩
+    · exact ⟨a', by simp_all⟩
+
+@[simp]
+theorem mem_values_insertEntry_self [BEq α] [ReflBEq α] {l : List ((_ : α) × β)} {a : α} {b : β} :
+    b ∈ (l.insertEntry a b).values := by
+  rw [insertEntry]
+  cases h : containsKey a l
+  · simp
+  · simp only [cond_true]
+    induction l using assoc_induction
+    · simp_all
+    · next k v t ih =>
+      rw [replaceEntry_cons]
+      cases hka : k == a
+      · simp only [cond_false, values_cons, mem_cons]
+        exact Or.inr (ih (containsKey_of_containsKey_cons h hka))
+      · simp
 
 end
 
@@ -933,6 +1005,11 @@ variable {β : Type v}
 theorem findValue?_of_perm [BEq α] [PartialEquivBEq α] {l l' : List ((_ : α) × β)} {k : α} (hl : l.DistinctKeys)
     (h : l ~ l') : l.findValue? k = l'.findValue? k := by
   simp only [findValue?_eq_findEntry?, findEntry?_of_perm hl h]
+
+theorem mem_values_of_perm [BEq α] [EquivBEq α] {l l' : List ((_ : α) × β)} {v : β} (hl : l.DistinctKeys)
+    (h : l ~ l') : v ∈ l.values ↔ v ∈ l'.values := by
+  rw [mem_values_iff_exists_findValue?_eq_some hl, mem_values_iff_exists_findValue?_eq_some (hl.perm h.symm)]
+  simp only [findValue?_of_perm hl h]
 
 end
 
