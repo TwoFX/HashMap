@@ -9,6 +9,7 @@ import Hashmap.BEq
 import Hashmap.LawfulHashable
 import Batteries.Data.Array.Lemmas
 import Hashmap.DHashMap.Index
+import Hashmap.Sigma
 
 set_option autoImplicit false
 
@@ -250,6 +251,20 @@ def beq [BEq α] [Hashable α] [LawfulBEq α] [∀ k, BEq (β k)] (m₁ m₂ : R
 instance [BEq α] [Hashable α] [LawfulBEq α] [∀ k, BEq (β k)] : BEq (Raw α β) where
   beq := beq
 
+def toList (m : Raw α β) : List (Σ a, β a) :=
+  m.foldl (fun acc k v => ⟨k, v⟩ :: acc) []
+
+def toArray (m : Raw α β) : Array (Σ a, β a) :=
+  m.foldl (fun acc k v => acc.push ⟨k, v⟩) #[]
+
+def toListConst {β : Type v} (m : Raw α (fun _ => β)) : List (α × β) :=
+  m.foldl (fun acc k v => ⟨k, v⟩ :: acc) []
+
+def toArrayConst {β : Type v} (m : Raw α (fun _ => β)) : Array (α × β) :=
+  m.foldl (fun acc k v => acc.push ⟨k, v⟩) #[]
+
+-- def containsValue
+
 section WF
 
 /--
@@ -379,5 +394,11 @@ def size [BEq α] [Hashable α] (m : DHashMap α β) : Nat :=
 
 instance [BEq α] [Hashable α] [LawfulBEq α] [∀ k, BEq (β k)] : BEq (DHashMap α β) where
   beq m₁ m₂ := m₁.1 == m₂.1
+
+def toList [BEq α] [Hashable α] (m : DHashMap α β) : List (Σ a, β a) :=
+  m.1.toList
+
+def toArray [BEq α] [Hashable α] (m : DHashMap α β) : Array (Σ a, β a) :=
+  m.1.toArray
 
 end MyLean.DHashMap

@@ -1,4 +1,10 @@
-import Hashmap.HashMap.Lemmas
+/-
+Copyright (c) 2024 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Markus Himmel
+-/
+import Hashmap.HashMap.Properties
+import Hashmap.List.BEq
 
 /-!
 # Hash map showcase: nested inductive types
@@ -12,41 +18,6 @@ Our chosen example is a (non-path-compressing) trie that stores child nodes in a
 -/
 
 open MyLean
-
-def hasValue [BEq α] [Hashable α] (m : HashMap.Raw α β) (b : β) : Prop :=
-  ∃ a, m.find? a = some b
-
-@[simp]
-theorem hasValue_emptyc [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (b : β) :
-    ¬(hasValue (∅ : HashMap.Raw α β) b) := by
-  simp [hasValue]
-
-theorem hasValue_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
-    {m : HashMap.Raw α β} (h : m.WF) {a : α} {b b' : β} :
-    hasValue (m.insert a b) b' ↔ b = b' ∨ ∃ a', (a == a') = false ∧ m.find? a' = some b' := by
-  simp only [hasValue, HashMap.Raw.find?_insert _ h, cond_eq_if]
-  refine ⟨?_, ?_⟩
-  · simp only [forall_exists_index]
-    intro a'
-    split
-    · rintro ⟨rfl⟩
-      exact Or.inl rfl
-    · exact fun h => Or.inr ⟨a', ⟨by simp_all, h⟩⟩
-  · rintro (rfl|⟨a', h₁, h₂⟩)
-    · exact ⟨a, by simp⟩
-    · exact ⟨a', by simp_all⟩
-
-namespace List
-
-@[simp] theorem nil_beq_cons [BEq α] {a : α} {as : List α} : ([] == a::as) = false := rfl
-@[simp] theorem nil_beq_nil [BEq α] : ([] : List α) == [] := rfl
-@[simp] theorem cons_beq_nil [BEq α] {a : α} {as : List α} : (a::as == []) = false := rfl
-@[simp] theorem cons_beq_cons [BEq α] {a b : α} {as bs : List α} : (a::as == b::bs) = ((a == b) && as == bs) := rfl
-
-end List
-
-instance : Hashable Char where
-  hash c := hash c.val
 
 inductive RawTrie (α : Type u) where
   | mk : Bool → HashMap.Raw α (RawTrie α) → RawTrie α
@@ -98,12 +69,12 @@ def insert [BEq α] [Hashable α] : List α → RawTrie α → RawTrie α
   | (a::as), t => ⟨t.contained, t.children.insert a ((t.child a).insert as)⟩
 
 inductive WF [BEq α] [Hashable α] : RawTrie α → Prop where
-  | mk {t : RawTrie α} : t.children.WF → (∀ c [EquivBEq α] [LawfulHashable α], hasValue t.children c → c.WF) → t.WF
+  | mk {t : RawTrie α} : t.children.WF → (∀ c [EquivBEq α] [LawfulHashable α], t.children.hasValue c → c.WF) → t.WF
 
 theorem WF.WF_children [BEq α] [Hashable α] {t : RawTrie α} : t.WF → t.children.WF
   | ⟨h, _⟩ => h
 
-theorem WF.WF_of_hasValue [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {t : RawTrie α} : t.WF → ∀ c, hasValue t.children c → c.WF
+theorem WF.WF_of_hasValue [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {t : RawTrie α} : t.WF → ∀ c, t.children.hasValue c → c.WF
   | ⟨_, h⟩ => fun c => h c
 
 @[simp]
@@ -130,7 +101,7 @@ theorem WF.insert [BEq α] [Hashable α] {l : List α} {t : RawTrie α} (h : t.W
     exact ⟨by simpa using h.WF_children, fun _ _ _ => by simpa using h.WF_of_hasValue _⟩
   · next a as u ih =>
     rw [RawTrie.insert]
-    refine ⟨h.WF_children.insert, fun v _ _ hv => ((hasValue_insert h.WF_children).1 hv).elim ?_ ?_⟩
+    refine ⟨h.WF_children.insert, fun v _ _ hv => ((HashMap.Raw.hasValue_insert h.WF_children).1 hv).elim ?_ ?_⟩
     · exact fun hx => hx ▸ ih h.child
     · rintro ⟨a', -, ha'₂⟩
       exact h.WF_of_hasValue _ ⟨a', ha'₂⟩

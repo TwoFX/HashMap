@@ -165,6 +165,9 @@ def find?' [LawfulBEq α] (m : DHashMap α β) (a : α) : Option (β a) :=
 instance : GetElem (DHashMap α β) α (Option (Σ a, β a)) (fun _ _ => True) where
   getElem m k _ := m.findEntry? k
 
+instance : Membership α (DHashMap α β) where
+  mem a m := m.contains a
+
 /--
 Returns the value associated with the given key, or the given default value if there is no such mapping.
 
