@@ -963,6 +963,7 @@ theorem containsKey_eraseKey_of_false [BEq α] [PartialEquivBEq α] {l : List (�
     (hka : (k == a) = false) : (l.eraseKey k).containsKey a = l.containsKey a := by
   simp [containsKey_eq_isSome_findEntry?, findEntry?_eraseKey_of_false hka]
 
+-- TODO: this should probably be something like (!(k == a)) && l.containsKey a
 theorem containsKey_eraseKey [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k a : α} (hl : l.DistinctKeys) :
     (l.eraseKey k).containsKey a = bif k == a then false else l.containsKey a := by
   simp [containsKey_eq_isSome_findEntry?, findEntry?_eraseKey hl, apply_bif Option.isSome]

@@ -186,6 +186,7 @@ instance : EmptyCollection (Raw α β) where
     ⟨r, replaced⟩
   else (m, false) -- will never happen for well-formed inputs
 
+-- It can be verified from the IR that the `Prod.mk` in `insert'` is correctly elided.
 @[inline] def insert [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β a) : Raw α β :=
   (insert' m a b).1
 
@@ -338,6 +339,7 @@ Returns `true` if there was a previous mapping that was replaced.
   let m' := Raw₀.insert ⟨m.1, m.2.size_buckets_pos⟩ a b
   ⟨⟨m'.1.1, .insert₀ m.2⟩, m'.2⟩
 
+-- It can be verified from the IR that the `Prod.mk` in `insert'` is correctly elided.
 /--
 Inserts the mapping into the map, replacing an existing mapping if there is one.
 -/
