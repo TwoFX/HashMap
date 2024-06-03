@@ -40,6 +40,9 @@ instance : EmptyCollection (Raw α β) where
 @[inline] def find? [BEq α] [Hashable α] (m : Raw α β) (a : α) : Option β :=
   m.inner.findConst? a
 
+@[inline] def contains [BEq α] [Hashable α] (m : Raw α β) (a : α) : Bool :=
+  m.inner.contains a
+
 @[inline] def values (m : Raw α β) : List β :=
   m.inner.values
 
@@ -57,12 +60,6 @@ theorem WF.insert' [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β} (h :
 
 theorem WF.insert [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β} (h : m.WF) : (m.insert a b).WF :=
   DHashMap.Raw.WF.insert h
-
-section
-
-
-
-end
 
 end Raw
 

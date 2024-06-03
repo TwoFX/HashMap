@@ -48,6 +48,17 @@ theorem find?_insert {a k : α} {b : β} :
 theorem find?_congr {a b : α} (hab : a == b) : m.find? a = m.find? b := by
   simp [find?, DHashMap.Raw.findConst?_congr _ h hab]
 
+@[simp]
+theorem contains_empty {a : α} {c : Nat} : (empty c : Raw α β).contains a = false := by
+  simp [contains]
+
+@[simp]
+theorem contains_emptyc {a : α} : (∅ : Raw α β).contains a = false := by
+  simp [contains]
+
+theorem contains_insert {a k : α} {b : β} : (m.insert a b).contains k = ((a == k) || m.contains k) := by
+  simp [contains, insert, DHashMap.Raw.contains_insert _ h]
+
 theorem mem_values_iff_exists_find?_eq_some {β : Type v} (m : Raw α β) (h : m.WF) {v : β} :
     v ∈ m.values ↔ ∃ k, m.find? k = some v := by
   simp [values, find?, DHashMap.Raw.mem_values_iff_exists_findConst?_eq_some _ h]
@@ -96,6 +107,20 @@ theorem findEntry?_insert {a k : α} {b : β} :
 theorem find?_insert {a k : α} {b : β} :
     (m.insert a b).find? k = bif a == k then some b else m.find? k := by
   simp [find?, insert, DHashMap.findConst?_insert]
+
+theorem find?_congr {a b : α} (hab : a == b) : m.find? a = m.find? b := by
+  simp [find?, DHashMap.findConst?_congr _ hab]
+
+@[simp]
+theorem contains_empty {a : α} {c : Nat} : (empty c : HashMap α β).contains a = false := by
+  simp [contains]
+
+@[simp]
+theorem contains_emptyc {a : α} : (∅ : HashMap α β).contains a = false := by
+  simp [contains]
+
+theorem contains_insert {a k : α} {b : β} : (m.insert a b).contains k = ((a == k) || m.contains k) := by
+  simp [contains, insert, DHashMap.contains_insert]
 
 theorem mem_values_iff_exists_find?_eq_some {β : Type v} (m : HashMap α β) {v : β} :
     v ∈ m.values ↔ ∃ k, m.find? k = some v := by
