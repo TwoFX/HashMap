@@ -13,17 +13,41 @@ variable {α : Type u} {β : α → Type v} [BEq α] [Hashable α] [EquivBEq α]
 
 namespace MyLean.DHashMap
 
+section empty
+
+@[simp]
+theorem Raw₀.buckets_empty {c} {i : Nat} {h} : (empty c : Raw₀ α β).1.buckets[i]'h = AssocList.nil := by
+  simp [empty]
+
+@[simp]
+theorem Raw.buckets_empty {c} {i : Nat} {h} : (empty c : Raw α β).buckets[i]'h = AssocList.nil := by
+  simp [empty]
+
+@[simp]
+theorem Raw.buckets_emptyc {i : Nat} {h} : (∅ : Raw α β).buckets[i]'h = AssocList.nil :=
+  buckets_empty
+
+@[simp]
+theorem buckets_empty {c} {i : Nat} {h} : (empty c : DHashMap α β).1.buckets[i]'h = AssocList.nil := by
+  simp [empty]
+
+@[simp]
+theorem buckets_emptyc {i : Nat} {h} : (∅ : DHashMap α β).1.buckets[i]'h = AssocList.nil :=
+  buckets_empty
+
+end empty
+
 namespace Raw₀
 
 variable (m : Raw₀ α β) (h : m.1.WF)
 
 @[simp]
 theorem findEntry?_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).findEntry? a = none := by
-  simp [findEntry?_eq_findEntry? Raw.WF.empty₀.out]
+  simp [findEntry?]
 
 @[simp]
 theorem findConst?_empty {β : Type v} {a : α} {c : Nat} : (empty c : Raw₀ α (fun _ => β)).findConst? a = none := by
-  simp [findConst?_eq_findValue? Raw.WF.empty₀.out]
+  simp [findConst?]
 
 theorem findEntry?_insert (a k : α) (b : β a) :
     (m.insert a b).1.findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k := by
@@ -43,7 +67,7 @@ theorem findConst?_congr {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF
 
 @[simp]
 theorem contains_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).contains a = false := by
-  simp [contains_eq_containsKey Raw.WF.empty₀.out]
+  simp [contains]
 
 theorem contains_insert (a k : α) (b : β a) : (m.insert a b).1.contains k = ((a == k) || m.contains k) := by
   rw [contains_eq_containsKey h.out.insert, contains_eq_containsKey h.out,
