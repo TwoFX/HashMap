@@ -335,6 +335,27 @@ theorem wfImp_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m
   rw [insert_eq_insertₘ]
   exact wfImp_insertₘ h
 
+/-! # `computeIfAbsentₘ` -/
+
+-- TODO: toListModel_computeIfAbsentₘ
+
+theorem wfImp_computeIfAbsentₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
+    (h : m.1.WFImp) {a : α} {b : β a} : (m.computeIfAbsentₘ a b).1.WFImp := by
+  rw [computeIfAbsentₘ]
+  split
+  · exact h
+  · apply wfImp_expandIfNecessary
+    apply wfImp_consₘ _ h _ _ (by simp_all)
+
+/-! # `computeIfAbsent` -/
+
+-- TODO: toListModel_computeIfAbsent
+
+theorem wfImp_computeIfAbsent [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β}
+    (h : m.1.WFImp) {a : α} {f : Unit → β a} : (m.computeIfAbsent a f).1.1.WFImp := by
+  rw [computeIfAbsent_eq_computeIfAbsentₘ]
+  exact wfImp_computeIfAbsentₘ h
+
 /-! # `eraseₘ` -/
 
 theorem toListModel_eraseₘaux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β) (a : α)
@@ -465,6 +486,7 @@ alias insert := Raw₀.wfImp_insert
 alias erase := Raw₀.wfImp_erase
 alias filterMap := Raw₀.wfImp_filterMap
 alias map := Raw₀.wfImp_map
+alias computeIfAbsent := Raw₀.wfImp_computeIfAbsent
 
 end WFImp
 
@@ -474,6 +496,7 @@ theorem WF.out [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw
   · exact WFImp.empty
   · exact WFImp.insert (by assumption)
   · exact WFImp.erase (by assumption)
+  · exact WFImp.computeIfAbsent (by assumption)
 
 theorem empty_eq [BEq α] [Hashable α] {c : Nat} : (empty c : Raw α β) = (Raw₀.empty c).1 := rfl
 

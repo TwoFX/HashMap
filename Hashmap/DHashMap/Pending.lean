@@ -7,7 +7,7 @@ import Hashmap.DHashMap.Basic
 
 set_option autoImplicit false
 
-universe u v w
+universe u v w x
 
 variable {α : Type u} [BEq α] [Hashable α] {β : α → Type v} (γ : Type v) (δ : α → Type w) (ε : Type w)
 
@@ -15,18 +15,57 @@ namespace MyLean.DHashMap.Ops
 
 section modification
 
+#check Array.get
+#check Array.get?
+#check Lean.HashMap.find?
+
+/-!
+Trying to derive principles for naming
+
+`Array.get` is a function which may fail because of an invalid input. The three variants are
+  * `get?` returns an `Option`
+  * `get!` panicks
+  * `getD` returns a default value.
+
+Probably `HashMap.find` should be renamed `HashMap.get` and have all of these variants.
+
+For `insert`, it's all slightly more annoying, because there the extraction part isn't really
+the main event.
+
+The name `insert?` is especially unfortunate. There are really two reasonable things to expect:
+either this is the version that always replaces and returns ad `Option` containing the old
+value, or it is the version that doesn't replace and returns an `Option` containing the present
+value.
+
+Possible solution: change `insert?` to `insertGet?` or `insertGet`.
+
+-/
+
 /--
 Inserts the mapping into the map, replacing an existing mapping if there is one.
-Returns the previous mapping if there was one.
 -/
-def insert₁ (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (Σ a, β a) :=
+def insert (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
+  sorry
+
+/--
+Inserts the mapping into the map, replacing an existing mapping if there is one.
+Returns `true` if there was a previous mapping.
+-/
+def insertB (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
   sorry
 
 /--
 Inserts the mapping into the map, replacing an existing mapping if there is one.
 Returns the previous mapping if there was one.
 -/
-def insert₂ (m : DHashMap α (fun _ => γ)) (a : α) (b : γ) : DHashMap α (fun _ => γ) × Option γ :=
+def insertGet? (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (Σ a, β a) :=
+  sorry
+
+/--
+Inserts the mapping into the map, replacing an existing mapping if there is one.
+Returns the previous mapping if there was one.
+-/
+def Const.insertGet? (m : DHashMap α (fun _ => γ)) (a : α) (b : γ) : DHashMap α (fun _ => γ) × Option γ :=
   sorry
 
 /--
@@ -39,39 +78,39 @@ def insertIfNew (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
 Inserts the mapping into the map, but does not alter the map if there is already a mapping.
 Returns `true` if the map was altered.
 -/
-def insertIfNew' (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
+def insertIfNewB (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
   sorry
 
 /--
 Inserts the mapping into the map, but does not alter the map if there is already a mapping.
 Returns the existing mapping if there is one, or `none` if the given mapping was inserted.
 -/
-def insertIfNew₁ (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (Σ a, β a) :=
+def insertIfNewGet? (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (Σ a, β a) :=
   sorry
 
 /--
 Inserts the mapping into the map, but does not alter the map if there is already a mapping.
 Returns the existing mapping if there is one, or `none` if the given mapping was inserted.
 -/
-def insertIfNew₂ (m : DHashMap α (fun _ => γ)) (a : α) (b : γ) : DHashMap α (fun _ => γ) × Option γ :=
+def Const.insertIfNewGet? (m : DHashMap α (fun _ => γ)) (a : α) (b : γ) : DHashMap α (fun _ => γ) × Option γ :=
   sorry
 
 /--
 Removes the mapping with the given key if it exists, returning `true` if the map was altered.
 -/
-def erase' (m : DHashMap α β) (a : α) : DHashMap α β × Bool :=
+def removeB (m : DHashMap α β) (a : α) : DHashMap α β × Bool :=
   sorry
 
 /--
 Removes the mapping with the given key if it exists, returning the removed mapping.
 -/
-def erase₁ (m : DHashMap α β) (a : α) : DHashMap α β × Option (Σ a, β a) :=
+def removeGet? (m : DHashMap α β) (a : α) : DHashMap α β × Option (Σ a, β a) :=
   sorry
 
 /--
 Removes the mapping with the given key if it exists, returning the removed mapping.
 -/
-def erase₂ (m : DHashMap α (fun _ => γ)) (a : α) : DHashMap α (fun _ => γ) × Option γ :=
+def Const.removeGet? (m : DHashMap α (fun _ => γ)) (a : α) : DHashMap α (fun _ => γ) × Option γ :=
   sorry
 
 /--
@@ -82,67 +121,134 @@ def ofList (l : List (Σ a, β a)) : DHashMap α β :=
   sorry
 
 /--
-Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are replaced
-by their respective last occurrences.
+Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are combined
+using the given function.
 -/
-def ofList' (l : List (α × γ)) : DHashMap α (fun _ => γ) :=
+def ofListWithM [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
+    (f : (a : α) → β a → β a → m (β a)) : m (DHashMap α β) :=
   sorry
 
 /--
 Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are combined
 using the given function.
-
-TODO: Does this need a monadic version?
 -/
-def ofListWith (l : List (α × γ)) (f : γ → γ → γ) : DHashMap α (fun _ => γ) :=
+def ofListWith [LawfulBEq α] (l : List (Σ a, β a)) (f : (a : α) → β a → β a → β a) : DHashMap α β :=
+  sorry
+
+/--
+Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are replaced
+by their respective last occurrences.
+-/
+def Const.ofList (l : List (α × γ)) : DHashMap α (fun _ => γ) :=
+  sorry
+
+/--
+Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are combined
+using the given function.
+-/
+def Const.ofListWithM {γ : Type u} {m : Type u → Type v} [Monad m] (f : (a : α) → γ → γ → m γ) : m (DHashMap α (fun _ => γ)) :=
+  sorry
+
+/--
+Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are combined
+using the given function.
+-/
+def Const.ofListWith (l : List (α × γ)) (f : γ → γ → γ) : DHashMap α (fun _ => γ) :=
   sorry
 
 /--
 Groups all elements `x`, `y` in `xs` with `key x == key y` into the same array
 `(xs.groupByKey key).find! (key x)`. Groups preserve the relative order of elements in `xs`.
+
+We won't actually provide a version of this returning a `DHashMap`, only a `HashMap`.
 -/
-def groupByKey (key : γ → α) (xs : Array γ) : DHashMap α (fun _ => Array γ) :=
+def _root_.Array.groupByKey' (key : γ → α) (xs : Array γ) : DHashMap α (fun _ => Array γ) :=
   sorry
+
+/--
+General purpose "modify the mapping for a given key" function that can be used to insert, update
+and remove mappings from a hash map.
+-/
+def Const.alterM {γ : Type u} {m : Type u → Type v} [Monad m]
+  (q : DHashMap α β) (k : α) (f : Option γ → m (Option γ)) : m (DHashMap α (fun _ => γ)) := sorry
 
 /--
 General purpose "modify the mapping for a given key" function that can be used to insert, update
 and remove mappings from a hash map.
 
 TODO: this theoretically needs all the variants that insert also has...
-TODO: Does this need a monadic version?
 -/
-def alter (m : DHashMap α (fun _ => γ)) (f : Option γ → Option γ) (k : α) : DHashMap α (fun _ => γ) := sorry
+def Const.alter (m : DHashMap α (fun _ => γ)) (f : Option γ → Option γ) (k : α) : DHashMap α (fun _ => γ) := sorry
+
+/--
+General purpose "modify the mapping for a given key" function that can be used to insert, update
+and remove mappings from a hash map.
+-/
+def alterM [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
+  (q : DHashMap α β) (k : α) (f : Option (β k) → m (Option (β k))) : m (DHashMap α β) := sorry
+
+/--
+General purpose "modify the mapping for a given key" function that can be used to insert, update
+and remove mappings from a hash map.
+-/
+def alter [LawfulBEq α] (m : DHashMap α β) (k : α) (f : Option (β k) → Option (β k)) : DHashMap α β := sorry
 
 /--
 Applies the given mapping function to all entries in the map, discarding entries for which the
 mapping function returns `none`.
+-/
+def filterMapM {β : α → Type u} {δ : α → Type u} {m : Type u → Type v} [Monad m] (q : DHashMap α β)
+    (f : (a : α) → β a → m (Option (δ a))) : m (DHashMap α δ) := sorry
 
-Does this need a monadic version?
+/--
+Applies the given mapping function to all entries in the map, discarding entries for which the
+mapping function returns `none`.
 -/
 def filterMap (m : DHashMap α β) (f : (a : α) → β a → Option (δ a)) : DHashMap α δ := sorry
 
 /--
 Applies the given mapping function to all entries in the map.
+-/
+def mapM {β : α → Type u} {δ : α → Type u} {m : Type u → Type v} [Monad m] (q : DHashMap α β)
+    (f : (a : α) → β a → m (δ a)) : m (DHashMap α δ) := sorry
 
-TODO: Does this need a monadic version?
+/--
+Applies the given mapping function to all entries in the map.
 -/
 def map (m : DHashMap α β) (f : (a : α) → β a → δ a) : DHashMap α δ := sorry
 
 /--
 Returns a map that contains only those mappings for which the provided function returns `true`.
+-/
+def filterM {α : Type} [BEq α] [Hashable α] {β : α → Type} {m : Type → Type u} [Monad m]
+    (q : DHashMap α β) (f : (a : α) → β a → m Bool) : m (DHashMap α β) := sorry
 
-TODO: Does this need a monadic version?
+/--
+Returns a map that contains only those mappings for which the provided function returns `true`.
 -/
 def filter (m : DHashMap α β) (f : (a : α) → β a → Bool) : DHashMap α β := sorry
 
 /--
 Combines two hash maps using the given combination function.
-
-TODO: Does this need a monadic version?
 -/
-def mergeWith (m m' : DHashMap α (fun _ => γ)) (f : α → γ → γ → γ) : DHashMap α (fun _ => γ) := sorry
+def mergeWithM [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m] (q q' : DHashMap α β)
+    (f : (a : α) → β a → β a → m (β a)) : m (DHashMap α β) := sorry
 
--- Haskell has difference and intersection, but these don't seem very useful to me
+/--
+Combines two hash maps using the given combination function.
+-/
+def mergeWith [LawfulBEq α] (m m' : DHashMap α β) (f : (a : α) → β a → β a → β a) : DHashMap α β := sorry
+
+/--
+Combines two hash maps using the given combination function.
+-/
+def Const.mergeWithM {γ : Type u} {m : Type u → Type v} [Monad m] (q q' : DHashMap α (fun _ => γ))
+    (f : (a : α) → γ → γ → m γ) : m (DHashMap α (fun _ => γ)) := sorry
+
+/--
+Combines two hash maps using the given combination function.
+-/
+def Const.mergeWith (m m' : DHashMap α (fun _ => γ)) (f : α → γ → γ → γ) : DHashMap α (fun _ => γ) := sorry
 
 /--
 Returns a new hash map with the same contents as the input, but with a number of internal buckets that is
@@ -154,12 +260,32 @@ end modification
 
 section query
 
+def getEntry? (m : DHashMap α β) (a : α) : Option (Σ a, β a) := sorry
+
+def getEntry! [Inhabited (Σ a, β a)] (m : DHashMap α β) (a : α) : Σ a, β a := sorry
+
+def getEntryD (m : DHashMap α β) (a : α) (default : Σ a, β a) : Σ a, β a := sorry
+
 /--
 If the `BEq` instance is lawful, this function will query the dependent hash map and if a mapping with the given key is
 found, the associated value is cast to the required type.
 -/
-def find?' [LawfulBEq α] (m : DHashMap α β) (a : α) : Option (β a) :=
+def get? [LawfulBEq α] (m : DHashMap α β) (a : α) : Option (β a) :=
   sorry
+
+def get! [LawfulBEq α] (m : DHashMap α β) (a : α) [Inhabited (β a)] : β a :=
+  sorry
+
+def getD [LawfulBEq α] (m : DHashMap α β) (a : α) (default : β a) : β a :=
+  sorry
+
+-- This will become `get` in `HashSet`.
+def getKey? (m : DHashMap α β) (a : α) : Option α := sorry
+
+-- TODO: should this just build an inhabited instance using `a` or are we afraid of instance clashes here?
+def getKey! (m : DHashMap α β) (a : α) [Inhabited α] : α := sorry
+
+def getKeyD (m : DHashMap α β) (a : α) (default : α) : α := sorry
 
 -- We cannot provide a `find?'` version here because `GetElem` is not dependent!
 instance : GetElem (DHashMap α β) α (Option (Σ a, β a)) (fun _ _ => True) where
@@ -168,21 +294,17 @@ instance : GetElem (DHashMap α β) α (Option (Σ a, β a)) (fun _ _ => True) w
 instance : Membership α (DHashMap α β) where
   mem a m := m.contains a
 
+def Const.get? (m : DHashMap α (fun _ => γ)) (a : α) : Option γ := sorry
+
 /--
 Returns the value associated with the given key, or the given default value if there is no such mapping.
-
-A dependent version of this would be possible, but doesn't sound very useful?
-A LawfulBEq dependent version of this would be possible, and is probably useful.
 -/
-def findD (m : DHashMap α (fun _ => γ)) (a : α) (b₀ : γ) : γ := sorry
+def Const.getD (m : DHashMap α (fun _ => γ)) (a : α) (b₀ : γ) : γ := sorry
 
 /--
 Returns the value associated with the given key, or panics if there is no such mapping.
-
-A dependent version of this would be possible, but doesn't sound very useful?
-A LawfulBEq dependent version of this would be possible, and is probably useful.
 -/
-def find! [Inhabited γ] (m : DHashMap α (fun _ => γ)) (a : α) : γ := sorry
+def Const.get! [Inhabited γ] (m : DHashMap α (fun _ => γ)) (a : α) : γ := sorry
 
 /--
 Returns the number of mappings contained in the hash map.
@@ -221,7 +343,7 @@ def toList (m : DHashMap α β) : List (Σ a, β a) := sorry
 /--
 Create a list containing all mappings contained in the hash map, in some order.
 -/
-def toList' (m : DHashMap α (fun _ => γ)) : List (α × γ) := sorry
+def Const.toList (m : DHashMap α (fun _ => γ)) : List (α × γ) := sorry
 
 /--
 Create an array containing all mappings contained in the hash map, in some order.
@@ -231,9 +353,9 @@ def toArray (m : DHashMap α β) : Array (Σ a, β a) := sorry
 /--
 Create an array containing all mappings contained in the hash map, in some order.
 -/
-def toArray' (m : DHashMap α (fun _ => γ)) : Array (α × γ) := sorry
+def Const.toArray (m : DHashMap α (fun _ => γ)) : Array (α × γ) := sorry
 
-instance [∀ a, BEq (β a)] : BEq (DHashMap α β) := sorry
+instance [LawfulBEq α] [∀ a, BEq (β a)] : BEq (DHashMap α β) := sorry
 
 /--
 Create a list containing all keys contained in the hash map, in some order.
@@ -243,7 +365,7 @@ def keys (m : DHashMap α β) : List α := sorry
 /--
 Create a list containing all values contained in the hash map, in some order.
 -/
-def values (m : DHashMap α (fun _ => γ)) : List γ := sorry
+def Const.values (m : DHashMap α (fun _ => γ)) : List γ := sorry
 
 alias assocs := toList
 
@@ -252,7 +374,7 @@ Returns the number of buckets in the internal representation of the hash map.
 It should generally not be necessary to call this function other than for things
 like monitoring system health.
 -/
-def numBuckets (m : DHashMap α β) : Nat := sorry
+def Internal.numBuckets (m : DHashMap α β) : Nat := sorry
 
 end query
 

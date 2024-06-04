@@ -324,6 +324,10 @@ theorem containsKey_eq_isSome_findKey? [BEq α] {l : List (Σ a, β a)} {a : α}
     l.containsKey a = (l.findKey? a).isSome := by
   simp [containsKey_eq_isSome_findEntry?, findKey?_eq_findEntry?]
 
+theorem containsKey_eq_isSome_findValueCast? [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a : α} :
+    l.containsKey a = (l.findValueCast? a).isSome := by
+  simp [containsKey_eq_isSome_findEntry?, findValueCast?_eq_findEntry?]
+
 theorem containsKey_eq_of_beq [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {a b : α} (h : a == b) :
     l.containsKey a = l.containsKey b := by
   simp [containsKey_eq_isSome_findEntry?, findEntry?_eq_of_beq h]

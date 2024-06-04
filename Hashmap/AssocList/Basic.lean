@@ -116,6 +116,40 @@ def erase [BEq α] (a : α) : AssocList α β → AssocList α β
 def insert [BEq α] (l : AssocList α β) (k : α) (v : β k) : AssocList α β :=
   bif l.contains k then l.replace k v else l.cons k v
 
+@[specialize] def alterM [BEq α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type u} [Monad m] (a : α)
+    (f : Option (β a) → m (Option (β a))) : AssocList α β → m (AssocList α β)
+  | nil => do match ← f none with
+    | none => return .nil
+    | some v => return .cons a v .nil
+  | cons k v t =>
+      if h : k == a then do
+        match ← f (some (cast (congrArg β (eq_of_beq h)) v)) with
+        | none => return t
+        | some v' => return .cons a v' t
+      else do return .cons k v (← alterM a f t)
+
+@[specialize] def alter [BEq α] [LawfulBEq α] (a : α) (f : Option (β a) → Option (β a)) :
+    AssocList α β → AssocList α β
+  | nil => match f none with
+    | none => .nil
+    | some v => .cons a v .nil
+  | cons k v t =>
+      if h : k == a then
+        match f (some (cast (congrArg β (eq_of_beq h)) v)) with
+        | none => t
+        | some v' => .cons a v' t
+      else .cons k v (alter a f t)
+
+@[specialize] def filterMapM [BEq α] {β : α → Type u} {γ : α → Type u} {m : Type u → Type u} [Monad m]
+    (f : (a : α) → β a → m (Option (γ a))) : AssocList α β → m (AssocList α γ) :=
+  go .nil
+where
+  @[specialize] go (acc : AssocList α γ) : AssocList α β → m (AssocList α γ)
+  | nil => return acc
+  | cons k v t => do match ← f k v with
+    | none => go acc t
+    | some v' => go (cons k v' acc) t
+
 @[specialize] def filterMap (f : (a : α) → β a → Option (γ a)) :
     AssocList α β → AssocList α γ :=
   go .nil

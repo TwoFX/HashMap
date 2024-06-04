@@ -7,6 +7,7 @@ import Hashmap.List.Associative
 import Hashmap.DHashMap.Basic
 import Hashmap.DHashMap.ForUpstream
 import Hashmap.Leftovers
+import Hashmap.AssocList.Lemmas
 
 /-!
 In this file we define functions for manipulating a hash map based on operations defined in terms of their buckets.
@@ -232,6 +233,9 @@ def containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Bool :=
 def insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   if m.containsₘ a then m.replaceₘ a b else Raw₀.expandIfNecessary (m.consₘ a b)
 
+def computeIfAbsentₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
+  if m.containsₘ a then m else Raw₀.expandIfNecessary (m.consₘ a b)
+
 def eraseₘaux [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
   ⟨⟨m.1.size - 1, updateBucket m.1.buckets m.2 a (fun l => l.erase a)⟩, by simpa using m.2⟩
 
@@ -272,6 +276,23 @@ theorem insert_eq_insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (
   rw [insert, insertₘ, containsₘ, bucket]
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
   split <;> rfl
+
+theorem computeIfAbsent_eq_computeIfAbsentₘ [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (f : Unit → β a) :
+    (m.computeIfAbsent a f).1 = m.computeIfAbsentₘ a (f ()) := by
+  rw [computeIfAbsent, computeIfAbsentₘ, containsₘ, bucket]
+  dsimp only [Array.ugetElem_eq_getElem, Array.uset]
+  split
+  · next x h =>
+    -- TODO: clean up
+    simp at h
+    rw [AssocList.contains_eq, List.containsKey_eq_isSome_findValueCast?, h, Option.isSome_none]
+    simp
+    rfl
+  · next x v h =>
+    -- TODO: clean up
+    simp at h
+    rw [AssocList.contains_eq, List.containsKey_eq_isSome_findValueCast?, h, Option.isSome_some]
+    simp
 
 theorem erase_eq_eraseₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : m.erase a = m.eraseₘ a := by
   rw [erase, eraseₘ, containsₘ, bucket]
