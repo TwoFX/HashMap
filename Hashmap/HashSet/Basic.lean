@@ -36,6 +36,12 @@ instance : EmptyCollection (Raw α) where
 @[inline] def contains [BEq α] [Hashable α] (m : Raw α) (a : α) : Bool :=
   m.inner.contains a
 
+@[inline] def size (m : Raw α) : Nat :=
+  m.inner.size
+
+@[inline] def isEmpty (m : Raw α) : Bool :=
+  m.inner.isEmpty
+
 def WF [BEq α] [Hashable α] : Raw α → Prop :=
   fun r => r.inner.WF
 
@@ -75,6 +81,12 @@ instance [BEq α] [Hashable α] : EmptyCollection (HashSet α) where
 
 @[inline] def contains [BEq α] [Hashable α] (m : HashSet α) (a : α) : Bool :=
   m.inner.contains a
+
+@[inline] def size [BEq α] [Hashable α] (m : HashSet α) : Nat :=
+  m.inner.size
+
+@[inline] def isEmpty [BEq α] [Hashable α] (m : HashSet α) : Bool :=
+  m.inner.isEmpty
 
 end HashSet
 

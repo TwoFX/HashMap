@@ -317,6 +317,9 @@ def toArrayConst {β : Type v} (m : Raw α (fun _ => β)) : Array (α × β) :=
 def values {β : Type v} (m : Raw α (fun _ => β)) : List β :=
   m.foldl (fun acc _ v => v :: acc) []
 
+def isEmpty (m : Raw α β) : Bool :=
+  m.size = 0
+
 section WF
 
 /--
@@ -466,5 +469,8 @@ def toArray [BEq α] [Hashable α] (m : DHashMap α β) : Array (Σ a, β a) :=
 
 def values {β : Type v} [BEq α] [Hashable α] (m : DHashMap α (fun _ => β)) : List β :=
   m.1.values
+
+def isEmpty [BEq α] [Hashable α] (m : DHashMap α β) : Bool :=
+  m.1.isEmpty
 
 end MyLean.DHashMap

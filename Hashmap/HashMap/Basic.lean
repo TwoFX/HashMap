@@ -46,6 +46,12 @@ instance : EmptyCollection (Raw α β) where
 @[inline] def values (m : Raw α β) : List β :=
   m.inner.values
 
+@[inline] def size (m : Raw α β) : Nat :=
+  m.inner.size
+
+@[inline] def isEmpty (m : Raw α β) : Bool :=
+  m.inner.isEmpty
+
 def WF [BEq α] [Hashable α] : Raw α β → Prop :=
   fun r => r.inner.WF
 
@@ -94,5 +100,11 @@ instance [BEq α] [Hashable α] : EmptyCollection (HashMap α β) where
 
 @[inline] def values [BEq α] [Hashable α] (m : HashMap α β) : List β :=
   m.inner.values
+
+@[inline] def size [BEq α] [Hashable α] (m : HashMap α β) : Nat :=
+  m.inner.size
+
+@[inline] def isEmpty [BEq α] [Hashable α] (m : HashMap α β) : Bool :=
+  m.inner.isEmpty
 
 end MyLean.HashMap
