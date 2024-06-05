@@ -95,6 +95,19 @@ where
     let buckets' := buckets.uset i (AssocList.cons a b bkt) h
     (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets', -List.length_pos]⟩, false)
 
+@[inline] def computeIfAbsentM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
+    (q : Raw₀ α β) (a : α) (f : Unit → m (β a)) : m (Raw₀ α β × β a) :=
+  let ⟨⟨size, buckets⟩, hm⟩ := q
+  let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
+  let bkt := buckets[i]
+  match bkt.findCast? a with
+  | none => do
+      let v ← f ()
+      let size'    := size + 1
+      let buckets' := buckets.uset i (AssocList.cons a v bkt) h
+      return (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets', -List.length_pos]⟩, v)
+  | some v => pure (⟨⟨size, buckets⟩, hm⟩, v)
+
 @[inline] def computeIfAbsent [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (f : Unit → β a) : Raw₀ α β × β a :=
   let ⟨⟨size, buckets⟩, hm⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
@@ -201,6 +214,19 @@ instance : EmptyCollection (Raw α β) where
 -- It can be verified from the IR that the `Prod.mk` in `insert'` is correctly elided.
 @[inline] def insert [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β a) : Raw α β :=
   (insert' m a b).1
+
+@[inline] def computeIfAbsentM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
+    (q : Raw α β) (a : α) (f : Unit → m (β a)) : m (Raw α β × β a) :=
+  if h : 0 < q.buckets.size then do
+    let ⟨⟨r, _⟩, s⟩ ← Raw₀.computeIfAbsentM ⟨q, h⟩ a f
+    return (r, s)
+  else return (q, ← f ()) -- will never happen for well-formed inputs
+
+@[inline] def computeIfAbsent [BEq α] [Hashable α] [LawfulBEq α] (m : Raw α β) (a : α) (f : Unit → β a) : Raw α β × β a :=
+  if h : 0 < m.buckets.size then
+    let ⟨⟨r, _⟩, s⟩ := Raw₀.computeIfAbsent ⟨m, h⟩ a f
+    (r, s)
+  else (m, f ()) -- will never happen for well-formed inputs
 
 @[inline] def findEntry? [BEq α] [Hashable α] (m : Raw α β) (a : α) : Option (Σ a, β a) :=
   if h : 0 < m.buckets.size then
@@ -331,30 +357,6 @@ end WF
 
 end Raw
 
-namespace Raw₀
-
-@[inline] def computeIfAbsentM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
-    (q : Raw₀ α β) (a : α) (f : Unit → m (β a)) : m ({ r : Raw₀ α β // q.1.WF → r.1.WF } × β a) :=
-  let ⟨⟨size, buckets⟩, hm⟩ := q
-  let idx := mkIdx buckets.size hm (hash a)
-  let bkt := buckets[idx.1]
-  match hfc : bkt.findCast? a with
-  | none => do
-      let v ← f ()
-      let size'    := size + 1
-      let buckets' := buckets.uset idx.1 (AssocList.cons a v bkt) idx.2
-      let result := expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets', -List.length_pos]⟩
-      return (⟨result, by
-        intro h
-        have hkey : result = (Raw₀.computeIfAbsent ⟨⟨size, buckets⟩, hm⟩ a (fun _ => v)).1 := by
-          simp_all [hfc, result, computeIfAbsent, bkt, idx, size', buckets']
-        rw [hkey]
-        exact @Raw.WF.computeIfAbsent₀ _ _ _ _ _ ⟨size, buckets⟩ hm a (fun _ => v) h
-        ⟩, v)
-  | some v => pure (⟨⟨⟨size, buckets⟩, hm⟩, id⟩, v)
-
-end Raw₀
-
 end DHashMap
 
 def DHashMap (α : Type u) (β : α → Type v) [BEq α] [Hashable α] := { m : DHashMap.Raw α β // m.WF }
@@ -382,11 +384,6 @@ Inserts the mapping into the map, replacing an existing mapping if there is one.
 -/
 @[inline] def insert [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
   (m.insert' a b).1
-
-@[inline] def computeIfAbsentM [BEq α] [LawfulBEq α] [Hashable α] {β : α → Type u} {m : Type u → Type v} [Monad m]
-    (q : DHashMap α β) (a : α) (f : Unit → m (β a)) : m (DHashMap α β × β a) := do
-  let m' ← Raw₀.computeIfAbsentM ⟨q.1, q.2.size_buckets_pos⟩ a f
-  return ⟨⟨m'.1.1, m'.1.2 q.2⟩, m'.2⟩
 
 @[inline] def computeIfAbsent [BEq α] [LawfulBEq α] [Hashable α] (m : DHashMap α β) (a : α) (f : Unit → β a) : DHashMap α β × β a :=
   let m' := Raw₀.computeIfAbsent ⟨m.1, m.2.size_buckets_pos⟩ a f

@@ -8,7 +8,7 @@ set_option autoImplicit false
 
 def MemoizeT {α : Type u} [BEq α] [Hashable α] {β : α → Type u}
     (m : Type u → Type v) (_f : (a : α) → m (β a)) (γ : Type u) : Type (max u v) :=
-  StateT (DHashMap α β) m γ
+  StateT (DHashMap.Raw α β) m γ
 
 def MemoizeT.run {α : Type u} [BEq α] [Hashable α] {β : α → Type u}
     {m : Type u → Type v} [Functor m] {f : (a : α) → m (β a)} {γ : Type u} (x : MemoizeT m f γ) : m γ :=
@@ -49,7 +49,7 @@ protected def lift (t : m γ) : MemoizeT m f γ :=
   StateT.lift t
 
 protected def calculate [LawfulBEq α] (a : α) : MemoizeT m f (β a) :=
-  show StateT (DHashMap α β) m (β a) from do -- correct way would be to provide the MonadState instance for MemoizeT
+  show StateT (DHashMap.Raw α β) m (β a) from do -- correct way would be to provide the MonadState instance for MemoizeT
   let (newCache, result) ← (← get).computeIfAbsentM a (fun _ => MemoizeT.lift (f := f) (f a))
   set newCache
   return result
