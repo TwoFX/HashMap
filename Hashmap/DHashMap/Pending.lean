@@ -95,6 +95,12 @@ Returns the existing mapping if there is one, or `none` if the given mapping was
 def Const.insertIfNewGet? (m : DHashMap α (fun _ => γ)) (a : α) (b : γ) : DHashMap α (fun _ => γ) × Option γ :=
   sorry
 
+@[inline] def computeIfAbsentM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
+    (q : DHashMap α β) (a : α) (f : Unit → m (β a)) : m (Raw α β × β a) := sorry
+
+@[inline] def computeIfAbsent [BEq α] [LawfulBEq α] [Hashable α] (m : DHashMap α β) (a : α) (f : Unit → β a) :
+    DHashMap α β × β a := sorry
+
 /--
 Removes the mapping with the given key if it exists, returning `true` if the map was altered.
 -/
@@ -260,11 +266,18 @@ end modification
 
 section query
 
+instance : Membership α (DHashMap α β) where
+  mem a m := m.contains a
+
+def getEntry (m : DHashMap α β) (a : α) (_ : a ∈ m) : Σ a, β a := sorry
+
 def getEntry? (m : DHashMap α β) (a : α) : Option (Σ a, β a) := sorry
 
 def getEntry! [Inhabited (Σ a, β a)] (m : DHashMap α β) (a : α) : Σ a, β a := sorry
 
 def getEntryD (m : DHashMap α β) (a : α) (default : Σ a, β a) : Σ a, β a := sorry
+
+def get [LawfulBEq α] (m : DHashMap α β) (a : α) (_ : a ∈ m) : β a := sorry
 
 /--
 If the `BEq` instance is lawful, this function will query the dependent hash map and if a mapping with the given key is
@@ -279,6 +292,15 @@ def get! [LawfulBEq α] (m : DHashMap α β) (a : α) [Inhabited (β a)] : β a 
 def getD [LawfulBEq α] (m : DHashMap α β) (a : α) (default : β a) : β a :=
   sorry
 
+def getWithCast (m : DHashMap α β) (a : α) (_ : a ∈ m) (cast : ∀ {b}, b == a → β b → β a) : β a := sorry
+def getWithCast? (m : DHashMap α β) (a : α) (cast : ∀ {b}, b == a → β b → β a) : Option (β a) := sorry
+def getWithCast! (m : DHashMap α β) (a : α) [Inhabited (β a)] (cast : ∀ {b}, b == a → β b → β a) : β a := sorry
+def getWithCastD (m : DHashMap α β) (a : α) (default : β a) (cast : ∀ {b}, b == a → β b → β a) : β a := sorry
+
+def contains (m : DHashMap α β) (a : α) : Bool := sorry
+
+def getKey (m : DHashMap α β) (a : α) (_ : a ∈ m) : α := sorry
+
 -- This will become `get` in `HashSet`.
 def getKey? (m : DHashMap α β) (a : α) : Option α := sorry
 
@@ -291,8 +313,7 @@ def getKeyD (m : DHashMap α β) (a : α) (default : α) : α := sorry
 instance : GetElem (DHashMap α β) α (Option (Σ a, β a)) (fun _ _ => True) where
   getElem m k _ := m.findEntry? k
 
-instance : Membership α (DHashMap α β) where
-  mem a m := m.contains a
+def Const.get (m : DHashMap α (fun _ => γ)) (a : α) (_ : a ∈ m) : γ := sorry
 
 def Const.get? (m : DHashMap α (fun _ => γ)) (a : α) : Option γ := sorry
 
