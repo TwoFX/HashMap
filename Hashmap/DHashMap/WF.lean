@@ -326,13 +326,25 @@ theorem wfImp_insertₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
 /-! # `insert` -/
 
 theorem toListModel_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
-    (h : m.1.WFImp) {a : α} {b : β a} : toListModel (m.insert a b).1.1.2 ~ (toListModel m.1.2).insertEntry a b := by
+    (h : m.1.WFImp) {a : α} {b : β a} : toListModel (m.insert a b).1.2 ~ (toListModel m.1.2).insertEntry a b := by
   rw [insert_eq_insertₘ]
   exact toListModel_insertₘ h
 
 theorem wfImp_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
-    (h : m.1.WFImp) {a : α} {b : β a} : (m.insert a b).1.1.WFImp := by
+    (h : m.1.WFImp) {a : α} {b : β a} : (m.insert a b).1.WFImp := by
   rw [insert_eq_insertₘ]
+  exact wfImp_insertₘ h
+
+/-! # `insertB` -/
+
+theorem toListModel_insertB [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
+    (h : m.1.WFImp) {a : α} {b : β a} : toListModel (m.insertB a b).1.1.2 ~ (toListModel m.1.2).insertEntry a b := by
+  rw [insertB_eq_insertₘ]
+  exact toListModel_insertₘ h
+
+theorem wfImp_insertB [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
+    (h : m.1.WFImp) {a : α} {b : β a} : (m.insertB a b).1.1.WFImp := by
+  rw [insertB_eq_insertₘ]
   exact wfImp_insertₘ h
 
 /-! # `computeIfAbsentₘ` -/
@@ -483,6 +495,7 @@ namespace WFImp
 
 alias empty := Raw₀.wfImp_empty
 alias insert := Raw₀.wfImp_insert
+alias insertB := Raw₀.wfImp_insertB
 alias erase := Raw₀.wfImp_erase
 alias filterMap := Raw₀.wfImp_filterMap
 alias map := Raw₀.wfImp_map
@@ -495,6 +508,7 @@ theorem WF.out [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw
   · next h => exact h
   · exact WFImp.empty
   · exact WFImp.insert (by assumption)
+  · exact WFImp.insertB (by assumption)
   · exact WFImp.erase (by assumption)
   · exact WFImp.computeIfAbsent (by assumption)
 
@@ -502,13 +516,13 @@ theorem empty_eq [BEq α] [Hashable α] {c : Nat} : (empty c : Raw α β) = (Raw
 
 theorem emptyc_eq [BEq α] [Hashable α] : (∅ : Raw α β) = Raw₀.empty.1 := rfl
 
-theorem insert'_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
-    (m.insert' a b).1 = (Raw₀.insert ⟨m, h.size_buckets_pos⟩ a b).1.1 := by
-  simp [insert', h.size_buckets_pos]
+theorem insertB_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
+    (m.insertB a b).1 = (Raw₀.insertB ⟨m, h.size_buckets_pos⟩ a b).1.1 := by
+  simp [insertB, h.size_buckets_pos]
 
 theorem insert_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
     m.insert a b = (Raw₀.insert ⟨m, h.size_buckets_pos⟩ a b).1 := by
-  simp [insert, insert', h.size_buckets_pos]
+  simp [insert, h.size_buckets_pos]
 
 theorem findEntry?_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} :
     m.findEntry? a = Raw₀.findEntry? ⟨m, h.size_buckets_pos⟩ a := by

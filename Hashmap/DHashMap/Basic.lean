@@ -84,7 +84,18 @@ where
     let ⟨buckets', h'⟩ := expand ⟨buckets, by simpa [-List.length_pos]⟩
     ⟨⟨size, buckets'⟩, h'⟩
 
-@[inline] def insert [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β × Bool :=
+@[inline] def insert [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
+  let ⟨⟨size, buckets⟩, hm⟩ := m
+  let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
+  let bkt := buckets[i]
+  if bkt.contains a then
+    ⟨⟨size, buckets.uset i (bkt.replace a b) h⟩, by simpa [-List.length_pos]⟩
+  else
+    let size'    := size + 1
+    let buckets' := buckets.uset i (AssocList.cons a b bkt) h
+    expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets', -List.length_pos]⟩
+
+@[inline] def insertB [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β × Bool :=
   let ⟨⟨size, buckets⟩, hm⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
   let bkt := buckets[i]
@@ -205,15 +216,16 @@ namespace Raw
 instance : EmptyCollection (Raw α β) where
   emptyCollection := empty
 
-@[inline] def insert' [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β a) : Raw α β × Bool :=
+@[inline] def insert [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β a) : Raw α β :=
   if h : 0 < m.buckets.size then
-    let ⟨⟨r, _⟩, replaced⟩ := Raw₀.insert ⟨m, h⟩ a b
+    (Raw₀.insert ⟨m, h⟩ a b).1
+  else m -- will never happen for well-formed inputs
+
+@[inline] def insertB [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β a) : Raw α β × Bool :=
+  if h : 0 < m.buckets.size then
+    let ⟨⟨r, _⟩, replaced⟩ := Raw₀.insertB ⟨m, h⟩ a b
     ⟨r, replaced⟩
   else (m, false) -- will never happen for well-formed inputs
-
--- It can be verified from the IR that the `Prod.mk` in `insert'` is correctly elided.
-@[inline] def insert [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β a) : Raw α β :=
-  (insert' m a b).1
 
 @[inline] def computeIfAbsentM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
     (q : Raw α β) (a : α) (f : Unit → m (β a)) : m (Raw α β × β a) :=
@@ -325,14 +337,16 @@ that map operations preserve well-formedness.
 inductive WF [BEq α] [Hashable α] : Raw α β → Prop where
   | wf {m} : 0 < m.buckets.size → (∀ [EquivBEq α] [LawfulHashable α], m.WFImp) → WF m
   | empty₀ {c} : WF (Raw₀.empty c).1
-  | insert₀ {m h a b} : WF m → WF (Raw₀.insert ⟨m, h⟩ a b).1.1
+  | insert₀ {m h a b} : WF m → WF (Raw₀.insert ⟨m, h⟩ a b).1
+  | insertB₀ {m h a b} : WF m → WF (Raw₀.insertB ⟨m, h⟩ a b).1.1
   | erase₀ {m h a} : WF m → WF (Raw₀.erase ⟨m, h⟩ a).1
   | computeIfAbsent₀ [LawfulBEq α] {m h a f} : WF m → WF (Raw₀.computeIfAbsent ⟨m, h⟩ a f).1
 
 theorem WF.size_buckets_pos [BEq α] [Hashable α] (m : Raw α β) : WF m → 0 < m.buckets.size
   | wf h₁ _ => h₁
   | empty₀ => (Raw₀.empty _).2
-  | insert₀ _ => (Raw₀.insert ⟨_, _⟩ _ _).1.2
+  | insert₀ _ => (Raw₀.insert ⟨_, _⟩ _ _).2
+  | insertB₀ _ => (Raw₀.insertB ⟨_, _⟩ _ _).1.2
   | erase₀ _ => (Raw₀.erase ⟨_, _⟩ _).2
   | computeIfAbsent₀ _ => (Raw₀.computeIfAbsent ⟨_, _⟩ _ _).1.2
 
@@ -344,11 +358,11 @@ theorem WF.empty [BEq α] [Hashable α] {c : Nat} : (Raw.empty c : Raw α β).WF
 theorem WF.emptyc [BEq α] [Hashable α] : (∅ : Raw α β).WF :=
   .empty
 
-theorem WF.insert' [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β a} (h : m.WF) : (m.insert' a b).1.WF := by
-  simpa [Raw.insert', h.size_buckets_pos] using .insert₀ h
+theorem WF.insertB [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β a} (h : m.WF) : (m.insertB a b).1.WF := by
+  simpa [Raw.insertB, h.size_buckets_pos] using .insertB₀ h
 
-theorem WF.insert [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β a} (h : m.WF) : (m.insert a b).WF :=
-  WF.insert' h
+theorem WF.insert [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β a} (h : m.WF) : (m.insert a b).WF := by
+  simpa [Raw.insert, h.size_buckets_pos] using .insert₀ h
 
 theorem WF.erase [BEq α] [Hashable α] {m : Raw α β} {a : α} (h : m.WF) : (m.erase a).WF := by
   simpa [Raw.erase, h.size_buckets_pos] using .erase₀ h
@@ -374,16 +388,15 @@ instance [BEq α] [Hashable α] : EmptyCollection (DHashMap α β) where
 Inserts the mapping into the map, replacing an existing mapping if there is one.
 Returns `true` if there was a previous mapping that was replaced.
 -/
-@[inline] def insert' [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
-  let m' := Raw₀.insert ⟨m.1, m.2.size_buckets_pos⟩ a b
-  ⟨⟨m'.1.1, .insert₀ m.2⟩, m'.2⟩
+@[inline] def insertB [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
+  let m' := Raw₀.insertB ⟨m.1, m.2.size_buckets_pos⟩ a b
+  ⟨⟨m'.1.1, .insertB₀ m.2⟩, m'.2⟩
 
--- It can be verified from the IR that the `Prod.mk` in `insert'` is correctly elided.
 /--
 Inserts the mapping into the map, replacing an existing mapping if there is one.
 -/
 @[inline] def insert [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
-  (m.insert' a b).1
+  ⟨Raw₀.insert ⟨m.1, m.2.size_buckets_pos⟩ a b, .insert₀ m.2⟩
 
 /--
 If the map contains a mapping for the given key, return the value. Otherwise, compute the value using the

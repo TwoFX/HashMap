@@ -49,14 +49,26 @@ theorem findEntry?_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).findEntry
 theorem findConst?_empty {β : Type v} {a : α} {c : Nat} : (empty c : Raw₀ α (fun _ => β)).findConst? a = none := by
   simp [findConst?]
 
+theorem findEntry?_insertB (a k : α) (b : β a) :
+    (m.insertB a b).1.findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k := by
+  rw [findEntry?_eq_findEntry? h.out.insertB, findEntry?_eq_findEntry? h.out,
+    List.findEntry?_of_perm h.out.insertB.distinct (toListModel_insertB h.out),
+    List.findEntry?_insertEntry]
+
 theorem findEntry?_insert (a k : α) (b : β a) :
-    (m.insert a b).1.findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k := by
+    (m.insert a b).findEntry? k = bif a == k then some ⟨a, b⟩ else m.findEntry? k := by
   rw [findEntry?_eq_findEntry? h.out.insert, findEntry?_eq_findEntry? h.out,
     List.findEntry?_of_perm h.out.insert.distinct (toListModel_insert h.out),
     List.findEntry?_insertEntry]
 
+theorem findConst?_insertB {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) (a k : α) (b : β) :
+    (m.insertB a b).1.findConst? k = bif a == k then some b else m.findConst? k := by
+  rw [findConst?_eq_findValue? h.out.insertB, findConst?_eq_findValue? h.out,
+    List.findValue?_of_perm h.out.insertB.distinct (toListModel_insertB h.out),
+    List.findValue?_insertEntry]
+
 theorem findConst?_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) (a k : α) (b : β) :
-    (m.insert a b).1.findConst? k = bif a == k then some b else m.findConst? k := by
+    (m.insert a b).findConst? k = bif a == k then some b else m.findConst? k := by
   rw [findConst?_eq_findValue? h.out.insert, findConst?_eq_findValue? h.out,
     List.findValue?_of_perm h.out.insert.distinct (toListModel_insert h.out),
     List.findValue?_insertEntry]
@@ -69,7 +81,12 @@ theorem findConst?_congr {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF
 theorem contains_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).contains a = false := by
   simp [contains]
 
-theorem contains_insert (a k : α) (b : β a) : (m.insert a b).1.contains k = ((a == k) || m.contains k) := by
+theorem contains_insertB (a k : α) (b : β a) : (m.insertB a b).1.contains k = ((a == k) || m.contains k) := by
+  rw [contains_eq_containsKey h.out.insertB, contains_eq_containsKey h.out,
+    List.containsKey_of_perm h.out.insertB.distinct (toListModel_insertB h.out),
+    List.containsKey_insertEntry]
+
+theorem contains_insert (a k : α) (b : β a) : (m.insert a b).contains k = ((a == k) || m.contains k) := by
   rw [contains_eq_containsKey h.out.insert, contains_eq_containsKey h.out,
     List.containsKey_of_perm h.out.insert.distinct (toListModel_insert h.out),
     List.containsKey_insertEntry]
@@ -89,8 +106,14 @@ theorem mem_values_iff_exists_findConst?_eq_some {β : Type v} (m : Raw₀ α (f
 theorem values_empty {β : Type v} {c} : (empty c : Raw₀ α (fun _ => β)).1.values = [] := by
   simpa using Raw.values_perm_values_toListModel (m := (empty c : Raw₀ α (fun _ => β)).1)
 
+theorem mem_values_insertB {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) {a : α} {b v : β} :
+    v ∈ (m.insertB a b).1.1.values ↔ b = v ∨ ∃ k, (a == k) = false ∧ m.findConst? k = some v := by
+  rw [mem_values_iff_mem_values_toListModel, List.mem_values_of_perm h.out.insertB.distinct (toListModel_insertB h.out),
+    List.mem_values_insertEntry h.out.distinct]
+  simp only [findConst?_eq_findValue? h.out]
+
 theorem mem_values_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) {a : α} {b v : β} :
-    v ∈ (m.insert a b).1.1.values ↔ b = v ∨ ∃ k, (a == k) = false ∧ m.findConst? k = some v := by
+    v ∈ (m.insert a b).1.values ↔ b = v ∨ ∃ k, (a == k) = false ∧ m.findConst? k = some v := by
   rw [mem_values_iff_mem_values_toListModel, List.mem_values_of_perm h.out.insert.distinct (toListModel_insert h.out),
     List.mem_values_insertEntry h.out.distinct]
   simp only [findConst?_eq_findValue? h.out]

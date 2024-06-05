@@ -272,8 +272,14 @@ theorem contains_eq_containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : �
     m.contains a = m.containsₘ a := rfl
 
 theorem insert_eq_insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) :
-    (m.insert a b).1 = m.insertₘ a b := by
+    m.insert a b = m.insertₘ a b := by
   rw [insert, insertₘ, containsₘ, bucket]
+  dsimp only [Array.ugetElem_eq_getElem, Array.uset]
+  split <;> rfl
+
+theorem insertB_eq_insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) :
+    (m.insertB a b).1 = m.insertₘ a b := by
+  rw [insertB, insertₘ, containsₘ, bucket]
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
   split <;> rfl
 

@@ -26,8 +26,8 @@ namespace Raw
 instance : EmptyCollection (Raw α) where
   emptyCollection := empty
 
-@[inline] def insert' [BEq α] [Hashable α] (m : Raw α) (a : α) : Raw α × Bool :=
-  let ⟨r, replaced⟩ := m.inner.insert' a ()
+@[inline] def insertB [BEq α] [Hashable α] (m : Raw α) (a : α) : Raw α × Bool :=
+  let ⟨r, replaced⟩ := m.inner.insertB a ()
   ⟨⟨r⟩, replaced⟩
 
 @[inline] def insert [BEq α] [Hashable α] (m : Raw α) (a : α) : Raw α :=
@@ -45,8 +45,8 @@ theorem WF.empty [BEq α] [Hashable α] {c} : (empty c : Raw α).WF :=
 theorem WF.emptyc [BEq α] [Hashable α] : (∅ : Raw α).WF :=
   HashMap.Raw.WF.empty
 
-theorem WF.insert' [BEq α] [Hashable α] {m : Raw α} {a : α} (h : m.WF) : (m.insert' a).1.WF :=
-  HashMap.Raw.WF.insert' h
+theorem WF.insertB [BEq α] [Hashable α] {m : Raw α} {a : α} (h : m.WF) : (m.insertB a).1.WF :=
+  HashMap.Raw.WF.insertB h
 
 theorem WF.insert [BEq α] [Hashable α] {m : Raw α} {a : α} (h : m.WF) : (m.insert a).WF :=
   HashMap.Raw.WF.insert h
@@ -66,8 +66,8 @@ namespace HashSet
 instance [BEq α] [Hashable α] : EmptyCollection (HashSet α) where
   emptyCollection := empty
 
-@[inline] def insert' [BEq α] [Hashable α] (m : HashSet α) (a : α) : HashSet α × Bool :=
-  let ⟨r, replaced⟩ := m.inner.insert' a ()
+@[inline] def insertB [BEq α] [Hashable α] (m : HashSet α) (a : α) : HashSet α × Bool :=
+  let ⟨r, replaced⟩ := m.inner.insertB a ()
   ⟨⟨r⟩, replaced⟩
 
 @[inline] def insert [BEq α] [Hashable α] (m : HashSet α) (a : α) : HashSet α :=
