@@ -118,6 +118,28 @@ theorem mem_values_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.W
     List.mem_values_insertEntry h.out.distinct]
   simp only [findConst?_eq_findValue? h.out]
 
+@[simp]
+theorem isEmpty_empty {c} : (empty c : Raw₀ α β).1.isEmpty := by
+  rw [Raw.isEmpty_eq_isEmpty wfImp_empty, toListModel_buckets_empty, List.isEmpty_nil]
+
+@[simp]
+theorem isEmpty_insertB {a : α} {b : β a} : (m.insertB a b).1.1.isEmpty = false := by
+  rw [Raw.isEmpty_eq_isEmpty h.out.insertB, (toListModel_insertB h.out).isEmpty_eq, List.isEmpty_insertEntry]
+
+@[simp]
+theorem isEmpty_insert {a : α} {b : β a} : (m.insert a b).1.isEmpty = false := by
+  rw [Raw.isEmpty_eq_isEmpty h.out.insert, (toListModel_insert h.out).isEmpty_eq, List.isEmpty_insertEntry]
+
+theorem findEntry?_of_isEmpty {a : α} (h' : m.1.isEmpty = true) : m.findEntry? a = none := by
+  simp_all [findEntry?_eq_findEntry? h.out, Raw.isEmpty_eq_isEmpty h.out, List.isEmpty_iff]
+
+theorem findConst?_of_isEmpty {a : α} {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) (h' : m.1.isEmpty = true) :
+    m.findConst? a = none := by
+  simp_all [findConst?_eq_findValue? h.out, Raw.isEmpty_eq_isEmpty h.out, List.isEmpty_iff]
+
+theorem contains_of_isEmpty {a : α} (h' : m.1.isEmpty = true) : m.contains a = false := by
+  simp_all [contains_eq_containsKey h.out, Raw.isEmpty_eq_isEmpty h.out, List.isEmpty_iff]
+
 end Raw₀
 
 namespace Raw
@@ -183,6 +205,32 @@ theorem mem_values_insert {β : Type v} {m : Raw α (fun _ => β)} (h : m.WF) {a
     v ∈ (m.insert a b).values ↔ b = v ∨ ∃ k, (a == k) = false ∧ m.findConst? k = some v := by
   rw [insert_eq h, Raw₀.mem_values_insert ⟨m, h.size_buckets_pos⟩ h]
   simp only [findConst?_eq h]
+
+@[simp]
+theorem isEmpty_empty {c} : (empty c : Raw α β).isEmpty :=
+  Raw₀.isEmpty_empty
+
+@[simp]
+theorem isEmpty_emptyc : (∅ : Raw α β).isEmpty :=
+  isEmpty_empty
+
+@[simp]
+theorem isEmpty_insertB {a : α} {b : β a} : (m.insertB a b).1.isEmpty = false := by
+  rw [insertB_eq h, Raw₀.isEmpty_insertB ⟨m, _⟩ h]
+
+@[simp]
+theorem isEmpty_insert {a : α} {b : β a} : (m.insert a b).isEmpty = false := by
+  rw [insert_eq h, Raw₀.isEmpty_insert ⟨m, _⟩ h]
+
+theorem findEntry?_of_isEmpty {a : α} (h' : m.isEmpty = true) : m.findEntry? a = none := by
+  rw [findEntry?_eq h, Raw₀.findEntry?_of_isEmpty ⟨m, _⟩ h h']
+
+theorem findConst?_of_isEmpty {a : α} {β : Type v} {m : Raw α (fun _ => β)} (h : m.WF) (h' : m.isEmpty = true) :
+    m.findConst? a = none := by
+  rw [findConst?_eq h, Raw₀.findConst?_of_isEmpty ⟨m, _⟩ h h']
+
+theorem contains_of_isEmpty {a : α} (h' : m.isEmpty = true) : m.contains a = false := by
+  rw [contains_eq h, Raw₀.contains_of_isEmpty ⟨m, _⟩ h h']
 
 end Raw
 
@@ -250,6 +298,32 @@ theorem values_emptyc {β : Type v} : (∅ : DHashMap α (fun _ => β)).values =
 theorem mem_values_insert {β : Type v} {m : DHashMap α (fun _ => β)} {a : α} {b v : β} :
     v ∈ (m.insert a b).values ↔ b = v ∨ ∃ k, (a == k) = false ∧ m.findConst? k = some v :=
   Raw₀.mem_values_insert ⟨m.1, _⟩ m.2
+
+@[simp]
+theorem isEmpty_empty {c} : (empty c : DHashMap α β).isEmpty :=
+  Raw₀.isEmpty_empty
+
+@[simp]
+theorem isEmpty_emptyc : (∅ : DHashMap α β).isEmpty :=
+  isEmpty_empty
+
+@[simp]
+theorem isEmpty_insertB {a : α} {b : β a} : (m.insertB a b).1.isEmpty = false :=
+  Raw₀.isEmpty_insertB ⟨m.1, _⟩ m.2
+
+@[simp]
+theorem isEmpty_insert {a : α} {b : β a} : (m.insert a b).isEmpty = false :=
+  Raw₀.isEmpty_insert ⟨m.1, _⟩ m.2
+
+theorem findEntry?_of_isEmpty {a : α} (h : m.isEmpty = true) : m.findEntry? a = none :=
+  Raw₀.findEntry?_of_isEmpty ⟨m.1, _⟩ m.2 h
+
+theorem findConst?_of_isEmpty {a : α} {β : Type v} {m : DHashMap α (fun _ => β)} (h : m.isEmpty = true) :
+    m.findConst? a = none :=
+  Raw₀.findConst?_of_isEmpty ⟨m.1, _⟩ m.2 h
+
+theorem contains_of_isEmpty {a : α} (h : m.isEmpty = true) : m.contains a = false :=
+  Raw₀.contains_of_isEmpty ⟨m.1, _⟩ m.2 h
 
 end
 

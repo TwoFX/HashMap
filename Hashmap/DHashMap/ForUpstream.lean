@@ -59,3 +59,13 @@ theorem List.Sublist.map (f : α → β) {l₁ l₂ : List α} (h : l₁.Sublist
   · simp
   · exact Sublist.cons _ (by assumption)
   · exact Sublist.cons₂ _ (by assumption)
+
+-- From mathlib
+theorem List.isEmpty_iff {l : List α} : l.isEmpty ↔ l = [] := by
+  cases l <;> simp
+
+theorem List.isEmpty_iff_length_eq_zero {l : List α} : l.isEmpty ↔ l.length = 0 := by
+  rw [isEmpty_iff, length_eq_zero]
+
+theorem List.Perm.isEmpty_eq {l l' : List α} (h : l ~ l') : l.isEmpty = l'.isEmpty := by
+  cases l <;> cases l' <;> simp_all

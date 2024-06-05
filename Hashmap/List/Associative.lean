@@ -296,6 +296,10 @@ theorem containsKey_eq_isSome_findEntry? [BEq α] {l : List (Σ a, β a)} {a : �
     · simp [findEntry?_cons_of_false h, h, ih]
     · simp [findEntry?_cons_of_true h, h]
 
+theorem isEmpty_eq_false_of_containsKey [BEq α] {l : List (Σ a, β a)} {a : α} (h : l.containsKey a = true) :
+    l.isEmpty = false := by
+  cases l <;> simp_all
+
 @[simp]
 theorem findEntry?_eq_none [BEq α] {l : List (Σ a, β a)} {a : α} :
     l.findEntry? a = none ↔ l.containsKey a = false := by
@@ -439,6 +443,13 @@ theorem replaceEntry_of_containsKey_eq_false [BEq α] {l : List (Σ a, β a)} {a
   · next k v l ih =>
     rw [containsKey_cons_eq_false] at h
     rw [replaceEntry_cons_of_false h.1, ih h.2]
+
+@[simp]
+theorem isEmpty_replaceEntry [BEq α] {l : List (Σ a, β a)} {a : α} {b : β a} : (l.replaceEntry a b).isEmpty = l.isEmpty := by
+  induction l using assoc_induction
+  · simp
+  · simp [replaceEntry_cons, cond_eq_if]
+    split <;> simp
 
 theorem findEntry?_replaceEntry_of_containsKey_eq_false [BEq α] {l : List (Σ a, β a)} {k a : α} {b : β a}
     (hl : l.containsKey a = false) : (l.replaceEntry a b).findEntry? k = l.findEntry? k := by
@@ -742,6 +753,12 @@ theorem DistinctKeys.insertEntry [BEq α] [PartialEquivBEq α] {l : List (Σ a, 
     exact ⟨h, h'⟩
   · rw [insertEntry_of_containsKey h']
     exact h.replaceEntry
+
+@[simp]
+theorem isEmpty_insertEntry [BEq α] {l : List (Σ a, β a)} {k : α} {v : β k} : (l.insertEntry k v).isEmpty = false := by
+  cases h : l.containsKey k
+  · simp [insertEntry_of_containsKey_eq_false h]
+  · rw [insertEntry_of_containsKey h, isEmpty_replaceEntry, isEmpty_eq_false_of_containsKey h]
 
 section
 
