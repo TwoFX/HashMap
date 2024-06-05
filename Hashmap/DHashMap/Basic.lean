@@ -385,6 +385,10 @@ Inserts the mapping into the map, replacing an existing mapping if there is one.
 @[inline] def insert [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
   (m.insert' a b).1
 
+/--
+If the map contains a mapping for the given key, return the value. Otherwise, compute the value using the
+given function, insert it into the map, and return the value.
+-/
 @[inline] def computeIfAbsent [BEq α] [LawfulBEq α] [Hashable α] (m : DHashMap α β) (a : α) (f : Unit → β a) : DHashMap α β × β a :=
   let m' := Raw₀.computeIfAbsent ⟨m.1, m.2.size_buckets_pos⟩ a f
   ⟨⟨m'.1.1, .computeIfAbsent₀ m.2⟩, m'.2⟩

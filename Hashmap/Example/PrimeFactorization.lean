@@ -66,21 +66,19 @@ theorem Nat.div_pos (hba : b ≤ a) (hb : 0 < b) : 0 < a / b :=
 
 abbrev M := StateM (DHashMap Nat fun n => { d : Nat // IsSmallestPrimeFactor n d })
 
-def findFactor (n : Nat) (hn : 1 < n) : M { d : Nat // IsSmallestPrimeFactor n d } := do
-  let cache ← get
-  match cache.find? n with
-  | some ans =>
-      dbg_trace "Cache hit: smallest prime factor of {n} is {ans}"
-      return ans
-  | none => do
-    let ans : { d : Nat // IsSmallestPrimeFactor n d } :=
-      match go n 2 Nat.one_lt_two (by omega) (.notFound (by omega)) with
-      | .found d' hd' => ⟨d', hd'⟩
-      | .notFound h => ⟨n, ⟨hn, n.mod_self, fun d' h₁ h₂ => have := h _ h₁; by omega⟩⟩
-    dbg_trace "Entering {n} => {ans} into the cache"
-    set (cache.insert n ans)
-    return ans
+@[inline]
+def Prod.swap : α × β → β × α
+  | (a, b) => (b, a)
+
+def findFactor (n : Nat) (hn : 1 < n) : M { d : Nat // IsSmallestPrimeFactor n d } :=
+  dbg_trace "Requesting {n}"
+  modifyGet (Prod.swap ∘ (·.computeIfAbsent n fun _ => compute n hn))
 where
+  compute (n : Nat) (hn : 1 < n) : { d : Nat // IsSmallestPrimeFactor n d } :=
+    dbg_trace "Cache miss {n}"
+    match go n 2 Nat.one_lt_two (by omega) (.notFound (by omega)) with
+    | .found d' hd' => ⟨d', hd'⟩
+    | .notFound h => ⟨n, ⟨hn, n.mod_self, fun d' h₁ h₂ => have := h _ h₁; by omega⟩⟩
   go (n d : Nat) (hd : 1 < d) (hd₂ : (d - 1) * (d - 1) < n) : FindFactorState n (d - 1) → FindFactorState n (n - 1)
     | .found d' hd' => .found d' hd'
     | .notFound h =>
