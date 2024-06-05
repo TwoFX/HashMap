@@ -38,6 +38,24 @@ theorem Nat.toUSize_one : (1 : Nat).toUSize = 1 := rfl
 theorem USize.toNat_lt' {a : USize} : a.toNat < USize.size :=
   a.1.2
 
+/--
+Scramble the hash code in order to protect against bad hash functions.
+
+Example: if `Hashable Float` was implemented using the "identity" reinterpreting the bit pattern as a `UInt64`,
+then the hash codes of all small positive or negative integers would end in around 50 zeroes, meaning that they
+all land in bucket 0 in reasonably-sized hash maps.
+
+To counteract this, we xor the hash code with some shifted-down versions of itself, to make sure that all of
+the entropy of the hash code appears in the lower 16 bits at least.
+
+The scrambling operation is very fast. It does not have a measurable impact on performance in the insert benchmark.
+-/
+@[inline]
+def scrambleHash (hash : UInt64) : UInt64 :=
+  let fold := hash ^^^ (hash >>> 32)
+  fold ^^^ (fold >>> 16)
+
+-- set_option trace.compiler.ir.result true in
 -- TODO: benchmark if we need a C implementation for this. Currently this still needs to do a scalar check for sz which we could
 -- maybe get rid of, if we changed to size condition in IsGoodSize to assert that sz is definitely a scalar.
 
@@ -119,7 +137,7 @@ def MyLean.DHashMap.Raw₀.erase._rarg (x_1 : obj) (x_2 : obj) (x_3 : obj) (x_4 
 ```
 -/
 @[irreducible] def mkIdx (sz : Nat) (h : 0 < sz) (hash : UInt64) : { u : USize // u.toNat < sz } :=
-  ⟨hash.toUSize &&& (sz.toUSize - 1), by
+  ⟨(scrambleHash hash).toUSize &&& (sz.toUSize - 1), by
     by_cases h' : sz < USize.size
     · rw [USize.toNat_and, ← Nat.toUSize_one, USize.toNat_sub_le, Nat.toNat_toUSize]
       · refine Nat.lt_of_le_of_lt and_le_right ?_
