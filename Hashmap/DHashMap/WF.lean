@@ -36,8 +36,10 @@ theorem computeSize_eq {buckets : Array (AssocList α β)} : computeSize buckets
   · simp
   · next l₂ t ih => rw [foldl_cons, ← List.length_append, ih, foldl_cons]
 
--- TODO: find a home and clean up
-theorem Raw.toList_perm_toListModel {m : Raw α β} : m.toList ~ toListModel m.buckets := by
+namespace Raw
+
+-- TODO: clean up
+theorem toList_perm_toListModel {m : Raw α β} : m.toList ~ toListModel m.buckets := by
   rw [Raw.toList, toListModel, List.bind_eq_foldl, Raw.foldl, Raw.foldlM, Array.foldlM_eq_foldlM_data, ← List.foldl_eq_foldlM, Id.run]
   have h₁ : ∀ {l : AssocList α β} {acc : List (Σ a, β a)}, l.foldlM (m := Id) (fun acc k v => ⟨k, v⟩ :: acc) acc =
       l.toList.reverse ++ acc := by
@@ -58,8 +60,8 @@ theorem Raw.toList_perm_toListModel {m : Raw α β} : m.toList ~ toListModel m.b
     refine (List.reverse_perm _).append_right _ |>.trans List.perm_append_comm |>.trans ?_
     exact h.append_right l.toList
 
--- TODO: find a home and clean up
-theorem Raw.values_eq_values_toList {β : Type v} {m : Raw α (fun _ => β)} : m.values = m.toList.values := by
+-- TODO: clean up
+theorem values_eq_values_toList {β : Type v} {m : Raw α (fun _ => β)} : m.values = m.toList.values := by
   simp only [Raw.toList, List.values_eq_map, Raw.values, Raw.foldl, Raw.foldlM, Array.foldlM_eq_foldlM_data, ← List.foldl_eq_foldlM, Id.run]
   suffices ∀ (l : List (AssocList α (fun _ => β))) (l' : List ((_ : α) × β)),
       List.foldl (fun acc l => AssocList.foldlM (m := Id) (fun acc _ v => v :: acc) acc l) (l'.map (·.2)) l =
@@ -76,9 +78,11 @@ theorem Raw.values_eq_values_toList {β : Type v} {m : Raw α (fun _ => β)} : m
     · simp [AssocList.foldlM]
     · next k v t ih' => simp [AssocList.foldlM, ← ih']
 
-theorem Raw.values_perm_values_toListModel {β : Type v} {m : Raw α (fun _ => β)} : m.values ~ (toListModel m.buckets).values := by
+theorem values_perm_values_toListModel {β : Type v} {m : Raw α (fun _ => β)} : m.values ~ (toListModel m.buckets).values := by
   rw [values_eq_values_toList, values_eq_map, values_eq_map]
   exact (toList_perm_toListModel (m := m)).map _
+
+end Raw
 
 namespace Raw₀
 
