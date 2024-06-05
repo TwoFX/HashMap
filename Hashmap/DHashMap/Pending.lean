@@ -15,10 +15,6 @@ namespace MyLean.DHashMap.Ops
 
 section modification
 
-#check Array.get
-#check Array.get?
-#check Lean.HashMap.find?
-
 /-!
 Trying to derive principles for naming
 
@@ -95,11 +91,39 @@ Returns the existing mapping if there is one, or `none` if the given mapping was
 def Const.insertIfNewGet? (m : DHashMap α (fun _ => γ)) (a : α) (b : γ) : DHashMap α (fun _ => γ) × Option γ :=
   sorry
 
-@[inline] def computeIfAbsentM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
+def computeIfAbsentM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
     (q : DHashMap α β) (a : α) (f : Unit → m (β a)) : m (Raw α β × β a) := sorry
 
-@[inline] def computeIfAbsent [BEq α] [LawfulBEq α] [Hashable α] (m : DHashMap α β) (a : α) (f : Unit → β a) :
+def computeIfAbsent [BEq α] [LawfulBEq α] [Hashable α] (m : DHashMap α β) (a : α) (f : Unit → β a) :
     DHashMap α β × β a := sorry
+
+/--
+General purpose "modify the mapping for a given key" function that can be used to insert, update
+and remove mappings from a hash map.
+-/
+def Const.alterM {γ : Type u} {m : Type u → Type v} [Monad m]
+  (q : DHashMap α β) (k : α) (f : Option γ → m (Option γ)) : m (DHashMap α (fun _ => γ)) := sorry
+
+/--
+General purpose "modify the mapping for a given key" function that can be used to insert, update
+and remove mappings from a hash map.
+
+TODO: this theoretically needs all the variants that insert also has...
+-/
+def Const.alter (m : DHashMap α (fun _ => γ)) (f : Option γ → Option γ) (k : α) : DHashMap α (fun _ => γ) := sorry
+
+/--
+General purpose "modify the mapping for a given key" function that can be used to insert, update
+and remove mappings from a hash map.
+-/
+def alterM [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
+  (q : DHashMap α β) (k : α) (f : Option (β k) → m (Option (β k))) : m (DHashMap α β) := sorry
+
+/--
+General purpose "modify the mapping for a given key" function that can be used to insert, update
+and remove mappings from a hash map.
+-/
+def alter [LawfulBEq α] (m : DHashMap α β) (k : α) (f : Option (β k) → Option (β k)) : DHashMap α β := sorry
 
 /--
 Removes the mapping with the given key if it exists, returning `true` if the map was altered.
@@ -170,34 +194,6 @@ We won't actually provide a version of this returning a `DHashMap`, only a `Hash
 -/
 def _root_.Array.groupByKey' (key : γ → α) (xs : Array γ) : DHashMap α (fun _ => Array γ) :=
   sorry
-
-/--
-General purpose "modify the mapping for a given key" function that can be used to insert, update
-and remove mappings from a hash map.
--/
-def Const.alterM {γ : Type u} {m : Type u → Type v} [Monad m]
-  (q : DHashMap α β) (k : α) (f : Option γ → m (Option γ)) : m (DHashMap α (fun _ => γ)) := sorry
-
-/--
-General purpose "modify the mapping for a given key" function that can be used to insert, update
-and remove mappings from a hash map.
-
-TODO: this theoretically needs all the variants that insert also has...
--/
-def Const.alter (m : DHashMap α (fun _ => γ)) (f : Option γ → Option γ) (k : α) : DHashMap α (fun _ => γ) := sorry
-
-/--
-General purpose "modify the mapping for a given key" function that can be used to insert, update
-and remove mappings from a hash map.
--/
-def alterM [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
-  (q : DHashMap α β) (k : α) (f : Option (β k) → m (Option (β k))) : m (DHashMap α β) := sorry
-
-/--
-General purpose "modify the mapping for a given key" function that can be used to insert, update
-and remove mappings from a hash map.
--/
-def alter [LawfulBEq α] (m : DHashMap α β) (k : α) (f : Option (β k) → Option (β k)) : DHashMap α β := sorry
 
 /--
 Applies the given mapping function to all entries in the map, discarding entries for which the
