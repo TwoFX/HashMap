@@ -50,11 +50,14 @@ Returns `true` if there was a previous mapping.
 def insertB (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
   sorry
 
+def insertGet? [LawfulBEq α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (β a) :=
+  sorry
+
 /--
 Inserts the mapping into the map, replacing an existing mapping if there is one.
 Returns the previous mapping if there was one.
 -/
-def insertGet? (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (Σ a, β a) :=
+def insertGetEntry? (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (Σ a, β a) :=
   sorry
 
 /--
@@ -132,16 +135,22 @@ and remove mappings from a hash map.
 -/
 def alter [LawfulBEq α] (m : DHashMap α β) (k : α) (f : Option (β k) → Option (β k)) : DHashMap α β := sorry
 
+def remove (m : DHashMap α β) (a : α) : DHashMap α β :=
+  sorry
+
 /--
 Removes the mapping with the given key if it exists, returning `true` if the map was altered.
 -/
 def removeB (m : DHashMap α β) (a : α) : DHashMap α β × Bool :=
   sorry
 
+def removeGet? [LawfulBEq α] (m : DHashMap α β) (a : α) : DHashMap α β × Option (β a) :=
+  sorry
+
 /--
 Removes the mapping with the given key if it exists, returning the removed mapping.
 -/
-def removeGet? (m : DHashMap α β) (a : α) : DHashMap α β × Option (Σ a, β a) :=
+def removeGetEntry? (m : DHashMap α β) (a : α) : DHashMap α β × Option (Σ a, β a) :=
   sorry
 
 /--
