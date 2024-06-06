@@ -91,8 +91,14 @@ Returns the existing mapping if there is one, or `none` if the given mapping was
 def Const.insertIfNewGet? (m : DHashMap α (fun _ => γ)) (a : α) (b : γ) : DHashMap α (fun _ => γ) × Option γ :=
   sorry
 
+def Const.computeIfAbsentM [BEq α] [Hashable α] {β : Type u} {m : Type u → Type v} [Monad m]
+    (q : DHashMap α (fun _ => β)) (a : α) (f : Unit → m β) : m (DHashMap α (fun _ => β) × β) := sorry
+
+def Const.computeIfAbsent [BEq α] [LawfulBEq α] {β : Type v} (m : DHashMap α (fun _ => β)) (a : α) (f : Unit → β) :
+    DHashMap α (fun _ => β) × β := sorry
+
 def computeIfAbsentM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
-    (q : DHashMap α β) (a : α) (f : Unit → m (β a)) : m (Raw α β × β a) := sorry
+    (q : DHashMap α β) (a : α) (f : Unit → m (β a)) : m (DHashMap α β × β a) := sorry
 
 def computeIfAbsent [BEq α] [LawfulBEq α] [Hashable α] (m : DHashMap α β) (a : α) (f : Unit → β a) :
     DHashMap α β × β a := sorry
@@ -107,9 +113,10 @@ def Const.alterM {γ : Type u} {m : Type u → Type v} [Monad m]
 /--
 General purpose "modify the mapping for a given key" function that can be used to insert, update
 and remove mappings from a hash map.
-
-TODO: this theoretically needs all the variants that insert also has...
 -/
+-- We don't provide variants indicating what changed, mainly because they would be somewhat confusing:
+-- would they return the previous mapping, the new mapping, or both? We can always add these later if
+-- a use case comes up.
 def Const.alter (m : DHashMap α (fun _ => γ)) (f : Option γ → Option γ) (k : α) : DHashMap α (fun _ => γ) := sorry
 
 /--
@@ -150,12 +157,19 @@ by their respective last occurrences.
 def ofList (l : List (Σ a, β a)) : DHashMap α β :=
   sorry
 
+def ofArray (l : Array (Σ a, β a)) : DHashMap α β :=
+  sorry
+
 /--
 Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are combined
 using the given function.
 -/
 def ofListWithM [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
-    (f : (a : α) → β a → β a → m (β a)) : m (DHashMap α β) :=
+    (f : (a : α) → β a → β a → m (β a)) (l : List (Σ a, β a)) : m (DHashMap α β) :=
+  sorry
+
+def ofArrayWithM [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
+    (l : Array (Σ a, β a)) (f : (a : α) → β a → β a → m (β a)) : m (DHashMap α β) :=
   sorry
 
 /--
@@ -165,6 +179,9 @@ using the given function.
 def ofListWith [LawfulBEq α] (l : List (Σ a, β a)) (f : (a : α) → β a → β a → β a) : DHashMap α β :=
   sorry
 
+def ofArrayWith [LawfulBEq α] (l : Array (Σ a, β a)) (f : (a : α) → β a → β a → β a) : DHashMap α β :=
+  sorry
+
 /--
 Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are replaced
 by their respective last occurrences.
@@ -172,11 +189,19 @@ by their respective last occurrences.
 def Const.ofList (l : List (α × γ)) : DHashMap α (fun _ => γ) :=
   sorry
 
+def Const.ofArray (l : Array (α × γ)) : DHashMap α (fun _ => γ) :=
+  sorry
+
 /--
 Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are combined
 using the given function.
 -/
-def Const.ofListWithM {γ : Type u} {m : Type u → Type v} [Monad m] (f : (a : α) → γ → γ → m γ) : m (DHashMap α (fun _ => γ)) :=
+def Const.ofListWithM {γ : Type u} {m : Type u → Type v} [Monad m] (l : α × γ)
+    (f : (a : α) → γ → γ → m γ) : m (DHashMap α (fun _ => γ)) :=
+  sorry
+
+def Const.ofArrayWithM {γ : Type u} {m : Type u → Type v} [Monad m] (l : α × γ)
+    (f : (a : α) → γ → γ → m γ) : m (DHashMap α (fun _ => γ)) :=
   sorry
 
 /--
@@ -186,6 +211,9 @@ using the given function.
 def Const.ofListWith (l : List (α × γ)) (f : γ → γ → γ) : DHashMap α (fun _ => γ) :=
   sorry
 
+def Const.ofArrayWith (l : List (α × γ)) (f : γ → γ → γ) : DHashMap α (fun _ => γ) :=
+  sorry
+
 /--
 Groups all elements `x`, `y` in `xs` with `key x == key y` into the same array
 `(xs.groupByKey key).find! (key x)`. Groups preserve the relative order of elements in `xs`.
@@ -193,6 +221,9 @@ Groups all elements `x`, `y` in `xs` with `key x == key y` into the same array
 We won't actually provide a version of this returning a `DHashMap`, only a `HashMap`.
 -/
 def _root_.Array.groupByKey' (key : γ → α) (xs : Array γ) : DHashMap α (fun _ => Array γ) :=
+  sorry
+
+def _root_.List.groupByKey' (key : γ → α) (xs : List γ) : DHashMap α (fun _ => Array γ) :=
   sorry
 
 /--
