@@ -140,6 +140,9 @@ theorem findConst?_of_isEmpty {a : α} {β : Type v} (m : Raw₀ α (fun _ => β
 theorem contains_of_isEmpty {a : α} (h' : m.1.isEmpty = true) : m.contains a = false := by
   simp_all [contains_eq_containsKey h.out, Raw.isEmpty_eq_isEmpty h.out, List.isEmpty_iff]
 
+theorem isEmpty_iff_size_eq_zero : m.1.isEmpty ↔ m.1.size = 0 := by
+  simp [Raw.isEmpty]
+
 end Raw₀
 
 namespace Raw
@@ -231,6 +234,9 @@ theorem findConst?_of_isEmpty {a : α} {β : Type v} {m : Raw α (fun _ => β)} 
 
 theorem contains_of_isEmpty {a : α} (h' : m.isEmpty = true) : m.contains a = false := by
   rw [contains_eq h, Raw₀.contains_of_isEmpty ⟨m, _⟩ h h']
+
+theorem isEmpty_iff_size_eq_zero : m.isEmpty ↔ m.size = 0 := by
+  simp [isEmpty]
 
 end Raw
 
@@ -324,6 +330,9 @@ theorem findConst?_of_isEmpty {a : α} {β : Type v} {m : DHashMap α (fun _ => 
 
 theorem contains_of_isEmpty {a : α} (h : m.isEmpty = true) : m.contains a = false :=
   Raw₀.contains_of_isEmpty ⟨m.1, _⟩ m.2 h
+
+theorem isEmpty_iff_size_eq_zero : m.isEmpty ↔ m.size = 0 :=
+  Raw₀.isEmpty_iff_size_eq_zero ⟨m.1, m.2.size_buckets_pos⟩
 
 end
 

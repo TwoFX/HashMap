@@ -88,11 +88,6 @@ theorem size_eq_length [BEq α] [Hashable α] {m : Raw α β} (h : m.WFImp) : m.
 theorem isEmpty_eq_isEmpty [BEq α] [Hashable α] {m : Raw α β} (h : m.WFImp) : m.isEmpty = (toListModel m.buckets).isEmpty := by
   rw [isEmpty, Bool.eq_iff_iff, List.isEmpty_iff_length_eq_zero, size_eq_length h, decide_eq_true_eq]
 
-theorem isEmpty_iff_toListModel_eq_nil [BEq α] [Hashable α] {m : Raw α β} (h : m.WFImp) : m.isEmpty ↔ toListModel m.buckets = [] := by
-  rw [isEmpty_eq_isEmpty h, List.isEmpty_iff]
-
-alias ⟨toListModel_eq_nil, isEmpty_of_toListModel_eq_nil⟩ := isEmpty_iff_toListModel_eq_nil
-
 end Raw
 
 namespace Raw₀
