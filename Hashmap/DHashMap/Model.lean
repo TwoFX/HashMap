@@ -275,13 +275,21 @@ theorem insert_eq_insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (
     m.insert a b = m.insertₘ a b := by
   rw [insert, insertₘ, containsₘ, bucket]
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
-  split <;> rfl
+  split
+  · simp only [replaceₘ, Subtype.mk.injEq, Raw.mk.injEq, true_and]
+    rw [Array.set_set, updateBucket]
+    simp only [Array.uset, Array.ugetElem_eq_getElem]
+  · rfl
 
 theorem insertB_eq_insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) :
     (m.insertB a b).1 = m.insertₘ a b := by
   rw [insertB, insertₘ, containsₘ, bucket]
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
-  split <;> rfl
+  split
+  · simp only [replaceₘ, Subtype.mk.injEq, Raw.mk.injEq, true_and]
+    rw [Array.set_set, updateBucket]
+    simp only [Array.uset, Array.ugetElem_eq_getElem]
+  · rfl
 
 theorem computeIfAbsent_eq_computeIfAbsentₘ [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (f : Unit → β a) :
     (m.computeIfAbsent a f).1 = m.computeIfAbsentₘ a (f ()) := by
@@ -303,7 +311,11 @@ theorem computeIfAbsent_eq_computeIfAbsentₘ [BEq α] [Hashable α] [LawfulBEq 
 theorem erase_eq_eraseₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : m.erase a = m.eraseₘ a := by
   rw [erase, eraseₘ, containsₘ, bucket]
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
-  split <;> rfl
+  split
+  · simp only [eraseₘaux, Subtype.mk.injEq, Raw.mk.injEq, true_and]
+    rw [Array.set_set, updateBucket]
+    simp only [Array.uset, Array.ugetElem_eq_getElem]
+  · rfl
 
 theorem filterMap_eq_filterMapₘ (m : Raw₀ α β) (f : (a : α) → β a → Option (δ a)) :
     m.filterMap f = m.filterMapₘ f := rfl

@@ -15,7 +15,6 @@ lean_exe «hashmap» where
 lean_exe «insert» where
   root := `Hashmap.Benchmark.Insert
 
-@[default_target]
 lean_exe «insert_replace» where
   root := `Hashmap.Benchmark.InsertReplace
 

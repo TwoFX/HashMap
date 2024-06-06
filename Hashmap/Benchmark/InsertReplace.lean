@@ -3,6 +3,9 @@ import Hashmap.DHashMap.Basic
 /-!
 Example run below. This benchmark tests the case of the `insert` operation in case the key is already present.
 Turns out this has a linearity bug with rather profound performance implications.
+
+If you want to run this benchmark, go back to 2e04b4f8440dd5900e555d83209cf0c084c18abc where all the necessary
+functions on the hash map are implemented.
 -/
 
 open MyLean
