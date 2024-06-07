@@ -58,11 +58,13 @@ Returns `true` if the map was altered.
 def insertIfNewB (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
   sorry
 
+def insertIfNewGet? [LawfulBEq α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (β a) :=
+  sorry
 /--
 Inserts the mapping into the map, but does not alter the map if there is already a mapping.
 Returns the existing mapping if there is one, or `none` if the given mapping was inserted.
 -/
-def insertIfNewGet? (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (Σ a, β a) :=
+def insertIfNewGetEntry? (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (Σ a, β a) :=
   sorry
 
 /--
