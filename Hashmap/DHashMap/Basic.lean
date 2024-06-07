@@ -96,6 +96,18 @@ where
     let buckets' := buckets.uset i (AssocList.cons a b bkt) h
     expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets', -List.length_pos]⟩
 
+@[inline] def insertModify [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
+  let ⟨⟨size, buckets⟩, hm⟩ := m
+  let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
+  let bkt := buckets[i]
+  if bkt.contains a then
+    let buckets' := buckets.modify i.toNat (fun bk => bk.replace a b)
+    ⟨⟨size, buckets'⟩, by simpa [-List.length_pos, buckets']⟩
+  else
+    let size'    := size + 1
+    let buckets' := buckets.uset i (AssocList.cons a b bkt) h
+    expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets', -List.length_pos]⟩
+
 @[inline] def insertB [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β × Bool :=
   let ⟨⟨size, buckets⟩, hm⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
@@ -403,6 +415,8 @@ Inserts the mapping into the map, replacing an existing mapping if there is one.
 -/
 @[inline] def insert [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
   ⟨Raw₀.insert ⟨m.1, m.2.size_buckets_pos⟩ a b, .insert₀ m.2⟩
+@[inline] def insertModify [BEq α] [Hashable α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
+  ⟨Raw₀.insertModify ⟨m.1, m.2.size_buckets_pos⟩ a b, sorry⟩
 
 /--
 If the map contains a mapping for the given key, return the value. Otherwise, compute the value using the
