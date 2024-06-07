@@ -15,28 +15,6 @@ namespace MyLean.DHashMap.Ops
 
 section modification
 
-/-!
-Trying to derive principles for naming
-
-`Array.get` is a function which may fail because of an invalid input. The three variants are
-  * `get?` returns an `Option`
-  * `get!` panicks
-  * `getD` returns a default value.
-
-Probably `HashMap.find` should be renamed `HashMap.get` and have all of these variants.
-
-For `insert`, it's all slightly more annoying, because there the extraction part isn't really
-the main event.
-
-The name `insert?` is especially unfortunate. There are really two reasonable things to expect:
-either this is the version that always replaces and returns ad `Option` containing the old
-value, or it is the version that doesn't replace and returns an `Option` containing the present
-value.
-
-Possible solution: change `insert?` to `insertGet?` or `insertGet`.
-
--/
-
 /--
 Inserts the mapping into the map, replacing an existing mapping if there is one.
 -/
