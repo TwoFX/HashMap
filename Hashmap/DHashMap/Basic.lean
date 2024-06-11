@@ -8,7 +8,7 @@ import Hashmap.List.Defs
 import Hashmap.BEq
 import Hashmap.LawfulHashable
 import Batteries.Data.Array.Lemmas
-import Hashmap.DHashMap.Index
+import Hashmap.DHashMap.Internal.Index
 import Hashmap.Sigma
 
 set_option autoImplicit false

@@ -9,7 +9,7 @@ import Batteries.Data.List.Lemmas
 import Batteries.Data.List.Perm
 import Hashmap.LawfulHashable
 import Hashmap.Or
-import Hashmap.DHashMap.ForUpstream
+import Hashmap.ForUpstream
 
 universe u v w
 

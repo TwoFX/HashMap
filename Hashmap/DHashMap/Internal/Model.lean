@@ -5,7 +5,7 @@ Authors: Markus Himmel
 -/
 import Hashmap.List.Associative
 import Hashmap.DHashMap.Basic
-import Hashmap.DHashMap.ForUpstream
+import Hashmap.ForUpstream
 import Hashmap.Leftovers
 import Hashmap.AssocList.Lemmas
 
