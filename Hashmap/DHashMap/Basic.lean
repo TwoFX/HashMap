@@ -7,7 +7,6 @@ import Hashmap.AssocList.Basic
 import Hashmap.List.Defs
 import Hashmap.BEq
 import Hashmap.LawfulHashable
-import Batteries.Data.Array.Lemmas
 import Hashmap.DHashMap.Internal.Index
 import Hashmap.Sigma
 
@@ -53,7 +52,7 @@ namespace Raw₀
     (data : { d : Array (AssocList α β) // 0 < d.size }) (a : α) (b : β a) : { d : Array (AssocList α β) // 0 < d.size } :=
   let ⟨data, hd⟩ := data
   let ⟨i, h⟩ := mkIdx data.size hd (hash a)
-  ⟨data.uset i (data[i].cons a b) h, by simpa [-List.length_pos]⟩
+  ⟨data.uset i (data[i].cons a b) h, by simpa⟩
 
 /-- Copies all the entries from `buckets` into a new hash map with a larger capacity. -/
 def expand [Hashable α] (data : { d : Array (AssocList α β) // 0 < d.size }) : { d : Array (AssocList α β) // 0 < d.size } :=
@@ -81,7 +80,7 @@ where
   if numBucketsForCapacity size ≤ buckets.size then
     ⟨⟨size, buckets⟩, hm⟩
   else
-    let ⟨buckets', h'⟩ := expand ⟨buckets, by simpa [-List.length_pos]⟩
+    let ⟨buckets', h'⟩ := expand ⟨buckets, by simpa⟩
     ⟨⟨size, buckets'⟩, h'⟩
 
 @[inline] def insert [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
@@ -90,11 +89,11 @@ where
   let bkt := buckets[i]
   if bkt.contains a then
     let buckets' := buckets.uset i .nil h
-    ⟨⟨size, buckets'.uset i (bkt.replace a b) (by simpa [buckets'])⟩, by simpa [-List.length_pos, buckets']⟩
+    ⟨⟨size, buckets'.uset i (bkt.replace a b) (by simpa [buckets'])⟩, by simpa [buckets']⟩
   else
     let size'    := size + 1
     let buckets' := buckets.uset i (AssocList.cons a b bkt) h
-    expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets', -List.length_pos]⟩
+    expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩
 
 @[inline] def insertB [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β × Bool :=
   let ⟨⟨size, buckets⟩, hm⟩ := m
@@ -102,11 +101,11 @@ where
   let bkt := buckets[i]
   if bkt.contains a then
     let buckets' := buckets.uset i .nil h
-    (⟨⟨size, buckets'.uset i (bkt.replace a b) (by simpa [buckets'])⟩, by simpa [-List.length_pos, buckets']⟩, true)
+    (⟨⟨size, buckets'.uset i (bkt.replace a b) (by simpa [buckets'])⟩, by simpa [buckets']⟩, true)
   else
     let size'    := size + 1
     let buckets' := buckets.uset i (AssocList.cons a b bkt) h
-    (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets', -List.length_pos]⟩, false)
+    (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, false)
 
 @[inline] def computeIfAbsentM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
     (q : Raw₀ α β) (a : α) (f : Unit → m (β a)) : m (Raw₀ α β × β a) :=
@@ -118,7 +117,7 @@ where
       let v ← f ()
       let size'    := size + 1
       let buckets' := buckets.uset i (AssocList.cons a v bkt) h
-      return (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets', -List.length_pos]⟩, v)
+      return (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, v)
   | some v => pure (⟨⟨size, buckets⟩, hm⟩, v)
 
 @[inline] def computeIfAbsent [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (f : Unit → β a) : Raw₀ α β × β a :=
@@ -130,7 +129,7 @@ where
       let v := f ()
       let size'    := size + 1
       let buckets' := buckets.uset i (AssocList.cons a v bkt) h
-      (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets', -List.length_pos]⟩, v)
+      (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, v)
   | some v => (⟨⟨size, buckets⟩, hm⟩, v)
 
 @[inline] def findEntry? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
@@ -176,7 +175,7 @@ def erase [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
   let bkt := buckets[i]
   if bkt.contains a then
     let buckets' := buckets.uset i .nil h
-    ⟨⟨size - 1, buckets'.uset i (bkt.erase a) (by simpa [buckets'])⟩, by simpa [-List.length_pos, buckets']⟩
+    ⟨⟨size - 1, buckets'.uset i (bkt.erase a) (by simpa [buckets'])⟩, by simpa [buckets']⟩
   else
     ⟨⟨size, buckets⟩, hb⟩
 
@@ -186,12 +185,12 @@ def erase [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
     (m : Raw₀ α β) : Raw₀ α γ :=
   let ⟨⟨_, buckets⟩, hb⟩ := m
   let newBuckets := buckets.map (AssocList.filterMap f)
-  ⟨⟨computeSize newBuckets, newBuckets⟩, by simpa [-List.length_pos, newBuckets] using hb⟩
+  ⟨⟨computeSize newBuckets, newBuckets⟩, by simpa [newBuckets] using hb⟩
 
 @[specialize] def map {γ : α → Type w} (f : (a : α) → β a → γ a) (m : Raw₀ α β) : Raw₀ α γ :=
   let ⟨⟨size, buckets⟩, hb⟩ := m
   let newBuckets := buckets.map (AssocList.map f)
-  ⟨⟨size, newBuckets⟩, by simpa [-List.length_pos, newBuckets] using hb⟩
+  ⟨⟨size, newBuckets⟩, by simpa [newBuckets] using hb⟩
 
 section
 
