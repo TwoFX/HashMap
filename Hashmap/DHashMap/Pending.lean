@@ -15,8 +15,6 @@ namespace MyLean.DHashMap.Ops
 
 section modification
 
-#check Lean.HashMap
-
 /--
 Inserts the mapping into the map, replacing an existing mapping if there is one.
 -/
