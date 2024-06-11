@@ -15,6 +15,8 @@ namespace MyLean.DHashMap.Ops
 
 section modification
 
+#check Lean.HashMap
+
 /--
 Inserts the mapping into the map, replacing an existing mapping if there is one.
 -/
@@ -28,21 +30,21 @@ Returns `true` if there was a previous mapping.
 def insertB (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
   sorry
 
-def insertGet? [LawfulBEq α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (β a) :=
+def getThenInsert? [LawfulBEq α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (β a) :=
   sorry
 
 /--
 Inserts the mapping into the map, replacing an existing mapping if there is one.
 Returns the previous mapping if there was one.
 -/
-def insertGetEntry? (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (Σ a, β a) :=
+def getEntryThenInsert? (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (Σ a, β a) :=
   sorry
 
 /--
 Inserts the mapping into the map, replacing an existing mapping if there is one.
 Returns the previous mapping if there was one.
 -/
-def Const.insertGet? (m : DHashMap α (fun _ => γ)) (a : α) (b : γ) : DHashMap α (fun _ => γ) × Option γ :=
+def Const.getThenInsert? (m : DHashMap α (fun _ => γ)) (a : α) (b : γ) : DHashMap α (fun _ => γ) × Option γ :=
   sorry
 
 /--
@@ -58,32 +60,37 @@ Returns `true` if the map was altered.
 def insertIfNewB (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
   sorry
 
-def insertIfNewGet? [LawfulBEq α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (β a) :=
-  sorry
 /--
 Inserts the mapping into the map, but does not alter the map if there is already a mapping.
 Returns the existing mapping if there is one, or `none` if the given mapping was inserted.
 -/
-def insertIfNewGetEntry? (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (Σ a, β a) :=
+def getThenInsertIfNew? [LawfulBEq α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (β a) :=
   sorry
 
 /--
 Inserts the mapping into the map, but does not alter the map if there is already a mapping.
 Returns the existing mapping if there is one, or `none` if the given mapping was inserted.
 -/
-def Const.insertIfNewGet? (m : DHashMap α (fun _ => γ)) (a : α) (b : γ) : DHashMap α (fun _ => γ) × Option γ :=
+def getEntryThenInsertIfNew? (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (Σ a, β a) :=
   sorry
 
-def Const.computeIfAbsentM [BEq α] [Hashable α] {β : Type u} {m : Type u → Type v} [Monad m]
+/--
+Inserts the mapping into the map, but does not alter the map if there is already a mapping.
+Returns the existing mapping if there is one, or `none` if the given mapping was inserted.
+-/
+def Const.getThenInsertIfNew? (m : DHashMap α (fun _ => γ)) (a : α) (b : γ) : DHashMap α (fun _ => γ) × Option γ :=
+  sorry
+
+def Const.insertIfNewThenGetM [BEq α] [Hashable α] {β : Type u} {m : Type u → Type v} [Monad m]
     (q : DHashMap α (fun _ => β)) (a : α) (f : Unit → m β) : m (DHashMap α (fun _ => β) × β) := sorry
 
-def Const.computeIfAbsent [BEq α] [LawfulBEq α] {β : Type v} (m : DHashMap α (fun _ => β)) (a : α) (f : Unit → β) :
+def Const.insertIfNewThenGet [BEq α] [LawfulBEq α] {β : Type v} (m : DHashMap α (fun _ => β)) (a : α) (f : Unit → β) :
     DHashMap α (fun _ => β) × β := sorry
 
-def computeIfAbsentM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
+def insertIfNewThenGetM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
     (q : DHashMap α β) (a : α) (f : Unit → m (β a)) : m (DHashMap α β × β a) := sorry
 
-def computeIfAbsent [BEq α] [LawfulBEq α] [Hashable α] (m : DHashMap α β) (a : α) (f : Unit → β a) :
+def insertIfNewThenGet [BEq α] [LawfulBEq α] [Hashable α] (m : DHashMap α β) (a : α) (f : Unit → β a) :
     DHashMap α β × β a := sorry
 
 /--
@@ -124,19 +131,19 @@ Removes the mapping with the given key if it exists, returning `true` if the map
 def removeB (m : DHashMap α β) (a : α) : DHashMap α β × Bool :=
   sorry
 
-def removeGet? [LawfulBEq α] (m : DHashMap α β) (a : α) : DHashMap α β × Option (β a) :=
+def getThenRemove? [LawfulBEq α] (m : DHashMap α β) (a : α) : DHashMap α β × Option (β a) :=
   sorry
 
 /--
 Removes the mapping with the given key if it exists, returning the removed mapping.
 -/
-def removeGetEntry? (m : DHashMap α β) (a : α) : DHashMap α β × Option (Σ a, β a) :=
+def getEntryThenRemove? (m : DHashMap α β) (a : α) : DHashMap α β × Option (Σ a, β a) :=
   sorry
 
 /--
 Removes the mapping with the given key if it exists, returning the removed mapping.
 -/
-def Const.removeGet? (m : DHashMap α (fun _ => γ)) (a : α) : DHashMap α (fun _ => γ) × Option γ :=
+def Const.getThenRemove? (m : DHashMap α (fun _ => γ)) (a : α) : DHashMap α (fun _ => γ) × Option γ :=
   sorry
 
 /--
