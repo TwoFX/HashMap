@@ -7,7 +7,7 @@ import Hashmap.DHashMap.Basic
 
 set_option autoImplicit false
 
-universe u v w x
+universe u v w x y
 
 variable {α : Type u} [BEq α] [Hashable α] {β : α → Type v} (γ : Type v) (δ : α → Type w) (ε : Type w)
 
@@ -27,7 +27,7 @@ def insert (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
 Inserts the mapping into the map, replacing an existing mapping if there is one.
 Returns `true` if there was a previous mapping.
 -/
-def insertB (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
+def containsThenInsert (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
   sorry
 
 def getThenInsert? [LawfulBEq α] (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Option (β a) :=
@@ -57,7 +57,7 @@ def insertIfNew (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β :=
 Inserts the mapping into the map, but does not alter the map if there is already a mapping.
 Returns `true` if the map was altered.
 -/
-def insertIfNewB (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
+def containsThenInsertIfNew (m : DHashMap α β) (a : α) (b : β a) : DHashMap α β × Bool :=
   sorry
 
 /--
@@ -128,7 +128,7 @@ def remove (m : DHashMap α β) (a : α) : DHashMap α β :=
 /--
 Removes the mapping with the given key if it exists, returning `true` if the map was altered.
 -/
-def removeB (m : DHashMap α β) (a : α) : DHashMap α β × Bool :=
+def containsThenRemove (m : DHashMap α β) (a : α) : DHashMap α β × Bool :=
   sorry
 
 def getThenRemove? [LawfulBEq α] (m : DHashMap α β) (a : α) : DHashMap α β × Option (β a) :=
@@ -145,6 +145,41 @@ Removes the mapping with the given key if it exists, returning the removed mappi
 -/
 def Const.getThenRemove? (m : DHashMap α (fun _ => γ)) (a : α) : DHashMap α (fun _ => γ) × Option γ :=
   sorry
+
+def insertMany {ρ : Type x} [ForIn Id ρ (Σ a, β a)] (l : ρ) (m : DHashMap α β) : DHashMap α β := Id.run do
+  let mut m := m
+  for p in l do
+    m := m.insert p.1 p.2
+  return m
+
+def insertManyWith [LawfulBEq α] {ρ : Type x} [ForIn Id ρ (Σ a, β a)] (f : (a : α) → β a → β a → β a)
+    (l : ρ) (m : DHashMap α β) : DHashMap α β := Id.run do
+  let mut m := m
+  for p in l do
+    m := alter m p.1 fun | some y => some (f p.1 y p.2) | none => some p.2
+  return m
+
+def insertManyWithM [LawfulBEq α] {m : Type u → Type w} [Monad m] {β : α → Type u} {ρ : Type x} [ForIn m ρ (Σ a, β a)]
+    (f : (a : α) → β a → β a → m (β a)) (l : ρ) (ma : DHashMap α β) : m (DHashMap α β) := do
+  let mut m := ma
+  for p in l do
+    m ← alterM m p.1 fun | some y => some <$> f p.1 y p.2 | none => pure (some p.2)
+  return m
+
+def Const.insertMany {ρ : Type x} [ForIn Id ρ (α × γ)] (l : ρ) (m : DHashMap α (fun _ => γ)) :
+    DHashMap α (fun _ => γ) := sorry
+
+def Const.insertManyWith {ρ : Type x} [ForIn Id ρ (α × γ)] (f : α → γ → γ → γ) (l : ρ)
+    (m : DHashMap α (fun _ => γ)) : DHashMap α (fun _ => γ) := sorry
+
+def Const.insertManyWithM {m : Type u → Type v} {γ : Type u} {ρ : Type x} [ForIn Id ρ (α × γ)]
+    (f : α → γ → γ → m γ) (l : ρ) (q : DHashMap α (fun _ => γ)) : m (DHashMap α (fun _ => γ)) := sorry
+
+
+def forIn {m : Type w → Type x} [Monad m] {γ : Type w} (q : DHashMap α β) (init : γ) (f : (Σ a, β a) → γ → m (ForInStep γ)) : m γ := sorry
+
+instance {m : Type w → Type x} : ForIn m (DHashMap α β) (Σ a, β a) where
+  forIn q init f := forIn q init f
 
 /--
 Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are replaced
