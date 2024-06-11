@@ -194,11 +194,16 @@ def ofArray (l : Array (Σ a, β a)) : DHashMap α β :=
 /--
 Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are combined
 using the given function.
+
+TODO: remove this special case of insertManyWithM
 -/
 def ofListWithM [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
     (f : (a : α) → β a → β a → m (β a)) (l : List (Σ a, β a)) : m (DHashMap α β) :=
   sorry
 
+/--
+TODO: remove this special case of insertManyWithM
+-/
 def ofArrayWithM [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
     (l : Array (Σ a, β a)) (f : (a : α) → β a → β a → m (β a)) : m (DHashMap α β) :=
   sorry
@@ -206,31 +211,46 @@ def ofArrayWithM [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Mo
 /--
 Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are combined
 using the given function.
+
+TODO: remove this special case of insertManyWith
 -/
 def ofListWith [LawfulBEq α] (l : List (Σ a, β a)) (f : (a : α) → β a → β a → β a) : DHashMap α β :=
   sorry
 
+/--
+TODO: remove this special case of insertManyWith
+-/
 def ofArrayWith [LawfulBEq α] (l : Array (Σ a, β a)) (f : (a : α) → β a → β a → β a) : DHashMap α β :=
   sorry
 
 /--
 Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are replaced
 by their respective last occurrences.
+
+TODO: remove this special case of insertMany
 -/
 def Const.ofList (l : List (α × γ)) : DHashMap α (fun _ => γ) :=
   sorry
 
+/--
+TODO: remove this special case of insertMany
+-/
 def Const.ofArray (l : Array (α × γ)) : DHashMap α (fun _ => γ) :=
   sorry
 
 /--
 Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are combined
 using the given function.
+
+TODO: remove this special case of insertManyWithM
 -/
 def Const.ofListWithM {γ : Type u} {m : Type u → Type v} [Monad m] (l : α × γ)
     (f : (a : α) → γ → γ → m γ) : m (DHashMap α (fun _ => γ)) :=
   sorry
 
+/--
+TODO: remove this special case of insertManyWithM
+-/
 def Const.ofArrayWithM {γ : Type u} {m : Type u → Type v} [Monad m] (l : α × γ)
     (f : (a : α) → γ → γ → m γ) : m (DHashMap α (fun _ => γ)) :=
   sorry
@@ -238,10 +258,15 @@ def Const.ofArrayWithM {γ : Type u} {m : Type u → Type v} [Monad m] (l : α �
 /--
 Builds a `HashMap` from a list of key-value pairs. Values of duplicated keys are combined
 using the given function.
+
+TODO: remove this special case of insertManyWith
 -/
 def Const.ofListWith (l : List (α × γ)) (f : γ → γ → γ) : DHashMap α (fun _ => γ) :=
   sorry
 
+/--
+TODO: remove this special case of insertManyWith
+-/
 def Const.ofArrayWith (l : List (α × γ)) (f : γ → γ → γ) : DHashMap α (fun _ => γ) :=
   sorry
 
