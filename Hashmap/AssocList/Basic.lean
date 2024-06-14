@@ -45,73 +45,65 @@ def toList : AssocList α β → List (Σ a, β a)
   | nil => []
   | cons a b es => ⟨a, b⟩ :: es.toList
 
-@[simp] theorem toList_nil : (nil : AssocList α β).toList = [] := rfl
-@[simp] theorem toList_cons {l : AssocList α β} {a : α} {b : β a} : (l.cons a b).toList = ⟨a, b⟩ :: l.toList := rfl
-
-@[simp]
-theorem foldl_eq {f : δ → (a : α) → β a → δ} {init : δ} {l : AssocList α β} :
-    l.foldl f init = l.toList.foldl (fun d p => f d p.1 p.2) init := by
-  induction l generalizing init <;> simp_all [foldl, Id.run, foldlM]
-
 def length (l : AssocList α β) : Nat :=
   l.foldl (fun n _ _ => n + 1) 0
 
 /-- `O(n)`. Returns the first entry in the list whose key is equal to `a`. -/
-def findEntry? [BEq α] (a : α) : AssocList α β → Option (Σ a, β a)
+def getEntry? [BEq α] (a : α) : AssocList α β → Option (Σ a, β a)
   | nil => none
-  | cons k v es => bif k == a then some ⟨k, v⟩ else findEntry? a es
+  | cons k v es => bif k == a then some ⟨k, v⟩ else getEntry? a es
 
 section
 
 variable {β : Type v}
 
-def find? [BEq α] (a : α) : AssocList α (fun _ => β) → Option β
+def get? [BEq α] (a : α) : AssocList α (fun _ => β) → Option β
   | nil => none
-  | cons k v es => bif k == a then some v else find? a es
+  | cons k v es => bif k == a then some v else get? a es
 
 end
 
-def findCast? [BEq α] [LawfulBEq α] (a : α) : AssocList α β → Option (β a)
+def getCast? [BEq α] [LawfulBEq α] (a : α) : AssocList α β → Option (β a)
   | nil => none
-  | cons k v es => if h : k == a then some (cast (congrArg β (eq_of_beq h)) v) else es.findCast? a
+  | cons k v es => if h : k == a then some (cast (congrArg β (eq_of_beq h)) v) else es.getCast? a
 
 @[specialize]
-def findWithCast? [BEq α] (a : α) (cast : ∀ {b}, b == a → β b → β a) : AssocList α β → Option (β a)
+def getWithCast? [BEq α] (a : α) (cast : ∀ {b}, b == a → β b → β a) : AssocList α β → Option (β a)
   | nil => none
-  | cons k v es => if h : k == a then some (cast h v) else es.findWithCast? a cast
+  | cons k v es => if h : k == a then some (cast h v) else es.getWithCast? a cast
 
-def findKey? [BEq α] (a : α) : AssocList α β → Option α
+def getKey? [BEq α] (a : α) : AssocList α β → Option α
   | nil => none
-  | cons k _ es => bif k == a then some k else findKey? a es
+  | cons k _ es => bif k == a then some k else getKey? a es
 
 def contains [BEq α] (a : α) : AssocList α β → Bool
   | nil => false
   | cons k _ l => k == a || l.contains a
 
-def findEntry [BEq α] (a : α) : (l : AssocList α β) → l.contains a → Σ a, β a
-  | cons k v es, h => if hka : k == a then ⟨k, v⟩ else findEntry a es
+def getEntry [BEq α] (a : α) : (l : AssocList α β) → l.contains a → Σ a, β a
+  | cons k v es, h => if hka : k == a then ⟨k, v⟩ else getEntry a es
       (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
 
-def find {β : Type v} [BEq α] (a : α) : (l : AssocList α (fun _ => β)) → l.contains a → β
-  | cons k v es, h => if hka : k == a then v else find a es
+def get {β : Type v} [BEq α] (a : α) : (l : AssocList α (fun _ => β)) → l.contains a → β
+  | cons k v es, h => if hka : k == a then v else get a es
       (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
 
-def findCast [BEq α] [LawfulBEq α] (a : α) : (l : AssocList α β) → l.contains a → β a
-  | cons k v es, h => if hka : k == a then cast (congrArg β (eq_of_beq hka)) v else es.findCast a
+def getCast [BEq α] [LawfulBEq α] (a : α) : (l : AssocList α β) → l.contains a → β a
+  | cons k v es, h => if hka : k == a then cast (congrArg β (eq_of_beq hka)) v else es.getCast a
       (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
 
 @[specialize]
-def findWithCast [BEq α] (a : α) (cast : ∀ {b}, b == a → β b → β a) : (l : AssocList α β) → l.contains a → β a
-  | cons k v es, h => if hka : k == a then cast hka v else es.findWithCast a cast
+def getWithCast [BEq α] (a : α) (cast : ∀ {b}, b == a → β b → β a) : (l : AssocList α β) → l.contains a → β a
+  | cons k v es, h => if hka : k == a then cast hka v else es.getWithCast a cast
       (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
 
 def replace [BEq α] (a : α) (b : β a) : AssocList α β → AssocList α β
   | nil => nil
   | cons k v l => bif k == a then cons a b l else cons k v (replace a b l)
 
-def erase [BEq α] (a : α) : AssocList α β → AssocList α β
+def remove [BEq α] (a : α) : AssocList α β → AssocList α β
   | nil => nil
-  | cons k v l => bif k == a then l else cons k v (l.erase a)
+  | cons k v l => bif k == a then l else cons k v (l.remove a)
 
 def insert [BEq α] (l : AssocList α β) (k : α) (v : β k) : AssocList α β :=
   bif l.contains k then l.replace k v else l.cons k v

@@ -91,7 +91,7 @@ where
     let buckets' := buckets.uset i (AssocList.cons a b bkt) h
     expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩
 
-@[inline] def insertB [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β × Bool :=
+@[inline] def containsThenInsert [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β × Bool :=
   let ⟨⟨size, buckets⟩, hm⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
   let bkt := buckets[i]
@@ -103,12 +103,12 @@ where
     let buckets' := buckets.uset i (AssocList.cons a b bkt) h
     (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, false)
 
-@[inline] def computeIfAbsentM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
+@[inline] def insertIfNewThenGetM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
     (q : Raw₀ α β) (a : α) (f : Unit → m (β a)) : m (Raw₀ α β × β a) :=
   let ⟨⟨size, buckets⟩, hm⟩ := q
   let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
   let bkt := buckets[i]
-  match bkt.findCast? a with
+  match bkt.getCast? a with
   | none => do
       let v ← f ()
       let size'    := size + 1
@@ -116,11 +116,11 @@ where
       return (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, v)
   | some v => pure (⟨⟨size, buckets⟩, hm⟩, v)
 
-@[inline] def computeIfAbsent [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (f : Unit → β a) : Raw₀ α β × β a :=
+@[inline] def insertIfNewThenGet [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (f : Unit → β a) : Raw₀ α β × β a :=
   let ⟨⟨size, buckets⟩, hm⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
   let bkt := buckets[i]
-  match bkt.findCast? a with
+  match bkt.getCast? a with
   | none =>
       let v := f ()
       let size'    := size + 1
@@ -128,50 +128,50 @@ where
       (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, v)
   | some v => (⟨⟨size, buckets⟩, hm⟩, v)
 
-@[inline] def findEntry? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
+@[inline] def getEntry? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
-  buckets[i].findEntry? a
+  buckets[i].getEntry? a
 
-@[inline] def find? [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (β a) :=
+@[inline] def get? [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (β a) :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
-  buckets[i].findCast? a
+  buckets[i].getCast? a
 
-@[inline, specialize] def findWithCast? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α)
+@[inline, specialize] def getWithCast? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α)
     (cast : ∀ {b}, b == a → β b → β a) : Option (β a) :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
-  buckets[i].findWithCast? a cast
+  buckets[i].getWithCast? a cast
 
 @[inline] def contains [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Bool :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
   buckets[i].contains a
 
-@[inline] def findEntry [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (hma : m.contains a) : Σ a, β a :=
+@[inline] def getEntry [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (hma : m.contains a) : Σ a, β a :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let idx := mkIdx buckets.size h (hash a)
-  buckets[idx.1].findEntry a hma
+  buckets[idx.1].getEntry a hma
 
-@[inline, specialize] def findWithCast [BEq α] [Hashable α] (m : Raw₀ α β) (a : α)
+@[inline, specialize] def getWithCast [BEq α] [Hashable α] (m : Raw₀ α β) (a : α)
     (cast : ∀ {b}, b == a → β b → β a) (hma : m.contains a) : β a :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let idx := mkIdx buckets.size h (hash a)
-  buckets[idx.1].findWithCast a cast hma
+  buckets[idx.1].getWithCast a cast hma
 
-@[inline] def find [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) (hma : m.contains a) : β a :=
+@[inline] def get [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) (hma : m.contains a) : β a :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let idx := mkIdx buckets.size h (hash a)
-  buckets[idx.1].findCast a hma
+  buckets[idx.1].getCast a hma
 
-def erase [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
+def remove [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
   let ⟨⟨size, buckets⟩, hb⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size hb (hash a)
   let bkt := buckets[i]
   if bkt.contains a then
     let buckets' := buckets.uset i .nil h
-    ⟨⟨size - 1, buckets'.uset i (bkt.erase a) (by simpa [buckets'])⟩, by simpa [buckets']⟩
+    ⟨⟨size - 1, buckets'.uset i (bkt.remove a) (by simpa [buckets'])⟩, by simpa [buckets']⟩
   else
     ⟨⟨size, buckets⟩, hb⟩
 
@@ -192,15 +192,15 @@ section
 
 variable {β : Type v}
 
-@[inline] def findConst? [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) : Option β :=
+@[inline] def Const.get? [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) : Option β :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
-  buckets[i].find? a
+  buckets[i].get? a
 
-@[inline] def findConst [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (hma : m.contains a) : β :=
+@[inline] def Const.get [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (hma : m.contains a) : β :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let idx := mkIdx buckets.size h (hash a)
-  buckets[idx.1].find a hma
+  buckets[idx.1].get a hma
 
 end
 

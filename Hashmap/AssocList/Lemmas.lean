@@ -14,6 +14,15 @@ variable {α : Type u} {β : α → Type v} {γ : α → Type w} {δ : Type w} {
 
 namespace MyLean.AssocList
 
+@[simp] theorem toList_nil : (nil : AssocList α β).toList = [] := rfl
+@[simp] theorem toList_cons {l : AssocList α β} {a : α} {b : β a} : (l.cons a b).toList = ⟨a, b⟩ :: l.toList := rfl
+
+@[simp]
+theorem foldl_eq {f : δ → (a : α) → β a → δ} {init : δ} {l : AssocList α β} :
+    l.foldl f init = l.toList.foldl (fun d p => f d p.1 p.2) init := by
+  induction l generalizing init <;> simp_all [foldl, Id.run, foldlM]
+
+
 @[simp]
 theorem length_eq {l : AssocList α β} : l.length = l.toList.length := by
   rw [length, foldl_eq]
@@ -25,25 +34,25 @@ theorem length_eq {l : AssocList α β} : l.length = l.toList.length := by
     simp [ih, Nat.add_assoc, Nat.add_comm n 1]
 
 @[simp]
-theorem findEntry?_eq [BEq α] {l : AssocList α β} {a : α} : l.findEntry? a = l.toList.findEntry? a := by
-  induction l <;> simp_all [findEntry?, List.findEntry?]
+theorem getEntry?_eq [BEq α] {l : AssocList α β} {a : α} : l.getEntry? a = l.toList.getEntry? a := by
+  induction l <;> simp_all [getEntry?, List.getEntry?]
 
 @[simp]
-theorem find?_eq {β : Type v} [BEq α] {l : AssocList α (fun _ => β)} {a : α} : l.find? a = l.toList.findValue? a := by
-  induction l <;> simp_all [find?, List.findValue?]
+theorem get?_eq {β : Type v} [BEq α] {l : AssocList α (fun _ => β)} {a : α} : l.get? a = l.toList.getValue? a := by
+  induction l <;> simp_all [get?, List.getValue?]
 
 @[simp]
-theorem findCast?_eq [BEq α] [LawfulBEq α] {l : AssocList α β} {a : α} : l.findCast? a = l.toList.findValueCast? a := by
-  induction l <;> simp_all [findCast?, List.findValueCast?]
+theorem getCast?_eq [BEq α] [LawfulBEq α] {l : AssocList α β} {a : α} : l.getCast? a = l.toList.getValueCast? a := by
+  induction l <;> simp_all [getCast?, List.getValueCast?]
 
 @[simp]
-theorem findWithCast?_eq [BEq α] {l : AssocList α β} {a : α} {cast : ∀ {b}, b == a → β b → β a} :
-    l.findWithCast? a cast = l.toList.findValueWithCast? a cast := by
-  induction l <;> simp_all [findWithCast?, List.findValueWithCast?]
+theorem getWithCast?_eq [BEq α] {l : AssocList α β} {a : α} {cast : ∀ {b}, b == a → β b → β a} :
+    l.getWithCast? a cast = l.toList.getValueWithCast? a cast := by
+  induction l <;> simp_all [getWithCast?, List.getValueWithCast?]
 
 @[simp]
-theorem findKey?_eq [BEq α] {l : AssocList α β} {a : α} : l.findKey? a = l.toList.findKey? a := by
-  induction l <;> simp_all [findKey?, List.findKey?]
+theorem getKey?_eq [BEq α] {l : AssocList α β} {a : α} : l.getKey? a = l.toList.getKey? a := by
+  induction l <;> simp_all [getKey?, List.getKey?]
 
 @[simp]
 theorem contains_eq [BEq α] {l : AssocList α β} {a : α} : l.contains a = l.toList.containsKey a := by
@@ -57,10 +66,10 @@ theorem toList_replace [BEq α] {l : AssocList α β} {a : α} {b : β a} :
   · next k v t ih => cases h : k == a <;> simp_all [replace, List.replaceEntry_cons]
 
 @[simp]
-theorem toList_erase [BEq α] {l : AssocList α β} {a : α} : (l.erase a).toList = l.toList.eraseKey a := by
+theorem toList_remove [BEq α] {l : AssocList α β} {a : α} : (l.remove a).toList = l.toList.removeKey a := by
   induction l
-  · simp [erase]
-  · next k v t ih => cases h : k == a <;> simp_all [erase, List.eraseKey_cons]
+  · simp [remove]
+  · next k v t ih => cases h : k == a <;> simp_all [remove, List.removeKey_cons]
 
 @[simp]
 theorem toList_insert [BEq α] {l : AssocList α β} {k : α} {v : β k} :
@@ -99,8 +108,8 @@ theorem toList_map {f : (a : α) → β a → γ a} {l : AssocList α β} :
     refine (ih _).trans ?_
     simpa using perm_middle.symm
 
-theorem findEntry?_eq_some [BEq α] {l : AssocList α β} {a : α} {p : Σ a, β a}
-    (h : l.findEntry? a = some p) : p.1 == a :=
-  List.findEntry?_eq_some (findEntry?_eq (l := l) ▸ h)
+theorem getEntry?_eq_some [BEq α] {l : AssocList α β} {a : α} {p : Σ a, β a}
+    (h : l.getEntry? a = some p) : p.1 == a :=
+  List.getEntry?_eq_some (getEntry?_eq (l := l) ▸ h)
 
 end MyLean.AssocList

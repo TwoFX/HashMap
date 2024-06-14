@@ -221,11 +221,11 @@ def replaceₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : R
 def consₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   ⟨⟨m.1.size + 1, updateBucket m.1.buckets m.2 a (fun l => l.cons a b)⟩, by simpa using m.2⟩
 
-def findEntry?ₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
-  (bucket m.1.buckets m.2 a).findEntry? a
+def getEntry?ₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
+  (bucket m.1.buckets m.2 a).getEntry? a
 
-def find?ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (β a) :=
-  (bucket m.1.buckets m.2 a).findCast? a
+def get?ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (β a) :=
+  (bucket m.1.buckets m.2 a).getCast? a
 
 def containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Bool :=
   (bucket m.1.buckets m.2 a).contains a
@@ -233,14 +233,14 @@ def containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Bool :=
 def insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   if m.containsₘ a then m.replaceₘ a b else Raw₀.expandIfNecessary (m.consₘ a b)
 
-def computeIfAbsentₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
+def insertIfNewThenGetₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   if m.containsₘ a then m else Raw₀.expandIfNecessary (m.consₘ a b)
 
-def eraseₘaux [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
-  ⟨⟨m.1.size - 1, updateBucket m.1.buckets m.2 a (fun l => l.erase a)⟩, by simpa using m.2⟩
+def removeₘaux [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
+  ⟨⟨m.1.size - 1, updateBucket m.1.buckets m.2 a (fun l => l.remove a)⟩, by simpa using m.2⟩
 
-def eraseₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
-  if m.containsₘ a then m.eraseₘaux a else m
+def removeₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
+  if m.containsₘ a then m.removeₘaux a else m
 
 def filterMapₘ (m : Raw₀ α β) (f : (a : α) → β a → Option (δ a)) : Raw₀ α δ :=
   ⟨withComputedSize (updateAllBuckets m.1.buckets fun l => l.filterMap f), by simpa using m.2⟩
@@ -252,8 +252,8 @@ section
 
 variable {β : Type v}
 
-def findConst?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) : Option β :=
-  (bucket m.1.buckets m.2 a).find? a
+def Const.get?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) : Option β :=
+  (bucket m.1.buckets m.2 a).get? a
 
 end
 
@@ -262,11 +262,11 @@ end
 theorem reinsertAux_eq [Hashable α] (data : { d : Array (AssocList α β) // 0 < d.size }) (a : α) (b : β a) :
     (reinsertAux hash data a b).1 = updateBucket data.1 data.2 a (fun l => l.cons a b) := rfl
 
-theorem findEntry?_eq_findEntry?ₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
-    findEntry? m a = findEntry?ₘ m a := rfl
+theorem getEntry?_eq_getEntry?ₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
+    getEntry? m a = getEntry?ₘ m a := rfl
 
-theorem find?_eq_find?ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
-    find? m a = find?ₘ m a := rfl
+theorem get?_eq_get?ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
+    get? m a = get?ₘ m a := rfl
 
 theorem contains_eq_containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
     m.contains a = m.containsₘ a := rfl
@@ -281,9 +281,9 @@ theorem insert_eq_insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (
     simp only [Array.uset, Array.ugetElem_eq_getElem]
   · rfl
 
-theorem insertB_eq_insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) :
-    (m.insertB a b).1 = m.insertₘ a b := by
-  rw [insertB, insertₘ, containsₘ, bucket]
+theorem containsThenInsert_eq_insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) :
+    (m.containsThenInsert a b).1 = m.insertₘ a b := by
+  rw [containsThenInsert, insertₘ, containsₘ, bucket]
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
   split
   · simp only [replaceₘ, Subtype.mk.injEq, Raw.mk.injEq, true_and]
@@ -291,28 +291,28 @@ theorem insertB_eq_insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) 
     simp only [Array.uset, Array.ugetElem_eq_getElem]
   · rfl
 
-theorem computeIfAbsent_eq_computeIfAbsentₘ [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (f : Unit → β a) :
-    (m.computeIfAbsent a f).1 = m.computeIfAbsentₘ a (f ()) := by
-  rw [computeIfAbsent, computeIfAbsentₘ, containsₘ, bucket]
+theorem insertIfNewThenGet_eq_insertIfNewThenGetₘ [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (f : Unit → β a) :
+    (m.insertIfNewThenGet a f).1 = m.insertIfNewThenGetₘ a (f ()) := by
+  rw [insertIfNewThenGet, insertIfNewThenGetₘ, containsₘ, bucket]
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
   split
   · next x h =>
     -- TODO: clean up
     simp at h
-    rw [AssocList.contains_eq, List.containsKey_eq_isSome_findValueCast?, h, Option.isSome_none]
+    rw [AssocList.contains_eq, List.containsKey_eq_isSome_getValueCast?, h, Option.isSome_none]
     simp
     rfl
   · next x v h =>
     -- TODO: clean up
     simp at h
-    rw [AssocList.contains_eq, List.containsKey_eq_isSome_findValueCast?, h, Option.isSome_some]
+    rw [AssocList.contains_eq, List.containsKey_eq_isSome_getValueCast?, h, Option.isSome_some]
     simp
 
-theorem erase_eq_eraseₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : m.erase a = m.eraseₘ a := by
-  rw [erase, eraseₘ, containsₘ, bucket]
+theorem remove_eq_removeₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : m.remove a = m.removeₘ a := by
+  rw [remove, removeₘ, containsₘ, bucket]
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
   split
-  · simp only [eraseₘaux, Subtype.mk.injEq, Raw.mk.injEq, true_and]
+  · simp only [removeₘaux, Subtype.mk.injEq, Raw.mk.injEq, true_and]
     rw [Array.set_set, updateBucket]
     simp only [Array.uset, Array.ugetElem_eq_getElem]
   · rfl
@@ -327,8 +327,8 @@ section
 
 variable {β : Type v}
 
-theorem findConst?_eq_findConst?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) :
-    m.findConst? a = m.findConst?ₘ a := rfl
+theorem Const.get?_eq_get?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) :
+    Const.get? m a = Const.get?ₘ m a := rfl
 
 end
 
