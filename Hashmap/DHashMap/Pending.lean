@@ -392,7 +392,7 @@ def getKeyD (m : DHashMap α β) (a : α) (default : α) : α := sorry
 
 -- We cannot provide a `find?'` version here because `GetElem` is not dependent!
 instance : GetElem (DHashMap α β) α (Option (Σ a, β a)) (fun _ _ => True) where
-  getElem m k _ := m.findEntry? k
+  getElem m k _ := m.getEntry? k
 
 def Const.get (m : DHashMap α (fun _ => γ)) (a : α) (_ : a ∈ m) : γ := sorry
 

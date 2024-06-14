@@ -86,7 +86,7 @@ theorem size_eq_length [BEq α] [Hashable α] {m : Raw α β} (h : m.WFImp) : m.
   h.size_eq
 
 theorem isEmpty_eq_isEmpty [BEq α] [Hashable α] {m : Raw α β} (h : m.WFImp) : m.isEmpty = (toListModel m.buckets).isEmpty := by
-  rw [isEmpty, Bool.eq_iff_iff, List.isEmpty_iff_length_eq_zero, size_eq_length h, decide_eq_true_eq]
+  rw [isEmpty, Bool.eq_iff_iff, List.isEmpty_iff_length_eq_zero, size_eq_length h, Nat.beq_eq_true_eq]
 
 end Raw
 
@@ -95,16 +95,13 @@ namespace Raw₀
 /-! # Raw₀.empty -/
 
 @[simp]
-theorem size_empty {c} : (empty c : Raw₀ α β).1.size = 0 := rfl
-
-@[simp]
 theorem toListModel_buckets_empty {c} : toListModel (empty c : Raw₀ α β).1.buckets = [] :=
   toListModel_mkArray_nil
 
 theorem wfImp_empty [BEq α] [Hashable α] {c} : (empty c : Raw₀ α β).1.WFImp where
   buckets_hash_self := by simp [Raw.empty, Raw₀.empty]
   buckets_size := Raw.WF.empty₀.size_buckets_pos
-  size_eq := by simp
+  size_eq := by simp [Raw.empty, Raw₀.empty]
   distinct := by simp
 
 theorem isHashSelf_reinsertAux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]

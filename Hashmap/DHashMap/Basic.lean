@@ -125,7 +125,7 @@ def values {β : Type v} (m : Raw α (fun _ => β)) : List β :=
   m.foldl (fun acc _ v => v :: acc) []
 
 def isEmpty (m : Raw α β) : Bool :=
-  m.size = 0
+  m.size == 0
 
 section WF
 

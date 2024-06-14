@@ -41,6 +41,91 @@ namespace Raw₀
 
 variable (m : Raw₀ α β) (h : m.1.WF)
 
+macro "wf_trivial" : tactic => `(tactic|
+  repeat (first | apply Raw.WFImp.insert | apply Raw.WFImp.remove | apply Raw.WF.out | assumption | apply wfImp_empty | apply Raw.WFImp.distinct))
+
+open Lean Elab Meta Tactic
+
+def baseNames : MetaM (List (TSyntax `term)) := do
+  return [ ← `(contains_eq_containsKey), ← `(Raw.isEmpty_eq_isEmpty), ← `(Raw.size_eq_length) ]
+
+def modifyNames : MetaM (List (TSyntax `term)) := do
+  return [← `(toListModel_insert), ← `(toListModel_remove) ]
+
+def congrNames : MetaM (List (TSyntax `term)) := do
+  return [← `(List.Perm.isEmpty_eq), ← `(List.containsKey_of_perm _), ← `(List.Perm.length_eq)]
+
+syntax "simp_to_model" ("with" term)? ("using" term)? : tactic
+
+elab_rules : tactic
+| `(tactic| simp_to_model $[with $with?]? $[using $using?]?) => withMainContext do
+  for name in ← baseNames do
+    evalTactic (← `(tactic| repeat rw [$name:term]))
+  for modify in ← modifyNames do
+    for congr in ← congrNames do
+      evalTactic (← `(tactic| repeat rw [$congr:term ($modify:term ..)]))
+  if let some usingLem := using? then
+    evalTactic (← `(tactic| apply $usingLem:term))
+  if let some withLem := with? then
+    evalTactic (← `(tactic| rw [$withLem:term]))
+  for sideGoal in (← getUnsolvedGoals) do
+    let _ ← evalTacticAt (← `(tactic| wf_trivial)) sideGoal
+  return ()
+
+@[simp]
+theorem isEmpty_empty {c} : (empty c : Raw₀ α β).1.isEmpty := by
+  rw [Raw.isEmpty_eq_isEmpty wfImp_empty, toListModel_buckets_empty, List.isEmpty_nil]
+
+@[simp]
+theorem isEmpty_insert {a : α} {b : β a} : (m.insert a b).1.isEmpty = false := by
+  simp_to_model using List.isEmpty_insertEntry
+
+@[simp]
+theorem contains_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).contains a = false := by
+  simp [contains]
+
+theorem contains_of_isEmpty {a : α} (h' : m.1.isEmpty = true) : m.contains a = false := by
+  simp_all [contains_eq_containsKey h.out, Raw.isEmpty_eq_isEmpty h.out, List.isEmpty_iff]
+
+theorem isEmpty_eq_false_iff_exists_contains_eq_true : m.1.isEmpty = false ↔ ∃ a, m.contains a = true := by
+  simp only [Raw.isEmpty_eq_isEmpty h.out, contains_eq_containsKey h.out, List.isEmpty_eq_false_iff_exists_containsKey]
+
+theorem contains_insert (a k : α) (b : β a) : (m.insert a b).contains k = ((a == k) || m.contains k) := by
+  simp_to_model using List.containsKey_insertEntry
+
+@[simp]
+theorem size_empty {c} : (empty c : Raw₀ α β).1.size = 0 := rfl
+
+theorem isEmpty_eq_size_eq_zero : m.1.isEmpty = (m.1.size == 0) := by
+  simp [Raw.isEmpty]
+
+theorem size_insert (a : α) (b : β a) : (m.insert a b).1.size = bif m.contains a then m.1.size else m.1.size + 1 := by
+  simp_to_model using List.length_insertEntry
+
+theorem size_le_size_insert (a : α) (b : β a) : m.1.size ≤ (m.insert a b).1.size := by
+  simp_to_model using List.length_le_length_insert
+
+@[simp]
+theorem remove_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).remove a = empty c := by
+  simp [remove, empty]
+
+theorem isEmpty_remove {a : α} : (m.remove a).1.isEmpty = (m.1.isEmpty || (m.1.size == 1 && m.contains a)) := by
+  simp_to_model using List.isEmpty_removeKey
+
+theorem contains_remove {k a : α} : (m.remove k).contains a = (!(k == a) && m.contains a) := by
+  simp_to_model using List.containsKey_removeKey
+
+theorem contains_of_contains_remove {k a : α} : (m.remove k).contains a → m.contains a := by
+  simp_to_model using List.containsKey_of_containsKey_removeKey
+
+theorem size_remove {a : α} : (m.remove a).1.size = bif m.contains a then m.1.size - 1 else m.1.size := by
+  simp_to_model using List.length_removeKey
+
+theorem size_remove_le {a : α} : (m.remove a).1.size ≤ m.1.size := by
+  simp_to_model using List.length_removeKey_le
+
+----------- unofficial lemmas below
+
 @[simp]
 theorem getEntry?_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).getEntry? a = none := by
   simp [getEntry?]
@@ -77,18 +162,9 @@ theorem Const.get?_congr {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF
     Const.get? m a = Const.get? m b := by
   rw [Const.get?_eq_getValue? h.out, Const.get?_eq_getValue? h.out, List.getValue?_eq_of_beq hab]
 
-@[simp]
-theorem contains_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).contains a = false := by
-  simp [contains]
-
 theorem contains_containsThenInsert (a k : α) (b : β a) : (m.containsThenInsert a b).1.contains k = ((a == k) || m.contains k) := by
   rw [contains_eq_containsKey h.out.containsThenInsert, contains_eq_containsKey h.out,
     List.containsKey_of_perm h.out.containsThenInsert.distinct (toListModel_containsThenInsert h.out),
-    List.containsKey_insertEntry]
-
-theorem contains_insert (a k : α) (b : β a) : (m.insert a b).contains k = ((a == k) || m.contains k) := by
-  rw [contains_eq_containsKey h.out.insert, contains_eq_containsKey h.out,
-    List.containsKey_of_perm h.out.insert.distinct (toListModel_insert h.out),
     List.containsKey_insertEntry]
 
 theorem contains_eq_isSome_getEntry? {a : α} : m.contains a = (m.getEntry? a).isSome := by
@@ -119,16 +195,8 @@ theorem mem_values_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.W
   simp only [Const.get?_eq_getValue? h.out]
 
 @[simp]
-theorem isEmpty_empty {c} : (empty c : Raw₀ α β).1.isEmpty := by
-  rw [Raw.isEmpty_eq_isEmpty wfImp_empty, toListModel_buckets_empty, List.isEmpty_nil]
-
-@[simp]
 theorem isEmpty_containsThenInsert {a : α} {b : β a} : (m.containsThenInsert a b).1.1.isEmpty = false := by
   rw [Raw.isEmpty_eq_isEmpty h.out.containsThenInsert, (toListModel_containsThenInsert h.out).isEmpty_eq, List.isEmpty_insertEntry]
-
-@[simp]
-theorem isEmpty_insert {a : α} {b : β a} : (m.insert a b).1.isEmpty = false := by
-  rw [Raw.isEmpty_eq_isEmpty h.out.insert, (toListModel_insert h.out).isEmpty_eq, List.isEmpty_insertEntry]
 
 theorem getEntry?_of_isEmpty {a : α} (h' : m.1.isEmpty = true) : m.getEntry? a = none := by
   simp_all [getEntry?_eq_getEntry? h.out, Raw.isEmpty_eq_isEmpty h.out, List.isEmpty_iff]
@@ -136,12 +204,6 @@ theorem getEntry?_of_isEmpty {a : α} (h' : m.1.isEmpty = true) : m.getEntry? a 
 theorem Const.get?_of_isEmpty {a : α} {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) (h' : m.1.isEmpty = true) :
     Const.get? m a = none := by
   simp_all [Const.get?_eq_getValue? h.out, Raw.isEmpty_eq_isEmpty h.out, List.isEmpty_iff]
-
-theorem contains_of_isEmpty {a : α} (h' : m.1.isEmpty = true) : m.contains a = false := by
-  simp_all [contains_eq_containsKey h.out, Raw.isEmpty_eq_isEmpty h.out, List.isEmpty_iff]
-
-theorem isEmpty_iff_size_eq_zero : m.1.isEmpty ↔ m.1.size = 0 := by
-  simp [Raw.isEmpty]
 
 end Raw₀
 
