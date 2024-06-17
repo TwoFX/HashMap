@@ -189,21 +189,12 @@ end Const
 theorem getEntry?_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).getEntry? a = none := by
   simp [getEntry?]
 
-@[simp]
-theorem Const.get?_empty {β : Type v} {a : α} {c : Nat} : Const.get? (empty c : Raw₀ α (fun _ => β)) a = none := by
-  simp [Const.get?]
 
 theorem getEntry?_insert (a k : α) (b : β a) :
     (m.insert a b).getEntry? k = bif a == k then some ⟨a, b⟩ else m.getEntry? k := by
   rw [getEntry?_eq_getEntry? h.out.insert, getEntry?_eq_getEntry? h.out,
     List.getEntry?_of_perm h.out.insert.distinct (toListModel_insert h.out),
     List.getEntry?_insertEntry]
-
-theorem Const.get?_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) (a k : α) (b : β) :
-    Const.get? (m.insert a b) k = bif a == k then some b else Const.get? m k := by
-  rw [Const.get?_eq_getValue? h.out.insert, Const.get?_eq_getValue? h.out,
-    List.getValue?_of_perm h.out.insert.distinct (toListModel_insert h.out),
-    List.getValue?_insertEntry]
 
 theorem Const.get?_congr {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) {a b : α} (hab : a == b) :
     Const.get? m a = Const.get? m b := by
@@ -231,11 +222,7 @@ theorem mem_values_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.W
   simp only [Const.get?_eq_getValue? h.out]
 
 theorem getEntry?_of_isEmpty {a : α} (h' : m.1.isEmpty = true) : m.getEntry? a = none := by
-  simp_all [getEntry?_eq_getEntry? h.out, Raw.isEmpty_eq_isEmpty h.out, List.isEmpty_iff]
-
-theorem Const.get?_of_isEmpty {a : α} {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) (h' : m.1.isEmpty = true) :
-    Const.get? m a = none := by
-  simp_all [Const.get?_eq_getValue? h.out, Raw.isEmpty_eq_isEmpty h.out, List.isEmpty_iff ]-/
+  simp_all [getEntry?_eq_getEntry? h.out, Raw.isEmpty_eq_isEmpty h.out, List.isEmpty_iff]-/
 
 end Raw₀
 
