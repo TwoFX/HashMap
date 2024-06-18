@@ -219,6 +219,40 @@ theorem get_insert [LawfulBEq α] {a k : α} {b : β a} {h₁} :
 theorem get_insert_self [LawfulBEq α] {a : α} {b : β a} : (m.insert a b).get a (contains_insert_self _ h) = b := by
   simp_to_model using List.getValueCast_insertEntry_self
 
+theorem get_remove [LawfulBEq α] {a k : α} {h'} :
+    (m.remove a).get k h' = m.get k (contains_of_contains_remove _ h h') := by
+  simp_to_model using List.getValueCast_removeKey
+
+theorem get?_eq_some_get [LawfulBEq α] {a : α} {h} : m.get? a = some (m.get a h) := by
+  simp_to_model using List.getValueCast?_eq_some_getValueCast
+
+namespace Const
+
+variable {β : Type v} (m : DHashMap.Raw₀ α (fun _ => β)) (h : m.1.WF)
+
+theorem get_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β} {h₁} :
+    get (m.insert a b) k h₁ = if h₂ : a == k then b else get m k (contains_of_contains_insert _ h h₁ (Bool.eq_false_iff.2 h₂)) := by
+  simp_to_model using List.getValue_insertEntry
+
+theorem get_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {b : β} :
+    get (m.insert a b) a (contains_insert_self _ h) = b := by
+  simp_to_model using List.getValue_insertEntry_self
+
+theorem get_remove [EquivBEq α] [LawfulHashable α] {a k : α} {h'} :
+    get (m.remove a) k h' = get m k (contains_of_contains_remove _ h h') := by
+  simp_to_model using List.getValue_removeKey
+
+theorem get?_eq_some_get [EquivBEq α] [LawfulHashable α] {a : α} {h} : get? m a = some (get m a h) := by
+  simp_to_model using List.getValue?_eq_some_getValue
+
+theorem get_eq_get [LawfulBEq α] {a : α} {h} : get m a h = m.get a h := by
+  simp_to_model using List.getValue_eq_getValueCast
+
+theorem get_congr [LawfulBEq α] {a b : α} (hab : a == b) {h'} : get m a h' = get m b ((contains_congr _ h hab).symm.trans h') := by
+  simp_to_model using List.getValue_congr
+
+end Const
+
 end Raw₀
 
 end MyLean.DHashMap
