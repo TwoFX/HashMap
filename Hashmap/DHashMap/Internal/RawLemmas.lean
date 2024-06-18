@@ -50,7 +50,7 @@ open Lean Elab Meta Tactic
 
 def baseNames : MetaM (List (TSyntax `term)) := do
   return [ ← `(contains_eq_containsKey), ← `(Raw.isEmpty_eq_isEmpty), ← `(Raw.size_eq_length), ← `(get?_eq_getValueCast?),
-    ← `(Const.get?_eq_getValue?) ]
+    ← `(Const.get?_eq_getValue?), ← `(get_eq_getValue) ]
 
 def modifyNames : MetaM (List (TSyntax `term)) := do
   return [← `(toListModel_insert), ← `(toListModel_remove) ]
@@ -100,6 +100,10 @@ theorem isEmpty_eq_false_iff_exists_contains_eq_true [EquivBEq α] [LawfulHashab
 
 theorem contains_insert [EquivBEq α] [LawfulHashable α] (a k : α) (b : β a) : (m.insert a b).contains k = ((a == k) || m.contains k) := by
   simp_to_model using List.containsKey_insertEntry
+
+theorem contains_of_contains_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} :
+    (m.insert a b).contains k → (a == k) = false → m.contains k := by
+  simp_to_model using List.containsKey_of_containsKey_insertEntry
 
 @[simp]
 theorem size_empty {c} : (empty c : Raw₀ α β).1.size = 0 := rfl
@@ -167,6 +171,7 @@ namespace Const
 
 variable {β : Type v} (m : DHashMap.Raw₀ α (fun _ => β)) (h : m.1.WF)
 
+@[simp]
 theorem get?_empty {a : α} {c} : get? (empty c : Raw₀ α (fun _ => β)) a = none := by
   simp [get?]
 
@@ -181,48 +186,31 @@ theorem get?_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {b : β} :
     get? (m.insert a b) a = some b := by
   simp_to_model using List.getValue?_insertEntry_self
 
+theorem contains_eq_isSome_get? [EquivBEq α] [LawfulHashable α] {a : α} : m.contains a = (get? m a).isSome := by
+  simp_to_model using List.containsKey_eq_isSome_getValue?
+
+theorem get?_remove [EquivBEq α] [LawfulHashable α] {a k : α} :
+    Const.get? (m.remove a) k = bif a == k then none else get? m k := by
+  simp_to_model using List.getValue?_removeKey
+
+theorem get?_remove_self [EquivBEq α] [LawfulHashable α] {a : α} : get? (m.remove a) a = none := by
+  simp_to_model using List.getValue?_removeKey_self
+
+theorem get?_eq_get? [LawfulBEq α] {a : α} : get? m a = m.get? a := by
+  simp_to_model with List.getValueCast?_eq_getValue?
+
+theorem get?_congr [EquivBEq α] [LawfulHashable α] {a b : α} (hab : a == b) : get? m a = get? m b := by
+  simp_to_model using List.getValue?_eq_of_beq
+
 end Const
 
------------ unofficial lemmas below
-
-/- @[simp]
-theorem getEntry?_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).getEntry? a = none := by
-  simp [getEntry?]
-
-
-theorem getEntry?_insert (a k : α) (b : β a) :
-    (m.insert a b).getEntry? k = bif a == k then some ⟨a, b⟩ else m.getEntry? k := by
-  rw [getEntry?_eq_getEntry? h.out.insert, getEntry?_eq_getEntry? h.out,
-    List.getEntry?_of_perm h.out.insert.distinct (toListModel_insert h.out),
-    List.getEntry?_insertEntry]
-
-theorem Const.get?_congr {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) {a b : α} (hab : a == b) :
-    Const.get? m a = Const.get? m b := by
-  rw [Const.get?_eq_getValue? h.out, Const.get?_eq_getValue? h.out, List.getValue?_eq_of_beq hab]
-
-theorem contains_eq_isSome_getEntry? {a : α} : m.contains a = (m.getEntry? a).isSome := by
-  rw [getEntry?_eq_getEntry? h.out, contains_eq_containsKey h.out, List.containsKey_eq_isSome_getEntry?]
-
-theorem getEntry?_eq_some (a : α) (p : Σ a, β a) (h : m.getEntry? a = some p) : p.1 == a :=
-  AssocList.getEntry?_eq_some h
-
-theorem Const.mem_values_iff_exists_get?_eq_some {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) {v : β} :
-    v ∈ m.1.values ↔ ∃ k, Const.get? m k = some v := by
-  rw [mem_values_iff_mem_values_toListModel, List.mem_values_iff_exists_getValue?_eq_some h.out.distinct]
-  simp only [Const.get?_eq_getValue? h.out]
-
-@[simp]
-theorem values_empty {β : Type v} {c} : (empty c : Raw₀ α (fun _ => β)).1.values = [] := by
-  simpa using Raw.values_perm_values_toListModel (m := (empty c : Raw₀ α (fun _ => β)).1)
-
-theorem mem_values_insert {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF) {a : α} {b v : β} :
-    v ∈ (m.insert a b).1.values ↔ b = v ∨ ∃ k, (a == k) = false ∧ Const.get? m k = some v := by
-  rw [mem_values_iff_mem_values_toListModel, List.mem_values_of_perm h.out.insert.distinct (toListModel_insert h.out),
-    List.mem_values_insertEntry h.out.distinct]
-  simp only [Const.get?_eq_getValue? h.out]
-
-theorem getEntry?_of_isEmpty {a : α} (h' : m.1.isEmpty = true) : m.getEntry? a = none := by
-  simp_all [getEntry?_eq_getEntry? h.out, Raw.isEmpty_eq_isEmpty h.out, List.isEmpty_iff]-/
+theorem get_insert [LawfulBEq α] {a k : α} {b : β a} {h₁} :
+    (m.insert a b).get k h₁ =
+      if h₂ : a == k then
+        cast (congrArg β (eq_of_beq h₂)) b
+      else
+        m.get k (contains_of_contains_insert _ h h₁ (Bool.eq_false_iff.2 h₂)) := by
+  sorry
 
 end Raw₀
 

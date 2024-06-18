@@ -163,6 +163,10 @@ theorem getValueCast?_cons_self [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} 
     (⟨k, v⟩ :: l).getValueCast? k = some v := by
   rw [getValueCast?_cons_of_true BEq.refl, cast_eq]
 
+theorem getValueCast?_eq_getValue? [BEq α] [LawfulBEq α] {β : Type v} {l : List ((_ : α) × β)} {a : α} :
+    l.getValueCast? a = l.getValue? a := by
+  induction l using assoc_induction <;> simp_all [getValueCast?_cons, getValue?_cons]
+
 def getValueWithCast? [BEq α] (a : α) (cast : ∀ {b}, b == a → β b → β a) : List (Σ a, β a) → Option (β a)
   | [] => none
   | ⟨k, v⟩ :: l => if h : k == a then some (cast h v) else l.getValueWithCast? a cast
@@ -428,7 +432,7 @@ variable {β : Type v}
 def getValue [BEq α] (l : List ((_ : α) × β)) (a : α) (h : l.containsKey a) : β :=
   (l.getValue? a).get <| containsKey_eq_isSome_getValue?.symm.trans h
 
-theorem getValue?_eq_some_get [BEq α] {l : List ((_ : α) × β)} {a : α} (h : l.containsKey a) :
+theorem getValue?_eq_some_getValue [BEq α] {l : List ((_ : α) × β)} {a : α} (h : l.containsKey a) :
     l.getValue? a = some (l.getValue a h) := by
   simp [getValue]
 
@@ -940,6 +944,10 @@ theorem containsKey_insertEntry_of_beq [BEq α] [PartialEquivBEq α] {l : List (
 theorem containsKey_insertEntry_self [BEq α] [EquivBEq α] {l : List (Σ a, β a)} {k : α} {v : β k} :
     (l.insertEntry k v).containsKey k :=
   containsKey_insertEntry_of_beq BEq.refl
+
+theorem containsKey_of_containsKey_insertEntry [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k a : α} {v : β k}
+    (h₁ : (l.insertEntry k v).containsKey a) (h₂ : (k == a) = false) : l.containsKey a := by
+  rwa [containsKey_insertEntry, h₂, Bool.false_or] at h₁
 
 @[simp]
 theorem keys_removeKey [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k : α} :
