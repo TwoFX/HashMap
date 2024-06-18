@@ -976,6 +976,19 @@ theorem containsKey_of_containsKey_insertEntry [BEq α] [PartialEquivBEq α] {l 
     (h₁ : (l.insertEntry k v).containsKey a) (h₂ : (k == a) = false) : l.containsKey a := by
   rwa [containsKey_insertEntry, h₂, Bool.false_or] at h₁
 
+theorem getValueCast_insertEntry [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {k a : α} {v : β k} {h} :
+    (l.insertEntry k v).getValueCast a h =
+    if h' : k == a then
+      cast (congrArg β (eq_of_beq h')) v
+    else
+      l.getValueCast a (containsKey_of_containsKey_insertEntry h (Bool.eq_false_iff.2 h')) := by
+  rw [← Option.some_inj, ← getValueCast?_eq_some_getValueCast, apply_dite Option.some, getValueCast?_insertEntry]
+  simp only [← getValueCast?_eq_some_getValueCast]
+
+theorem getValueCast_insertEntry_self [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {k : α} {v : β k} :
+    (l.insertEntry k v).getValueCast k containsKey_insertEntry_self = v := by
+  simp [getValueCast_insertEntry]
+
 @[simp]
 theorem keys_removeKey [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k : α} :
     (l.removeKey k).keys = l.keys.erase k := by

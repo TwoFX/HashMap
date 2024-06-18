@@ -50,14 +50,15 @@ open Lean Elab Meta Tactic
 
 def baseNames : MetaM (List (TSyntax `term)) := do
   return [ ← `(contains_eq_containsKey), ← `(Raw.isEmpty_eq_isEmpty), ← `(Raw.size_eq_length), ← `(get?_eq_getValueCast?),
-    ← `(Const.get?_eq_getValue?), ← `(get_eq_getValue) ]
+    ← `(Const.get?_eq_getValue?), ← `(get_eq_getValueCast), ← `(Const.get_eq_getValue) ]
 
 def modifyNames : MetaM (List (TSyntax `term)) := do
   return [← `(toListModel_insert), ← `(toListModel_remove) ]
 
 def congrNames : MetaM (List (TSyntax `term)) := do
-  return [← `(List.Perm.isEmpty_eq), ← `(List.containsKey_of_perm _), ← `(List.Perm.length_eq),
-    ← `(List.getValueCast?_of_perm _), ← `(List.getValue?_of_perm _) ]
+  return [← `(List.Perm.isEmpty_eq), ← `(List.containsKey_of_perm), ← `(List.Perm.length_eq),
+    ← `(List.getValueCast?_of_perm _), ← `(List.getValue?_of_perm _), ← `(List.getValue_of_perm _),
+    ← `(List.getValueCast_of_perm _) ]
 
 syntax "simp_to_model" ("with" term)? ("using" term)? : tactic
 
@@ -104,6 +105,9 @@ theorem contains_insert [EquivBEq α] [LawfulHashable α] (a k : α) (b : β a) 
 theorem contains_of_contains_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} :
     (m.insert a b).contains k → (a == k) = false → m.contains k := by
   simp_to_model using List.containsKey_of_containsKey_insertEntry
+
+theorem contains_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} : (m.insert a b).contains a := by
+  simp_to_model using List.containsKey_insertEntry_self
 
 @[simp]
 theorem size_empty {c} : (empty c : Raw₀ α β).1.size = 0 := rfl
@@ -210,7 +214,14 @@ theorem get_insert [LawfulBEq α] {a k : α} {b : β a} {h₁} :
         cast (congrArg β (eq_of_beq h₂)) b
       else
         m.get k (contains_of_contains_insert _ h h₁ (Bool.eq_false_iff.2 h₂)) := by
-  sorry
+  simp_to_model
+  rw [List.getValueCast_insertEntry]
+  split
+  · rfl
+  · simp_to_model
+
+theorem get_insert_self [LawfulBEq α] {a : α} {b : β a} : (m.insert a b).get a (contains_insert_self _ h) = b := by
+  simp_to_model using List.getValueCast_insertEntry_self
 
 end Raw₀
 
