@@ -274,7 +274,7 @@ theorem Const.getₘ_eq_getValue [BEq α] [Hashable α] [PartialEquivBEq α] [La
 
 theorem Const.get_eq_getValue [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
     (hm : m.1.WFImp) {a : α} {h} : Const.get m a h = (toListModel m.1.buckets).getValue a (contains_eq_containsKey hm ▸ h) := by
-  rw [Const.get_eq_getₘ, Const.getₘ_eq_getValue]
+  rw [Const.get_eq_getₘ, Const.getₘ_eq_getValue hm]
 
 theorem mem_values_iff_mem_values_toListModel {m : Raw₀ α (fun _ => β)} {b : β} :
     b ∈ m.1.values ↔ b ∈ (toListModel m.1.buckets).values :=
