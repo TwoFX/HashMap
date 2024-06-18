@@ -59,6 +59,20 @@ theorem contains_eq [BEq α] {l : AssocList α β} {a : α} : l.contains a = l.t
   induction l <;> simp_all [contains, List.containsKey]
 
 @[simp]
+theorem getCast_eq [BEq α] [LawfulBEq α] {l : AssocList α β} {a : α} {h} :
+    l.getCast a h = l.toList.getValueCast a (contains_eq.symm.trans h) := by
+  induction l
+  · simp [contains] at h
+  · next k v t ih => simp only [getCast, toList_cons, List.getValueCast_cons, ih]
+
+@[simp]
+theorem get_eq {β : Type v} [BEq α] {l : AssocList α (fun _ => β)} {a : α} {h} :
+    l.get a h = l.toList.getValue a (contains_eq.symm.trans h) := by
+  induction l
+  · simp [contains] at h
+  · next k v t ih => simp only [get, toList_cons, List.getValue_cons, ih]
+
+@[simp]
 theorem toList_replace [BEq α] {l : AssocList α β} {a : α} {b : β a} :
     (l.replace a b).toList = l.toList.replaceEntry a b := by
   induction l

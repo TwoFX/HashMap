@@ -138,6 +138,17 @@ theorem apply_bucket [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable
   rw [hfg, hg₂]
   exact hlk hm.buckets_hash_self _ rfl
 
+theorem apply_bucket_with_proof {γ : α → Type w} [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : m.1.WFImp) (a : α)
+    (f : (a : α) → (l : AssocList α β) → l.contains a → γ a) (g : (a : α) → (l : List (Σ a, β a)) → l.containsKey a → γ a)
+    (hfg : ∀ {a l h}, f a l h = g a l.toList (AssocList.contains_eq.symm.trans h))
+    (hg₁ : ∀ {l l' a h}, l.DistinctKeys → (hl' : l ~ l') → g a l h = g a l' ((List.containsKey_of_perm hl').symm.trans h)) {h h'}
+    (hg₂ : ∀ {l l' a h}, (hl' : l'.containsKey a = false) → g a (l ++ l') h = g a l ((List.containsKey_append_of_not_contains_right hl').symm.trans h)) :
+    f a (bucket m.1.buckets m.2 a) h = g a (toListModel m.1.buckets) h' := by
+  obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets hm.buckets_size a
+  refine Eq.trans ?_ (hg₁ hm.distinct hl).symm
+  rw [hfg, hg₂]
+  exact hlk hm.buckets_hash_self _ rfl
+
 /--
 This is the general theorem to show that modification operations are correct.
 -/
@@ -230,6 +241,9 @@ def get?ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) : 
 def containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Bool :=
   (bucket m.1.buckets m.2 a).contains a
 
+def getₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) (h : m.containsₘ a) : β a :=
+  (bucket m.1.buckets m.2 a).getCast a h
+
 def insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   if m.containsₘ a then m.replaceₘ a b else Raw₀.expandIfNecessary (m.consₘ a b)
 
@@ -255,6 +269,9 @@ variable {β : Type v}
 def Const.get?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) : Option β :=
   (bucket m.1.buckets m.2 a).get? a
 
+def Const.getₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (h : m.containsₘ a) : β :=
+  (bucket m.1.buckets m.2 a).get a h
+
 end
 
 /-! # Equivalence between model functions and real implementations -/
@@ -267,6 +284,9 @@ theorem getEntry?_eq_getEntry?ₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a :
 
 theorem get?_eq_get?ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
     get? m a = get?ₘ m a := rfl
+
+theorem get_eq_getₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) (h : m.contains a) :
+    get m a h = getₘ m a h := rfl
 
 theorem contains_eq_containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
     m.contains a = m.containsₘ a := rfl
@@ -335,6 +355,9 @@ variable {β : Type v}
 
 theorem Const.get?_eq_get?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) :
     Const.get? m a = Const.get?ₘ m a := rfl
+
+theorem Const.get_eq_getₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (h : m.contains a) :
+    Const.get m a h = Const.getₘ m a h := rfl
 
 end
 

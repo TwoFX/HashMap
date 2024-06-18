@@ -223,7 +223,7 @@ theorem wfImp_expandIfNecessary [BEq α] [Hashable α] [EquivBEq α] [LawfulHash
 
 theorem containsₘ_eq_containsKey [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} :
     m.containsₘ a = (toListModel m.1.buckets).containsKey a :=
-  apply_bucket hm AssocList.contains_eq List.containsKey_of_perm List.containsKey_append_of_not_contains_right
+  apply_bucket hm AssocList.contains_eq (fun _ => List.containsKey_of_perm) List.containsKey_append_of_not_contains_right
 
 theorem contains_eq_containsKey [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} :
     m.contains a = (toListModel m.1.buckets).containsKey a := by
@@ -239,13 +239,22 @@ theorem getEntry?_eq_getEntry? [BEq α] [Hashable α] [PartialEquivBEq α] [Lawf
     getEntry? m a = (toListModel m.1.buckets).getEntry? a := by
   rw [getEntry?_eq_getEntry?ₘ, getEntry?ₘ_eq_getEntry? hm]
 
-theorem get?ₘ_eq_getValueCast? [BEq α] [Hashable α] [LawfulBEq α] [LawfulHashable α]
+theorem get?ₘ_eq_getValueCast? [BEq α] [Hashable α] [LawfulBEq α]
     {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} : m.get?ₘ a = (toListModel m.1.buckets).getValueCast? a :=
   apply_bucket hm AssocList.getCast?_eq List.getValueCast?_of_perm List.getValueCast?_append_of_containsKey_eq_false
 
-theorem get?_eq_getValueCast? [BEq α] [Hashable α] [LawfulBEq α] [LawfulHashable α]
+theorem get?_eq_getValueCast? [BEq α] [Hashable α] [LawfulBEq α]
     {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} : m.get? a = (toListModel m.1.buckets).getValueCast? a := by
   rw [get?_eq_get?ₘ, get?ₘ_eq_getValueCast? hm]
+
+theorem getₘ_eq_getValue [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} {h : m.containsₘ a} :
+    m.getₘ a h = (toListModel m.1.buckets).getValueCast a (containsₘ_eq_containsKey hm ▸ h) :=
+  apply_bucket_with_proof hm a AssocList.getCast List.getValueCast AssocList.getCast_eq List.getValueCast_of_perm
+    List.getValueCast_append_of_containsKey_eq_false
+
+theorem get_eq_getValue [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} {h : m.contains a} :
+    m.get a h = (toListModel m.1.buckets).getValueCast a (contains_eq_containsKey hm ▸ h) := by
+  rw [get_eq_getₘ, getₘ_eq_getValue hm]
 
 section
 
@@ -258,6 +267,14 @@ theorem Const.get?ₘ_eq_getValue? [BEq α] [Hashable α] [PartialEquivBEq α] [
 theorem Const.get?_eq_getValue? [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
     (hm : m.1.WFImp) {a : α} : Const.get? m a = (toListModel m.1.buckets).getValue? a := by
   rw [Const.get?_eq_get?ₘ, Const.get?ₘ_eq_getValue? hm]
+
+theorem Const.getₘ_eq_getValue [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
+    (hm : m.1.WFImp) {a : α} {h} : Const.getₘ m a h = (toListModel m.1.buckets).getValue a (containsₘ_eq_containsKey hm ▸ h) :=
+  apply_bucket_with_proof hm a AssocList.get List.getValue AssocList.get_eq List.getValue_of_perm List.getValue_append_of_containsKey_eq_false
+
+theorem Const.get_eq_getValue [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
+    (hm : m.1.WFImp) {a : α} {h} : Const.get m a h = (toListModel m.1.buckets).getValue a (contains_eq_containsKey hm ▸ h) := by
+  rw [Const.get_eq_getₘ, Const.getₘ_eq_getValue]
 
 theorem mem_values_iff_mem_values_toListModel {m : Raw₀ α (fun _ => β)} {b : β} :
     b ∈ m.1.values ↔ b ∈ (toListModel m.1.buckets).values :=
