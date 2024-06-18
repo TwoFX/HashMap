@@ -65,14 +65,14 @@ syntax "simp_to_model" ("with" term)? ("using" term)? : tactic
 elab_rules : tactic
 | `(tactic| simp_to_model $[with $with?]? $[using $using?]?) => withMainContext do
   for name in ← baseNames do
-    evalTactic (← `(tactic| repeat rw [$name:term]))
+    evalTactic (← `(tactic| repeat simp (discharger := wf_trivial) only [$name:term]))
   for modify in ← modifyNames do
     for congr in ← congrNames do
-      evalTactic (← `(tactic| repeat rw [$congr:term ($modify:term ..)]))
+      evalTactic (← `(tactic| repeat simp (discharger := wf_trivial) only [$congr:term ($modify:term ..)]))
   if let some usingLem := using? then
     evalTactic (← `(tactic| apply $usingLem:term))
   if let some withLem := with? then
-    evalTactic (← `(tactic| rw [$withLem:term]))
+    evalTactic (← `(tactic| simp (discharger := wf_trivial) only [$withLem:term]))
   for sideGoal in (← getUnsolvedGoals) do
     let _ ← evalTacticAt (← `(tactic| wf_trivial)) sideGoal
   return ()
@@ -214,11 +214,7 @@ theorem get_insert [LawfulBEq α] {a k : α} {b : β a} {h₁} :
         cast (congrArg β (eq_of_beq h₂)) b
       else
         m.get k (contains_of_contains_insert _ h h₁ (Bool.eq_false_iff.2 h₂)) := by
-  simp_to_model
-  rw [List.getValueCast_insertEntry]
-  split
-  · rfl
-  · simp_to_model
+  simp_to_model using List.getValueCast_insertEntry
 
 theorem get_insert_self [LawfulBEq α] {a : α} {b : β a} : (m.insert a b).get a (contains_insert_self _ h) = b := by
   simp_to_model using List.getValueCast_insertEntry_self
