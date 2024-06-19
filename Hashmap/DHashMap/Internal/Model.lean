@@ -253,7 +253,7 @@ def get!ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) [I
 def insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   if m.containsₘ a then m.replaceₘ a b else Raw₀.expandIfNecessary (m.consₘ a b)
 
-def insertIfNewThenGetₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
+def insertIfNewₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   if m.containsₘ a then m else Raw₀.expandIfNecessary (m.consₘ a b)
 
 def removeₘaux [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
@@ -337,9 +337,24 @@ theorem containsThenInsert_eq_containsₘ [BEq α] [Hashable α] (m : Raw₀ α 
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
   split <;> simp_all
 
-theorem insertIfNewThenGet_eq_insertIfNewThenGetₘ [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (f : Unit → β a) :
-    (m.insertIfNewThenGet a f).1 = m.insertIfNewThenGetₘ a (f ()) := by
-  rw [insertIfNewThenGet, insertIfNewThenGetₘ, containsₘ, bucket]
+theorem insertIfNew_eq_insertIfNewₘ [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (b : β a) :
+    m.insertIfNew a b = m.insertIfNewₘ a b := rfl
+
+theorem getThenInsertIfNew?_eq_insertIfNewₘ [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (b : β a) :
+    (m.getThenInsertIfNew? a b).1 = m.insertIfNewₘ a b := by
+  rw [getThenInsertIfNew?, insertIfNewₘ, containsₘ, bucket]
+  dsimp only [Array.ugetElem_eq_getElem, Array.uset]
+  split <;> simp_all [consₘ, updateBucket, List.containsKey_eq_isSome_getValueCast?]
+
+theorem getThenInsertIfNew?_eq_get?ₘ [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (b : β a) :
+    (m.getThenInsertIfNew? a b).2 = m.get?ₘ a := by
+  rw [getThenInsertIfNew?, get?ₘ, bucket]
+  dsimp only [Array.ugetElem_eq_getElem, Array.uset]
+  split <;> simp_all
+
+theorem insertIfNewThenGet_eq_insertIfNewₘ [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (f : Unit → β a) :
+    (m.insertIfNewThenGet a f).1 = m.insertIfNewₘ a (f ()) := by
+  rw [insertIfNewThenGet, insertIfNewₘ, containsₘ, bucket]
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
   split
   · next x h =>

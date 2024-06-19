@@ -403,13 +403,18 @@ theorem wfImp_containsThenInsert [BEq α] [Hashable α] [EquivBEq α] [LawfulHas
   rw [containsThenInsert_eq_insertₘ]
   exact wfImp_insertₘ h
 
-/-! # `insertIfNewThenGetₘ` -/
+/-! # `insertIfNewₘ` -/
 
--- TODO: toListModel_insertIfNewThenGetₘ
+theorem toListModel_insertIfNewₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
+    (h : m.1.WFImp) {a : α} {b : β a} : toListModel (m.insertIfNewₘ a b).1.buckets ~ (toListModel m.1.buckets).insertEntryIfNew a b := by
+  rw [insertIfNewₘ, insertEntryIfNew, containsₘ_eq_containsKey h, cond_eq_if]
+  split
+  · next h' => exact Perm.refl _
+  · next h' => exact (toListModel_expandIfNecessary _).trans (toListModel_consₘ m h a b)
 
-theorem wfImp_insertIfNewThenGetₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
-    (h : m.1.WFImp) {a : α} {b : β a} : (m.insertIfNewThenGetₘ a b).1.WFImp := by
-  rw [insertIfNewThenGetₘ]
+theorem wfImp_insertIfNewₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
+    (h : m.1.WFImp) {a : α} {b : β a} : (m.insertIfNewₘ a b).1.WFImp := by
+  rw [insertIfNewₘ]
   split
   · exact h
   · apply wfImp_expandIfNecessary
@@ -417,12 +422,22 @@ theorem wfImp_insertIfNewThenGetₘ [BEq α] [Hashable α] [EquivBEq α] [Lawful
 
 /-! # `insertIfNewThenGet` -/
 
--- TODO: toListModel_insertIfNewThenGet
+-- TODO: toListModel_insertIfNew
+
+theorem toListModel_insertIfNew [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β}
+    (h : m.1.WFImp) {a : α} {b : β a} : toListModel (m.insertIfNew a b).1.buckets ~ (toListModel m.1.buckets).insertEntryIfNew a b := by
+  rw [insertIfNew_eq_insertIfNewₘ]
+  exact toListModel_insertIfNewₘ h
+
+theorem wfImp_insertIfNew [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (h : m.1.WFImp) {a : α} {b : β a} :
+    (m.insertIfNew a b).1.WFImp := by
+  rw [insertIfNew_eq_insertIfNewₘ]
+  exact wfImp_insertIfNewₘ h
 
 theorem wfImp_insertIfNewThenGet [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β}
     (h : m.1.WFImp) {a : α} {f : Unit → β a} : (m.insertIfNewThenGet a f).1.1.WFImp := by
-  rw [insertIfNewThenGet_eq_insertIfNewThenGetₘ]
-  exact wfImp_insertIfNewThenGetₘ h
+  rw [insertIfNewThenGet_eq_insertIfNewₘ]
+  exact wfImp_insertIfNewₘ h
 
 /-! # `removeₘ` -/
 

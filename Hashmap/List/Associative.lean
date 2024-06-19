@@ -1153,6 +1153,9 @@ theorem getValue_insertEntry_self {β : Type v} [BEq α] [EquivBEq α] {l : List
     (l.insertEntry k v).getValue k containsKey_insertEntry_self = v := by
   simp [getValue_insertEntry]
 
+def insertEntryIfNew [BEq α] (l : List (Σ a, β a)) (k : α) (v : β k) : List (Σ a, β a) :=
+  bif l.containsKey k then l else ⟨k, v⟩ :: l
+
 @[simp]
 theorem keys_removeKey [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k : α} :
     (l.removeKey k).keys = l.keys.erase k := by
