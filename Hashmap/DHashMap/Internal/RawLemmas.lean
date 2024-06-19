@@ -296,6 +296,57 @@ theorem get_eq_get! [LawfulBEq α] {a : α} [Inhabited (β a)] {h} :
     m.get a h = m.get! a := by
   simp_to_model using List.getValueCast_eq_getValueCast!
 
+namespace Const
+
+variable {β : Type v} (m : DHashMap.Raw₀ α (fun _ => β)) (h : m.1.WF)
+
+theorem get!_empty [Inhabited β] {a : α} {c} : get! (empty c : Raw₀ α (fun _ => β)) a = default := by
+  simp [get!, empty]
+
+theorem get!_of_isEmpty [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} : m.1.isEmpty = true → get! m a = default := by
+  simp_to_model; empty
+
+theorem get!_insert [EquivBEq α] [LawfulHashable α] [Inhabited β] {a k : α} {b : β} :
+    get! (m.insert a b) k = bif a == k then b else get! m k := by
+  simp_to_model using List.getValue!_insertEntry
+
+theorem get!_insert_self [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} {b : β} :
+    get! (m.insert a b) a = b := by
+  simp_to_model using List.getValue!_insertEntry_self
+
+theorem get!_eq_default [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} :
+    m.contains a = false → get! m a = default := by
+  simp_to_model using List.getValue!_eq_default
+
+theorem get!_remove [EquivBEq α] [LawfulHashable α] [Inhabited β] {a k : α} :
+    get! (m.remove a) k = bif a == k then default else get! m k := by
+  simp_to_model using List.getValue!_removeKey
+
+theorem get!_remove_self [EquivBEq α] [LawfulHashable α] [Inhabited β] {k : α} :
+    get! (m.remove k) k = default := by
+  simp_to_model using List.getValue!_removeKey_self
+
+theorem get?_eq_some_get! [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} :
+    m.contains a = true → get? m a = some (get! m a) := by
+  simp_to_model using List.getValue?_eq_some_getValue!
+
+theorem get!_eq_get!_get? [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} :
+    get! m a = (get? m a).get! := by
+  simp_to_model using List.getValue!_eq_getValue?
+
+theorem get_eq_get! [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} {h} :
+    get m a h = get! m a := by
+  simp_to_model using List.getValue_eq_getValue!
+
+theorem get!_eq_get! [LawfulBEq α] [Inhabited β] {a : α} :
+    get! m a = m.get! a := by
+  simp_to_model using List.getValue!_eq_getValueCast!
+
+theorem get!_congr [EquivBEq α] [LawfulHashable α] [Inhabited β] {a b : α} (hab : a == b) :
+    get! m a = get! m b := by
+  simp_to_model using List.getValue!_congr
+
+end Const
 
 end Raw₀
 
