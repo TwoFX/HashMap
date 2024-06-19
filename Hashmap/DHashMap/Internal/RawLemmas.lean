@@ -348,6 +348,104 @@ theorem get!_congr [EquivBEq α] [LawfulHashable α] [Inhabited β] {a b : α} (
 
 end Const
 
+theorem getD_empty [LawfulBEq α] {a : α} {fallback : β a} {c} : (empty c : Raw₀ α β).getD a fallback = fallback := by
+  simp [getD, empty]
+
+theorem getD_of_isEmpty [LawfulBEq α] {a : α} {fallback : β a} : m.1.isEmpty = true → m.getD a fallback = fallback := by
+  simp_to_model; empty
+
+theorem getD_insert [LawfulBEq α] {a k : α} {fallback : β k} {b : β a} :
+    (m.insert a b).getD k fallback = if h : a == k then cast (congrArg β (eq_of_beq h)) b else m.getD k fallback := by
+  simp_to_model using List.getValueCastD_insertEntry
+
+theorem getD_insert_self [LawfulBEq α] {a : α} {fallback b : β a} :
+    (m.insert a b).getD a fallback = b := by
+  simp_to_model using List.getValueCastD_insertEntry_self
+
+theorem getD_eq_fallback [LawfulBEq α] {a : α} {fallback : β a} :
+    m.contains a = false → m.getD a fallback = fallback := by
+  simp_to_model using List.getValueCastD_eq_fallback
+
+theorem getD_remove [LawfulBEq α] {a k : α} {fallback : β k} :
+    (m.remove a).getD k fallback = bif a == k then fallback else m.getD k fallback := by
+  simp_to_model using List.getValueCastD_removeKey
+
+theorem getD_remove_self [LawfulBEq α] {k : α} {fallback : β k} :
+    (m.remove k).getD k fallback = fallback := by
+  simp_to_model using List.getValueCastD_removeKey_self
+
+theorem get?_eq_some_getD [LawfulBEq α] {a : α} {fallback : β a} :
+    m.contains a = true → m.get? a = some (m.getD a fallback) := by
+  simp_to_model using List.getValueCast?_eq_some_getValueCastD
+
+theorem getD_eq_getD_get? [LawfulBEq α] {a : α} {fallback : β a} :
+    m.getD a fallback = (m.get? a).getD fallback := by
+  simp_to_model using List.getValueCastD_eq_getValueCast?
+
+theorem get_eq_getD [LawfulBEq α] {a : α} {fallback : β a} {h} :
+    m.get a h = m.getD a fallback := by
+  simp_to_model using List.getValueCast_eq_getValueCastD
+
+theorem get!_eq_getD_default [LawfulBEq α] {a : α} [Inhabited (β a)] :
+    m.get! a = m.getD a default := by
+  simp_to_model using List.getValueCast!_eq_getValueCastD_default
+
+namespace Const
+
+variable {β : Type v} (m : DHashMap.Raw₀ α (fun _ => β)) (h : m.1.WF)
+
+theorem getD_empty {a : α} {fallback : β} {c} : getD (empty c : Raw₀ α (fun _ => β)) a fallback = fallback := by
+  simp [getD, empty]
+
+theorem getD_of_isEmpty [EquivBEq α] [LawfulHashable α] {a : α} {fallback : β} : m.1.isEmpty = true → getD m a fallback = fallback := by
+  simp_to_model; empty
+
+theorem getD_insert [EquivBEq α] [LawfulHashable α] {a k : α} {fallback b : β} :
+    getD (m.insert a b) k fallback = bif a == k then b else getD m k fallback := by
+  simp_to_model using List.getValueD_insertEntry
+
+theorem getD_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {fallback b : β} :
+    getD (m.insert a b) a fallback = b := by
+  simp_to_model using List.getValueD_insertEntry_self
+
+theorem getD_eq_fallback [EquivBEq α] [LawfulHashable α] {a : α} {fallback : β} :
+    m.contains a = false → getD m a fallback = fallback := by
+  simp_to_model using List.getValueD_eq_fallback
+
+theorem getD_remove [EquivBEq α] [LawfulHashable α] {a k : α} {fallback : β} :
+    getD (m.remove a) k fallback = bif a == k then fallback else getD m k fallback := by
+  simp_to_model using List.getValueD_removeKey
+
+theorem getD_remove_self [EquivBEq α] [LawfulHashable α] {k : α} {fallback : β} :
+    getD (m.remove k) k fallback = fallback := by
+  simp_to_model using List.getValueD_removeKey_self
+
+theorem get?_eq_some_getD [EquivBEq α] [LawfulHashable α] {a : α} {fallback : β} :
+    m.contains a = true → get? m a = some (getD m a fallback) := by
+  simp_to_model using List.getValue?_eq_some_getValueD
+
+theorem getD_eq_getD_get? [EquivBEq α] [LawfulHashable α] {a : α} {fallback : β} :
+    getD m a fallback = (get? m a).getD fallback := by
+  simp_to_model using List.getValueD_eq_getValue?
+
+theorem get_eq_getD [EquivBEq α] [LawfulHashable α] {a : α} {fallback : β} {h} :
+    get m a h = getD m a fallback := by
+  simp_to_model using List.getValue_eq_getValueD
+
+theorem get!_eq_getD_default [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} :
+    get! m a = getD m a default := by
+  simp_to_model using List.getValue!_eq_getValueD_default
+
+theorem getD_eq_getD [LawfulBEq α] {a : α} {fallback : β} :
+    getD m a fallback = m.getD a fallback := by
+  simp_to_model using List.getValueD_eq_getValueCastD
+
+theorem getD_congr [EquivBEq α] [LawfulHashable α] {a b : α} {fallback : β} (hab : a == b) :
+    getD m a fallback = getD m b fallback := by
+  simp_to_model using List.getValueD_congr
+
+end Const
+
 end Raw₀
 
 end MyLean.DHashMap

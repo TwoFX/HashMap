@@ -10,5 +10,10 @@ Authors: Markus Himmel
 theorem Option.get_eq_get! [Inhabited α] : (o : Option α) → {h : o.isSome} → o.get h = o.get!
   | some _, _ => rfl
 
+theorem Option.get_eq_getD {fallback : α} : (o : Option α) → {h : o.isSome} → o.get h = o.getD fallback
+  | some _, _ => rfl
+
 theorem Option.some_get! [Inhabited α] : (o : Option α) → o.isSome → some (o.get!) = o
   | some _, _ => rfl
+
+theorem Option.get!_eq_getD_default [Inhabited α] (o : Option α) : o.get! = o.getD default := rfl
