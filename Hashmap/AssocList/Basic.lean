@@ -92,6 +92,22 @@ def getCast [BEq α] [LawfulBEq α] (a : α) : (l : AssocList α β) → l.conta
   | cons k v es, h => if hka : k == a then cast (congrArg β (eq_of_beq hka)) v else es.getCast a
       (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
 
+def getCast! [BEq α] [LawfulBEq α] (a : α) [Inhabited (β a)] : AssocList α β → β a
+  | nil => panic! "key is not present in hash table"
+  | cons k v es => if h : k == a then cast (congrArg β (eq_of_beq h)) v else es.getCast! a
+
+def get! {β : Type v} [BEq α] [Inhabited β] (a : α) : AssocList α (fun _ => β) → β
+  | nil => panic! "key is not present in hash table"
+  | cons k v es => bif k == a then v else es.get! a
+
+def getCastD [BEq α] [LawfulBEq α] (a : α) (fallback : β a) : AssocList α β → β a
+  | nil => fallback
+  | cons k v es => if h : k == a then cast (congrArg β (eq_of_beq h)) v else es.getCastD a fallback
+
+def getD {β : Type v} [BEq α] (a : α) (fallback : β) : AssocList α (fun _ => β) → β
+  | nil => fallback
+  | cons k v es => bif k == a then v else es.getD a fallback
+
 @[specialize]
 def getWithCast [BEq α] (a : α) (cast : ∀ {b}, b == a → β b → β a) : (l : AssocList α β) → l.contains a → β a
   | cons k v es, h => if hka : k == a then cast hka v else es.getWithCast a cast

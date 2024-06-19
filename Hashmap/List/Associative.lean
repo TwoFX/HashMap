@@ -488,6 +488,36 @@ theorem getValue_eq_getValueCast {β : Type v} [BEq α] [LawfulBEq α] {l : List
   · simp at h
   · simp_all [getValue_cons, getValueCast_cons]
 
+def getValueCastD [BEq α] [LawfulBEq α] (a : α) (l : List (Σ a, β a)) (fallback : β a) : β a :=
+  (l.getValueCast? a).getD fallback
+
+theorem getValueCastD_eq_getValueCast? [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a : α} {fallback : β a} :
+    l.getValueCastD a fallback = (l.getValueCast? a).getD fallback := rfl
+
+def getValueCast! [BEq α] [LawfulBEq α] (a : α) [Inhabited (β a)] (l : List (Σ a, β a)) : β a :=
+  (l.getValueCast? a).get!
+
+theorem getValueCast!_eq_getValueCast? [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a : α} [Inhabited (β a)] :
+    l.getValueCast! a = (l.getValueCast? a).get! := rfl
+
+section
+
+variable {β : Type v}
+
+def getValueD [BEq α] (a : α) (l : List ((_ : α) × β)) (fallback : β) : β :=
+  (l.getValue? a).getD fallback
+
+theorem getValueD_eq_getValue? [BEq α] {l : List ((_ : α) × β)} {a : α} {fallback : β} :
+    l.getValueD a fallback = (l.getValue? a).getD fallback := rfl
+
+def getValue! [BEq α] [Inhabited β] (a : α) (l : List ((_ : α) × β)) : β :=
+  (l.getValue? a).get!
+
+theorem getValue!_eq_getValue? [BEq α] [Inhabited β] {l : List ((_: α) × β)} {a : α} :
+    l.getValue! a = (l.getValue? a).get! := rfl
+
+end
+
 def replaceEntry [BEq α] (a : α) (b : β a) : List (Σ a, β a) → List (Σ a, β a)
   | nil => nil
   | ⟨k, v⟩ :: l => bif k == a then ⟨a, b⟩ :: l else ⟨k, v⟩ :: replaceEntry a b l
@@ -1361,7 +1391,5 @@ theorem removeKey_append_of_containsKey_right_eq_false [BEq α] {l l' : List (Σ
     cases k' == k
     · rw [cond_false, cond_false, ih, cons_append]
     · rw [cond_true, cond_true]
-
--- TODO: results about combining modification operations
 
 end List

@@ -165,6 +165,16 @@ where
   let idx := mkIdx buckets.size h (hash a)
   buckets[idx.1].getCast a hma
 
+@[inline] def getD [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) (fallback : β a) : β a :=
+  let ⟨⟨_, buckets⟩, h⟩ := m
+  let idx := mkIdx buckets.size h (hash a)
+  buckets[idx.1].getCastD a fallback
+
+@[inline] def get! [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) [Inhabited (β a)] : β a :=
+  let ⟨⟨_, buckets⟩, h⟩ := m
+  let idx := mkIdx buckets.size h (hash a)
+  buckets[idx.1].getCast! a
+
 def remove [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
   let ⟨⟨size, buckets⟩, hb⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size hb (hash a)
@@ -201,6 +211,16 @@ variable {β : Type v}
   let ⟨⟨_, buckets⟩, h⟩ := m
   let idx := mkIdx buckets.size h (hash a)
   buckets[idx.1].get a hma
+
+@[inline] def Const.getD [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (fallback : β) : β :=
+  let ⟨⟨_, buckets⟩, h⟩ := m
+  let idx := mkIdx buckets.size h (hash a)
+  buckets[idx.1].getD a fallback
+
+@[inline] def Const.get! [BEq α] [Hashable α] [Inhabited β] (m : Raw₀ α (fun _ => β)) (a : α) : β :=
+  let ⟨⟨_, buckets⟩, h⟩ := m
+  let idx := mkIdx buckets.size h (hash a)
+  buckets[idx.1].get! a
 
 end
 

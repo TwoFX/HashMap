@@ -55,6 +55,9 @@ def baseNames : MetaM (List (TSyntax `term)) := do
 def modifyNames : MetaM (List (TSyntax `term)) := do
   return [← `(toListModel_insert), ← `(toListModel_remove) ]
 
+def modifyNames' : List Name :=
+  [ ``toListModel_insert, ``toListModel_remove ]
+
 def congrNames : MetaM (List (TSyntax `term)) := do
   return [← `(List.Perm.isEmpty_eq), ← `(List.containsKey_of_perm), ← `(List.Perm.length_eq),
     ← `(List.getValueCast?_of_perm _), ← `(List.getValue?_of_perm _), ← `(List.getValue_of_perm _),
@@ -66,9 +69,9 @@ elab_rules : tactic
 | `(tactic| simp_to_model $[with $with?]? $[using $using?]?) => withMainContext do
   for name in ← baseNames do
     evalTactic (← `(tactic| repeat simp (discharger := wf_trivial) only [$name:term]))
-  for modify in ← modifyNames do
+  for modify in modifyNames' do
     for congr in ← congrNames do
-      evalTactic (← `(tactic| repeat simp (discharger := wf_trivial) only [$congr:term ($modify:term ..)]))
+      evalTactic (← `(tactic| repeat simp (discharger := wf_trivial) only [$congr:term ($(mkIdent modify) ..)]))
   if let some usingLem := using? then
     evalTactic (← `(tactic| apply $usingLem:term))
   if let some withLem := with? then

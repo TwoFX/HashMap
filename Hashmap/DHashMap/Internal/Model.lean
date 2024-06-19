@@ -244,6 +244,12 @@ def containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Bool :=
 def getₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) (h : m.containsₘ a) : β a :=
   (bucket m.1.buckets m.2 a).getCast a h
 
+def getDₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) (fallback : β a) : β a :=
+  (m.get?ₘ a).getD fallback
+
+def get!ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) [Inhabited (β a)] : β a :=
+  (m.get?ₘ a).get!
+
 def insertₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   if m.containsₘ a then m.replaceₘ a b else Raw₀.expandIfNecessary (m.consₘ a b)
 
@@ -272,6 +278,12 @@ def Const.get?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) 
 def Const.getₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (h : m.containsₘ a) : β :=
   (bucket m.1.buckets m.2 a).get a h
 
+def Const.getDₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (fallback : β) : β :=
+  (Const.get?ₘ m a).getD fallback
+
+def Const.get!ₘ [BEq α] [Hashable α] [Inhabited β] (m : Raw₀ α (fun _ => β)) (a : α) : β :=
+  (Const.get?ₘ m a).get!
+
 end
 
 /-! # Equivalence between model functions and real implementations -/
@@ -287,6 +299,14 @@ theorem get?_eq_get?ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β)
 
 theorem get_eq_getₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) (h : m.contains a) :
     get m a h = getₘ m a h := rfl
+
+theorem getD_eq_getDₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) (fallback : β a) :
+    getD m a fallback = getDₘ m a fallback := by
+  simp [getD, getDₘ, get?ₘ, List.getValueCastD_eq_getValueCast?, bucket]
+
+theorem get!_eq_get!ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) [Inhabited (β a)] :
+    get! m a = get!ₘ m a := by
+  simp [get!, get!ₘ, get?ₘ, List.getValueCast!_eq_getValueCast?, bucket]
 
 theorem contains_eq_containsₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
     m.contains a = m.containsₘ a := rfl
@@ -358,6 +378,14 @@ theorem Const.get?_eq_get?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β
 
 theorem Const.get_eq_getₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (h : m.contains a) :
     Const.get m a h = Const.getₘ m a h := rfl
+
+theorem Const.getD_eq_getDₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (fallback : β) :
+    Const.getD m a fallback = Const.getDₘ m a fallback := by
+  simp [getD, getDₘ, get?ₘ, List.getValueD_eq_getValue?, bucket]
+
+theorem Const.get!_eq_get!ₘ [BEq α] [Hashable α] [Inhabited β] (m : Raw₀ α (fun _ => β)) (a : α) :
+    Const.get! m a = Const.get!ₘ m a := by
+  simp [get!, get!ₘ, get?ₘ, List.getValue!_eq_getValue?, bucket]
 
 end
 

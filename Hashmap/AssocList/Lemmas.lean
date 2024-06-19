@@ -73,6 +73,43 @@ theorem get_eq {β : Type v} [BEq α] {l : AssocList α (fun _ => β)} {a : α} 
   · next k v t ih => simp only [get, toList_cons, List.getValue_cons, ih]
 
 @[simp]
+theorem getCastD_eq [BEq α] [LawfulBEq α] {l : AssocList α β} {a : α} {fallback : β a} :
+    l.getCastD a fallback = l.toList.getValueCastD a fallback := by
+  induction l
+  · simp [getCastD, List.getValueCastD]
+  · simp_all [getCastD, List.getValueCastD, List.getValueCastD, List.getValueCast?_cons,
+      apply_dite (fun x => Option.getD x fallback)]
+
+@[simp]
+theorem getD_eq {β : Type v} [BEq α] {l : AssocList α (fun _ => β)} {a : α} {fallback : β} :
+    l.getD a fallback = l.toList.getValueD a fallback := by
+  induction l
+  · simp [getD, List.getValueD]
+  · simp_all [getD, List.getValueD, List.getValueD, List.getValue?_cons, apply_bif (fun x => Option.getD x fallback)]
+
+@[simp]
+theorem panicWithPosWithDecl_eq [Inhabited α] {modName declName line col msg} :
+  panicWithPosWithDecl modName declName line col msg = (default : α) := rfl
+
+@[simp] theorem Option.get!_none [Inhabited α] : (none : Option α).get! = default := rfl
+@[simp] theorem Option.get!_some [Inhabited α] {a : α} : (some a).get! = a := rfl
+
+@[simp]
+theorem getCast!_eq [BEq α] [LawfulBEq α] {l : AssocList α β} {a : α} [Inhabited (β a)] :
+    l.getCast! a = l.toList.getValueCast! a := by
+  induction l
+  · simp [getCast!, List.getValueCast!]
+  · simp_all [getCast!, List.getValueCast!, List.getValueCast!, List.getValueCast?_cons,
+      apply_dite Option.get!]
+
+@[simp]
+theorem get!_eq {β : Type v} [BEq α] [Inhabited β] {l : AssocList α (fun _ => β)} {a : α} :
+    l.get! a = l.toList.getValue! a := by
+  induction l
+  · simp [get!, List.getValue!]
+  · simp_all [get!, List.getValue!, List.getValue!, List.getValue?_cons, apply_bif Option.get!]
+
+@[simp]
 theorem toList_replace [BEq α] {l : AssocList α β} {a : α} {b : β a} :
     (l.replace a b).toList = l.toList.replaceEntry a b := by
   induction l

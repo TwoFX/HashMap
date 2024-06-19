@@ -242,9 +242,6 @@ the provided cast function.
 @[inline] def contains [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Bool :=
   Raw₀.contains ⟨m.1, m.2.size_buckets_pos⟩ a
 
--- instance [BEq α] [Hashable α] : GetElem (DHashMap α β) α (Σ a, β a) fun m a => m.contains a := sorry
--- instance [BEq α] [LawfulBEq α] [Hashable α] : DGetElem (DHashMap α β) α β fun m a => m.contains a := sorry
-
 /--
 Removes the mapping with the given key if it exists.
 -/

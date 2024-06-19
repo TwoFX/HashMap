@@ -256,6 +256,22 @@ theorem get_eq_getValueCast [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α
     m.get a h = (toListModel m.1.buckets).getValueCast a (contains_eq_containsKey hm ▸ h) := by
   rw [get_eq_getₘ, getₘ_eq_getValue hm]
 
+theorem get!ₘ_eq_getValueCast! [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} [Inhabited (β a)] :
+    m.get!ₘ a = (toListModel m.1.buckets).getValueCast! a := by
+  rw [get!ₘ, get?ₘ_eq_getValueCast? hm, List.getValueCast!_eq_getValueCast?]
+
+theorem get!_eq_getValueCast! [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} [Inhabited (β a)] :
+    m.get! a = (toListModel m.1.buckets).getValueCast! a := by
+  rw [get!_eq_get!ₘ, get!ₘ_eq_getValueCast! hm]
+
+theorem getDₘ_eq_getValueCastD [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} {fallback : β a} :
+    m.getDₘ a fallback = (toListModel m.1.buckets).getValueCastD a fallback := by
+  rw [getDₘ, get?ₘ_eq_getValueCast? hm, List.getValueCastD_eq_getValueCast?]
+
+theorem getD_eq_getValueCastD [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} {fallback : β a} :
+    m.getD a fallback = (toListModel m.1.buckets).getValueCastD a fallback := by
+  rw [getD_eq_getDₘ, getDₘ_eq_getValueCastD hm]
+
 section
 
 variable {β : Type v}
@@ -275,6 +291,22 @@ theorem Const.getₘ_eq_getValue [BEq α] [Hashable α] [PartialEquivBEq α] [La
 theorem Const.get_eq_getValue [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
     (hm : m.1.WFImp) {a : α} {h} : Const.get m a h = (toListModel m.1.buckets).getValue a (contains_eq_containsKey hm ▸ h) := by
   rw [Const.get_eq_getₘ, Const.getₘ_eq_getValue hm]
+
+theorem Const.get!ₘ_eq_getValue! [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] [Inhabited β] {m : Raw₀ α (fun _ => β)}
+    (hm : m.1.WFImp) {a : α} : Const.get!ₘ m a = (toListModel m.1.buckets).getValue! a := by
+  rw [get!ₘ, get?ₘ_eq_getValue? hm, List.getValue!_eq_getValue?]
+
+theorem Const.get!_eq_getValue! [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] [Inhabited β] {m : Raw₀ α (fun _ => β)}
+    (hm : m.1.WFImp) {a : α} : Const.get! m a = (toListModel m.1.buckets).getValue! a := by
+  rw [get!_eq_get!ₘ, get!ₘ_eq_getValue! hm]
+
+theorem Const.getDₘ_eq_getValueD [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
+    (hm : m.1.WFImp) {a : α} {fallback : β} : Const.getDₘ m a fallback = (toListModel m.1.buckets).getValueD a fallback := by
+  rw [getDₘ, get?ₘ_eq_getValue? hm, List.getValueD_eq_getValue?]
+
+theorem Const.getD_eq_getValueD [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
+    (hm : m.1.WFImp) {a : α} {fallback : β} : Const.getD m a fallback = (toListModel m.1.buckets).getValueD a fallback := by
+  rw [getD_eq_getDₘ, getDₘ_eq_getValueD hm]
 
 theorem mem_values_iff_mem_values_toListModel {m : Raw₀ α (fun _ => β)} {b : β} :
     b ∈ m.1.values ↔ b ∈ (toListModel m.1.buckets).values :=
