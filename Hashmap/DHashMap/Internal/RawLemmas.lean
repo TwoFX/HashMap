@@ -50,7 +50,8 @@ open Lean Elab Meta Tactic
 
 def baseNames : MetaM (List (TSyntax `term)) := do
   return [ ← `(contains_eq_containsKey), ← `(Raw.isEmpty_eq_isEmpty), ← `(Raw.size_eq_length), ← `(get?_eq_getValueCast?),
-    ← `(Const.get?_eq_getValue?), ← `(get_eq_getValueCast), ← `(Const.get_eq_getValue) ]
+    ← `(Const.get?_eq_getValue?), ← `(get_eq_getValueCast), ← `(Const.get_eq_getValue), ← `(get!_eq_getValueCast!),
+    ← `(getD_eq_getValueCastD), ← `(Const.get!_eq_getValue!), ← `(Const.getD_eq_getValueD) ]
 
 def modifyNames : MetaM (List (TSyntax `term)) := do
   return [← `(toListModel_insert), ← `(toListModel_remove) ]
@@ -61,7 +62,8 @@ def modifyNames' : List Name :=
 def congrNames : MetaM (List (TSyntax `term)) := do
   return [← `(List.Perm.isEmpty_eq), ← `(List.containsKey_of_perm), ← `(List.Perm.length_eq),
     ← `(List.getValueCast?_of_perm _), ← `(List.getValue?_of_perm _), ← `(List.getValue_of_perm _),
-    ← `(List.getValueCast_of_perm _) ]
+    ← `(List.getValueCast_of_perm _), ← `(List.getValueCast!_of_perm _), ← `(List.getValueCastD_of_perm _),
+    ← `(List.getValue!_of_perm _), ← `(List.getValueD_of_perm _) ]
 
 syntax "simp_to_model" ("with" term)? ("using" term)? : tactic
 
@@ -255,6 +257,32 @@ theorem get_congr [LawfulBEq α] {a b : α} (hab : a == b) {h'} : get m a h' = g
   simp_to_model using List.getValue_congr
 
 end Const
+
+theorem get!_empty [LawfulBEq α] {a : α} [Inhabited (β a)] {c} : (empty c : Raw₀ α β).get! a = default := by
+  simp [get!, empty]
+
+theorem get!_of_isEmpty [LawfulBEq α] {a : α} [Inhabited (β a)] : m.1.isEmpty = true → m.get! a = default := by
+  simp_to_model; empty
+
+theorem get!_insert [LawfulBEq α] {a k : α} [Inhabited (β k)] {b : β a} :
+    (m.insert a b).get! k = if h : a == k then cast (congrArg β (eq_of_beq h)) b else m.get! k := by
+  simp_to_model using List.getValueCast!_insertEntry
+
+theorem get!_insert_self [LawfulBEq α] {a : α} [Inhabited (β a)] {b : β a} :
+    (m.insert a b).get! a = b := by
+  simp_to_model using List.getValueCast!_insertEntry_self
+
+theorem get!_eq_default [LawfulBEq α] {a : α} [Inhabited (β a)] :
+    m.contains a = false → m.get! a = default := by
+  simp_to_model using List.getValueCast!_eq_default
+
+theorem get!_remove [LawfulBEq α] {a k : α} [Inhabited (β k)] :
+    (m.remove a).get! k = bif a == k then default else m.get! k := by
+  simp_to_model using List.getValueCast!_removeKey
+
+theorem get!_remove_self [LawfulBEq α] {k : α} [Inhabited (β k)] :
+    (m.remove k).get! k = default := by
+  simp_to_model using List.getValueCast!_removeKey_self
 
 end Raw₀
 

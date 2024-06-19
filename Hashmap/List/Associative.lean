@@ -10,6 +10,7 @@ import Batteries.Data.List.Perm
 import Hashmap.LawfulHashable
 import Hashmap.Or
 import Hashmap.ForUpstream
+import Hashmap.Option
 
 universe u v w
 
@@ -497,8 +498,16 @@ theorem getValueCastD_eq_getValueCast? [BEq α] [LawfulBEq α] {l : List (Σ a, 
 def getValueCast! [BEq α] [LawfulBEq α] (a : α) [Inhabited (β a)] (l : List (Σ a, β a)) : β a :=
   (l.getValueCast? a).get!
 
+@[simp]
+theorem getValueCast!_nil [BEq α] [LawfulBEq α] {a : α} [Inhabited (β a)] : ([] : List (Σ a, β a)).getValueCast! a = default := rfl
+
 theorem getValueCast!_eq_getValueCast? [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a : α} [Inhabited (β a)] :
     l.getValueCast! a = (l.getValueCast? a).get! := rfl
+
+theorem getValueCast!_eq_default [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a : α} [Inhabited (β a)]
+    (h : l.containsKey a = false) : l.getValueCast! a = default := by
+  rw [containsKey_eq_isSome_getValueCast?, Bool.eq_false_iff, ne_eq, Option.not_isSome_iff_eq_none] at h
+  rw [getValueCast!_eq_getValueCast?, h, Option.get!_none]
 
 section
 
@@ -720,8 +729,6 @@ theorem isEmpty_removeKey [BEq α] {l : List (Σ a, β a)} {k : α} :
   simp only [Bool.or_eq_true, Bool.and_eq_true, beq_iff_eq]
   rw [isEmpty_iff_length_eq_zero, length_removeKey, isEmpty_iff_length_eq_zero]
   cases containsKey k l <;> cases l <;> simp
-
--- TODO: removeKey+replaceEntry
 
 @[simp] theorem keys_nil : ([] : List (Σ a, β a)).keys = [] := rfl
 @[simp] theorem keys_cons {l : List (Σ a, β a)} {k : α} {v : β k} : (⟨k, v⟩ :: l).keys = k :: l.keys := rfl
@@ -993,6 +1000,14 @@ theorem getValueCast?_insertEntry_self [BEq α] [LawfulBEq α] {l : List (Σ a, 
     (l.insertEntry k v).getValueCast? k = some v := by
   rw [getValueCast?_insertEntry, dif_pos BEq.refl, cast_eq]
 
+theorem getValueCast!_insertEntry [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {k a : α} [Inhabited (β a)] {v : β k} :
+    (l.insertEntry k v).getValueCast! a = if h : k == a then cast (congrArg β (eq_of_beq h)) v else l.getValueCast! a := by
+  simp [getValueCast!_eq_getValueCast?, getValueCast?_insertEntry, apply_dite Option.get!]
+
+theorem getValueCast!_insertEntry_self [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {k : α} [Inhabited (β k)] {v : β k} :
+    (l.insertEntry k v).getValueCast! k = v := by
+  rw [getValueCast!_insertEntry, dif_pos BEq.refl, cast_eq]
+
 -- TODO: getEntry?_insertEntry_of_beq, getEntry?_insertEntry_of_beq_eq_false
 
 @[simp]
@@ -1179,6 +1194,14 @@ theorem getValueCast?_removeKey_self [BEq α] [LawfulBEq α] {l : List (Σ a, β
     (l.removeKey k).getValueCast? k = none := by
   rw [getValueCast?_removeKey hl, bif_pos BEq.refl]
 
+theorem getValueCast!_removeKey [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {k a : α} [Inhabited (β a)] (hl : l.DistinctKeys) :
+    (l.removeKey k).getValueCast! a = bif k == a then default else l.getValueCast! a := by
+  simp [getValueCast!_eq_getValueCast?, getValueCast?_removeKey hl, apply_bif Option.get!]
+
+theorem getValueCast!_removeKey_self [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {k : α} [Inhabited (β k)] (hl : l.DistinctKeys) :
+    (l.removeKey k).getValueCast! k = default := by
+  simp [getValueCast!_eq_getValueCast?, getValueCast?_removeKey_self hl]
+
 theorem containsKey_of_containsKey_removeKey [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k a : α} (hl : l.DistinctKeys) :
     (l.removeKey k).containsKey a → l.containsKey a := by
   simp [containsKey_removeKey hl]
@@ -1229,6 +1252,14 @@ theorem getValueCast_of_perm [BEq α] [LawfulBEq α] {l l' : List (Σ a, β a)} 
   rw [← Option.some_inj, ← getValueCast?_eq_some_getValueCast, ← getValueCast?_eq_some_getValueCast,
     getValueCast?_of_perm hl h]
 
+theorem getValueCast!_of_perm [BEq α] [LawfulBEq α] {l l' : List (Σ a, β a)} {k : α} [Inhabited (β k)] (hl : l.DistinctKeys)
+    (h : l ~ l') : l.getValueCast! k = l'.getValueCast! k := by
+  simp only [getValueCast!_eq_getValueCast?, getValueCast?_of_perm hl h]
+
+theorem getValueCastD_of_perm [BEq α] [LawfulBEq α] {l l' : List (Σ a, β a)} {k : α} {fallback : β k} (hl : l.DistinctKeys)
+    (h : l ~ l') : l.getValueCastD k fallback = l'.getValueCastD k fallback := by
+  simp only [getValueCastD_eq_getValueCast?, getValueCast?_of_perm hl h]
+
 section
 
 variable {β : Type v}
@@ -1240,6 +1271,14 @@ theorem getValue?_of_perm [BEq α] [PartialEquivBEq α] {l l' : List ((_ : α) �
 theorem getValue_of_perm [BEq α] [PartialEquivBEq α] {l l' : List ((_ : α) × β)} {k : α} {h'} (hl : l.DistinctKeys)
     (h : l ~ l') : l.getValue k h' = l'.getValue k ((containsKey_of_perm h).symm.trans h') := by
   rw [← Option.some_inj, ← getValue?_eq_some_getValue, ← getValue?_eq_some_getValue, getValue?_of_perm hl h]
+
+theorem getValue!_of_perm [BEq α] [PartialEquivBEq α] [Inhabited β] {l l' : List ((_ : α) × β)} {k : α} (hl : l.DistinctKeys)
+    (h : l ~ l') : l.getValue! k = l'.getValue! k := by
+  simp only [getValue!_eq_getValue?, getValue?_of_perm hl h]
+
+theorem getValueD_of_perm [BEq α] [PartialEquivBEq α] {l l' : List ((_ : α) × β)} {k : α} {fallback : β} (hl : l.DistinctKeys)
+    (h : l ~ l') : l.getValueD k fallback = l'.getValueD k fallback := by
+  simp only [getValueD_eq_getValue?, getValue?_of_perm hl h]
 
 theorem mem_values_of_perm [BEq α] [EquivBEq α] {l l' : List ((_ : α) × β)} {v : β} (hl : l.DistinctKeys)
     (h : l ~ l') : v ∈ l.values ↔ v ∈ l'.values := by

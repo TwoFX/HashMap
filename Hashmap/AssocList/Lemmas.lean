@@ -5,6 +5,7 @@ Authors: Markus Himmel
 -/
 import Hashmap.AssocList.Basic
 import Hashmap.List.Associative
+import Hashmap.Option
 
 set_option autoImplicit false
 
@@ -90,9 +91,6 @@ theorem getD_eq {β : Type v} [BEq α] {l : AssocList α (fun _ => β)} {a : α}
 @[simp]
 theorem panicWithPosWithDecl_eq [Inhabited α] {modName declName line col msg} :
   panicWithPosWithDecl modName declName line col msg = (default : α) := rfl
-
-@[simp] theorem Option.get!_none [Inhabited α] : (none : Option α).get! = default := rfl
-@[simp] theorem Option.get!_some [Inhabited α] {a : α} : (some a).get! = a := rfl
 
 @[simp]
 theorem getCast!_eq [BEq α] [LawfulBEq α] {l : AssocList α β} {a : α} [Inhabited (β a)] :
