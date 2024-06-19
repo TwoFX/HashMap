@@ -509,6 +509,14 @@ theorem getValueCast!_eq_default [BEq α] [LawfulBEq α] {l : List (Σ a, β a)}
   rw [containsKey_eq_isSome_getValueCast?, Bool.eq_false_iff, ne_eq, Option.not_isSome_iff_eq_none] at h
   rw [getValueCast!_eq_getValueCast?, h, Option.get!_none]
 
+theorem getValueCast_eq_getValueCast! [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a : α} [Inhabited (β a)]
+    (h : l.containsKey a = true) : l.getValueCast a h = l.getValueCast! a := by
+  rw [getValueCast!_eq_getValueCast?, getValueCast, Option.get_eq_get!]
+
+theorem getValueCast?_eq_some_getValueCast! [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a : α} [Inhabited (β a)]
+    (h : l.containsKey a = true) : l.getValueCast? a = some (l.getValueCast! a) := by
+  rw [getValueCast?_eq_some_getValueCast h, getValueCast_eq_getValueCast!]
+
 section
 
 variable {β : Type v}

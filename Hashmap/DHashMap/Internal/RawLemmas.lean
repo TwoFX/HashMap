@@ -284,6 +284,19 @@ theorem get!_remove_self [LawfulBEq α] {k : α} [Inhabited (β k)] :
     (m.remove k).get! k = default := by
   simp_to_model using List.getValueCast!_removeKey_self
 
+theorem get?_eq_some_get! [LawfulBEq α] {a : α} [Inhabited (β a)] :
+    m.contains a = true → m.get? a = some (m.get! a) := by
+  simp_to_model using List.getValueCast?_eq_some_getValueCast!
+
+theorem get!_eq_get!_get? [LawfulBEq α] {a : α} [Inhabited (β a)] :
+    m.get! a = (m.get? a).get! := by
+  simp_to_model using List.getValueCast!_eq_getValueCast?
+
+theorem get_eq_get! [LawfulBEq α] {a : α} [Inhabited (β a)] {h} :
+    m.get a h = m.get! a := by
+  simp_to_model using List.getValueCast_eq_getValueCast!
+
+
 end Raw₀
 
 end MyLean.DHashMap
