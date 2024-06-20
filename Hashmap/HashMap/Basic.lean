@@ -8,7 +8,7 @@ import Hashmap.Sigma
 
 set_option autoImplicit false
 
-universe u v
+universe u v w
 
 variable {α : Type u} {β : Type v}
 
@@ -27,21 +27,49 @@ namespace Raw
 instance : EmptyCollection (Raw α β) where
   emptyCollection := empty
 
+@[inline] def insert [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β) : Raw α β :=
+  ⟨m.inner.insert a b⟩
+
+@[inline] def insertIfNew [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β) : Raw α β :=
+  ⟨m.inner.insertIfNew a b⟩
+
 @[inline] def containsThenInsert [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β) : Raw α β × Bool :=
   let ⟨r, replaced⟩ := m.inner.containsThenInsert a b
   ⟨⟨r⟩, replaced⟩
 
-@[inline] def insert [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β) : Raw α β :=
-  ⟨m.inner.insert a b⟩
-
-@[inline] def getEntry? [BEq α] [Hashable α] (m : Raw α β) (a : α) : Option (α × β) :=
-  m.inner.getEntry? a |> .map Sigma.toProd
+@[inline] def getThenInsertIfNew? [BEq α] [Hashable α] (m : Raw α β) (a : α) (b : β) : Raw α β × Option β :=
+  let ⟨r, previous⟩ := DHashMap.Raw.Const.getThenInsertIfNew? m.inner a b
+  ⟨⟨r⟩, previous⟩
 
 @[inline] def get? [BEq α] [Hashable α] (m : Raw α β) (a : α) : Option β :=
   DHashMap.Raw.Const.get? m.inner a
 
 @[inline] def contains [BEq α] [Hashable α] (m : Raw α β) (a : α) : Bool :=
   m.inner.contains a
+
+@[inline] def remove [BEq α] [Hashable α] (m : Raw α β) (a : α) : Raw α β :=
+  ⟨m.inner.remove a⟩
+
+@[inline] def filterMap {γ : Type w} (f : α → β → Option γ) (m : Raw α β) : Raw α γ :=
+  ⟨m.inner.filterMap f⟩
+
+@[inline] def map {γ : Type w} (f : α → β → γ) (m : Raw α β) : Raw α γ :=
+  ⟨m.inner.map f⟩
+
+@[inline] def filter (f : α → β → Bool) (m : Raw α β) : Raw α β :=
+  ⟨m.inner.filter f⟩
+
+@[inline] def foldlM {m : Type w → Type w} [Monad m] {γ : Type w} (f : γ → α → β → m γ) (init : γ) (b : Raw α β) : m γ :=
+  b.inner.foldlM f init
+
+@[inline] def foldl {γ : Type w} (f : γ → α → β → γ) (init : γ) (b : Raw α β) : γ :=
+  b.inner.foldl f init
+
+@[inline] def toList (m : Raw α β) : List (α × β) :=
+  DHashMap.Raw.Const.toList m.inner
+
+@[inline] def toArray (m : Raw α β) : Array (α × β) :=
+  DHashMap.Raw.Const.toArray m.inner
 
 @[inline] def values (m : Raw α β) : List β :=
   m.inner.values
@@ -61,11 +89,23 @@ theorem WF.empty [BEq α] [Hashable α] {c} : (empty c : Raw α β).WF :=
 theorem WF.emptyc [BEq α] [Hashable α] : (∅ : Raw α β).WF :=
   WF.empty
 
+theorem WF.insert [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β} (h : m.WF) : (m.insert a b).WF :=
+  DHashMap.Raw.WF.insert h
+
+theorem WF.insertIfNew [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β} (h : m.WF) : (m.insertIfNew a b).WF :=
+  DHashMap.Raw.WF.insertIfNew h
+
 theorem WF.containsThenInsert [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β} (h : m.WF) : (m.containsThenInsert a b).1.WF :=
   DHashMap.Raw.WF.containsThenInsert h
 
-theorem WF.insert [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β} (h : m.WF) : (m.insert a b).WF :=
-  DHashMap.Raw.WF.insert h
+theorem WF.getThenInsertIfNew? [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β} (h : m.WF) : (m.getThenInsertIfNew? a b).1.WF :=
+  DHashMap.Raw.WF.Const.getThenInsertIfNew? h
+
+theorem WF.remove [BEq α] [Hashable α] {m : Raw α β} {a : α} (h : m.WF) : (m.remove a).WF :=
+  DHashMap.Raw.WF.remove h
+
+theorem WF.filter [BEq α] [Hashable α] {m : Raw α β} {f : α → β → Bool} (h : m.WF) : (m.filter f).WF :=
+  DHashMap.Raw.WF.filter h
 
 end Raw
 
@@ -82,15 +122,12 @@ namespace HashMap
 instance [BEq α] [Hashable α] : EmptyCollection (HashMap α β) where
   emptyCollection := empty
 
-@[inline] def containsThenInsert [BEq α] [Hashable α] (m : HashMap α β) (a : α) (b : β) : HashMap α β × Bool :=
-  let ⟨r, replaced⟩ := m.inner.containsThenInsert a b
-  ⟨⟨r⟩, replaced⟩
-
 @[inline] def insert [BEq α] [Hashable α] (m : HashMap α β) (a : α) (b : β) : HashMap α β :=
   ⟨m.inner.insert a b⟩
 
-@[inline] def getEntry? [BEq α] [Hashable α] (m : HashMap α β) (a : α) : Option (α × β) :=
-  m.inner.getEntry? a |> .map Sigma.toProd
+@[inline] def containsThenInsert [BEq α] [Hashable α] (m : HashMap α β) (a : α) (b : β) : HashMap α β × Bool :=
+  let ⟨r, replaced⟩ := m.inner.containsThenInsert a b
+  ⟨⟨r⟩, replaced⟩
 
 @[inline] def get? [BEq α] [Hashable α] (m : HashMap α β) (a : α) : Option β :=
   DHashMap.Const.get? m.inner a

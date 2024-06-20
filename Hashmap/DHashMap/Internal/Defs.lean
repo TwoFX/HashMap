@@ -125,62 +125,15 @@ where
     (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, none)
   | some v => (⟨⟨size, buckets⟩, hm⟩, some v)
 
-@[inline] def insertIfNewThenGetM [BEq α] [Hashable α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type v} [Monad m]
-    (q : Raw₀ α β) (a : α) (f : Unit → m (β a)) : m (Raw₀ α β × β a) :=
-  let ⟨⟨size, buckets⟩, hm⟩ := q
-  let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
-  let bkt := buckets[i]
-  match bkt.getCast? a with
-  | none => do
-      let v ← f ()
-      let size'    := size + 1
-      let buckets' := buckets.uset i (AssocList.cons a v bkt) h
-      return (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, v)
-  | some v => pure (⟨⟨size, buckets⟩, hm⟩, v)
-
-@[inline] def insertIfNewThenGet [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (f : Unit → β a) : Raw₀ α β × β a :=
-  let ⟨⟨size, buckets⟩, hm⟩ := m
-  let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
-  let bkt := buckets[i]
-  match bkt.getCast? a with
-  | none =>
-      let v := f ()
-      let size'    := size + 1
-      let buckets' := buckets.uset i (AssocList.cons a v bkt) h
-      (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, v)
-  | some v => (⟨⟨size, buckets⟩, hm⟩, v)
-
-@[inline] def getEntry? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
-  let ⟨⟨_, buckets⟩, h⟩ := m
-  let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
-  buckets[i].getEntry? a
-
 @[inline] def get? [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (β a) :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
   buckets[i].getCast? a
 
-@[inline, specialize] def getWithCast? [BEq α] [Hashable α] (m : Raw₀ α β) (a : α)
-    (cast : ∀ {b}, b == a → β b → β a) : Option (β a) :=
-  let ⟨⟨_, buckets⟩, h⟩ := m
-  let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
-  buckets[i].getWithCast? a cast
-
 @[inline] def contains [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Bool :=
   let ⟨⟨_, buckets⟩, h⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size h (hash a)
   buckets[i].contains a
-
-@[inline] def getEntry [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (hma : m.contains a) : Σ a, β a :=
-  let ⟨⟨_, buckets⟩, h⟩ := m
-  let idx := mkIdx buckets.size h (hash a)
-  buckets[idx.1].getEntry a hma
-
-@[inline, specialize] def getWithCast [BEq α] [Hashable α] (m : Raw₀ α β) (a : α)
-    (cast : ∀ {b}, b == a → β b → β a) (hma : m.contains a) : β a :=
-  let ⟨⟨_, buckets⟩, h⟩ := m
-  let idx := mkIdx buckets.size h (hash a)
-  buckets[idx.1].getWithCast a cast hma
 
 @[inline] def get [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) (hma : m.contains a) : β a :=
   let ⟨⟨_, buckets⟩, h⟩ := m
@@ -197,7 +150,7 @@ where
   let idx := mkIdx buckets.size h (hash a)
   buckets[idx.1].getCast! a
 
-def remove [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
+@[inline] def remove [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
   let ⟨⟨size, buckets⟩, hb⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size hb (hash a)
   let bkt := buckets[i]
@@ -219,6 +172,11 @@ def remove [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
   let ⟨⟨size, buckets⟩, hb⟩ := m
   let newBuckets := buckets.map (AssocList.map f)
   ⟨⟨size, newBuckets⟩, by simpa [newBuckets] using hb⟩
+
+@[specialize] def filter (f : (a : α) → β a → Bool) (m : Raw₀ α β) : Raw₀ α β :=
+  let ⟨⟨_, buckets⟩, hb⟩ := m
+  let newBuckets := buckets.map (AssocList.filter f)
+  ⟨⟨computeSize newBuckets, newBuckets⟩, by simpa [newBuckets] using hb⟩
 
 section
 

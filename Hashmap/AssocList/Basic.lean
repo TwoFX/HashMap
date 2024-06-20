@@ -48,11 +48,6 @@ def toList : AssocList α β → List (Σ a, β a)
 def length (l : AssocList α β) : Nat :=
   l.foldl (fun n _ _ => n + 1) 0
 
-/-- `O(n)`. Returns the first entry in the list whose key is equal to `a`. -/
-def getEntry? [BEq α] (a : α) : AssocList α β → Option (Σ a, β a)
-  | nil => none
-  | cons k v es => bif k == a then some ⟨k, v⟩ else getEntry? a es
-
 section
 
 variable {β : Type v}
@@ -67,22 +62,9 @@ def getCast? [BEq α] [LawfulBEq α] (a : α) : AssocList α β → Option (β a
   | nil => none
   | cons k v es => if h : k == a then some (cast (congrArg β (eq_of_beq h)) v) else es.getCast? a
 
-@[specialize]
-def getWithCast? [BEq α] (a : α) (cast : ∀ {b}, b == a → β b → β a) : AssocList α β → Option (β a)
-  | nil => none
-  | cons k v es => if h : k == a then some (cast h v) else es.getWithCast? a cast
-
-def getKey? [BEq α] (a : α) : AssocList α β → Option α
-  | nil => none
-  | cons k _ es => bif k == a then some k else getKey? a es
-
 def contains [BEq α] (a : α) : AssocList α β → Bool
   | nil => false
   | cons k _ l => k == a || l.contains a
-
-def getEntry [BEq α] (a : α) : (l : AssocList α β) → l.contains a → Σ a, β a
-  | cons k v es, h => if hka : k == a then ⟨k, v⟩ else getEntry a es
-      (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
 
 def get {β : Type v} [BEq α] (a : α) : (l : AssocList α (fun _ => β)) → l.contains a → β
   | cons k v es, h => if hka : k == a then v else get a es
@@ -108,11 +90,6 @@ def getD {β : Type v} [BEq α] (a : α) (fallback : β) : AssocList α (fun _ =
   | nil => fallback
   | cons k v es => bif k == a then v else es.getD a fallback
 
-@[specialize]
-def getWithCast [BEq α] (a : α) (cast : ∀ {b}, b == a → β b → β a) : (l : AssocList α β) → l.contains a → β a
-  | cons k v es, h => if hka : k == a then cast hka v else es.getWithCast a cast
-      (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
-
 def replace [BEq α] (a : α) (b : β a) : AssocList α β → AssocList α β
   | nil => nil
   | cons k v l => bif k == a then cons a b l else cons k v (replace a b l)
@@ -120,43 +97,6 @@ def replace [BEq α] (a : α) (b : β a) : AssocList α β → AssocList α β
 def remove [BEq α] (a : α) : AssocList α β → AssocList α β
   | nil => nil
   | cons k v l => bif k == a then l else cons k v (l.remove a)
-
-def insert [BEq α] (l : AssocList α β) (k : α) (v : β k) : AssocList α β :=
-  bif l.contains k then l.replace k v else l.cons k v
-
-@[specialize] def alterM [BEq α] [LawfulBEq α] {β : α → Type u} {m : Type u → Type u} [Monad m] (a : α)
-    (f : Option (β a) → m (Option (β a))) : AssocList α β → m (AssocList α β)
-  | nil => do match ← f none with
-    | none => return .nil
-    | some v => return .cons a v .nil
-  | cons k v t =>
-      if h : k == a then do
-        match ← f (some (cast (congrArg β (eq_of_beq h)) v)) with
-        | none => return t
-        | some v' => return .cons a v' t
-      else do return .cons k v (← alterM a f t)
-
-@[specialize] def alter [BEq α] [LawfulBEq α] (a : α) (f : Option (β a) → Option (β a)) :
-    AssocList α β → AssocList α β
-  | nil => match f none with
-    | none => .nil
-    | some v => .cons a v .nil
-  | cons k v t =>
-      if h : k == a then
-        match f (some (cast (congrArg β (eq_of_beq h)) v)) with
-        | none => t
-        | some v' => .cons a v' t
-      else .cons k v (alter a f t)
-
-@[specialize] def filterMapM [BEq α] {β : α → Type u} {γ : α → Type u} {m : Type u → Type u} [Monad m]
-    (f : (a : α) → β a → m (Option (γ a))) : AssocList α β → m (AssocList α γ) :=
-  go .nil
-where
-  @[specialize] go (acc : AssocList α γ) : AssocList α β → m (AssocList α γ)
-  | nil => return acc
-  | cons k v t => do match ← f k v with
-    | none => go acc t
-    | some v' => go (cons k v' acc) t
 
 @[specialize] def filterMap (f : (a : α) → β a → Option (γ a)) :
     AssocList α β → AssocList α γ :=
@@ -174,6 +114,13 @@ where
   @[specialize] go (acc : AssocList α γ) : AssocList α β → AssocList α γ
   | nil => acc
   | cons k v t => go (cons k (f k v) acc) t
+
+@[specialize] def filter (f : (a : α) → β a → Bool) : AssocList α β → AssocList α β :=
+  go .nil
+where
+  @[specialize] go (acc : AssocList α β) : AssocList α β → AssocList α β
+  | nil => acc
+  | cons k v t => bif f k v then go (cons k v acc) t else go acc t
 
 end AssocList
 

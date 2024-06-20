@@ -35,25 +35,12 @@ theorem length_eq {l : AssocList α β} : l.length = l.toList.length := by
     simp [ih, Nat.add_assoc, Nat.add_comm n 1]
 
 @[simp]
-theorem getEntry?_eq [BEq α] {l : AssocList α β} {a : α} : l.getEntry? a = l.toList.getEntry? a := by
-  induction l <;> simp_all [getEntry?, List.getEntry?]
-
-@[simp]
 theorem get?_eq {β : Type v} [BEq α] {l : AssocList α (fun _ => β)} {a : α} : l.get? a = l.toList.getValue? a := by
   induction l <;> simp_all [get?, List.getValue?]
 
 @[simp]
 theorem getCast?_eq [BEq α] [LawfulBEq α] {l : AssocList α β} {a : α} : l.getCast? a = l.toList.getValueCast? a := by
   induction l <;> simp_all [getCast?, List.getValueCast?]
-
-@[simp]
-theorem getWithCast?_eq [BEq α] {l : AssocList α β} {a : α} {cast : ∀ {b}, b == a → β b → β a} :
-    l.getWithCast? a cast = l.toList.getValueWithCast? a cast := by
-  induction l <;> simp_all [getWithCast?, List.getValueWithCast?]
-
-@[simp]
-theorem getKey?_eq [BEq α] {l : AssocList α β} {a : α} : l.getKey? a = l.toList.getKey? a := by
-  induction l <;> simp_all [getKey?, List.getKey?]
 
 @[simp]
 theorem contains_eq [BEq α] {l : AssocList α β} {a : α} : l.contains a = l.toList.containsKey a := by
@@ -120,11 +107,6 @@ theorem toList_remove [BEq α] {l : AssocList α β} {a : α} : (l.remove a).toL
   · simp [remove]
   · next k v t ih => cases h : k == a <;> simp_all [remove, List.removeKey_cons]
 
-@[simp]
-theorem toList_insert [BEq α] {l : AssocList α β} {k : α} {v : β k} :
-    (l.insert k v).toList = l.toList.insertEntry k v := by
-  simp [insert, List.insertEntry, apply_bif toList]
-
 open List
 
 theorem toList_filterMap {f : (a : α) → β a → Option (γ a)} {l : AssocList α β} :
@@ -157,8 +139,18 @@ theorem toList_map {f : (a : α) → β a → γ a} {l : AssocList α β} :
     refine (ih _).trans ?_
     simpa using perm_middle.symm
 
-theorem getEntry?_eq_some [BEq α] {l : AssocList α β} {a : α} {p : Σ a, β a}
-    (h : l.getEntry? a = some p) : p.1 == a :=
-  List.getEntry?_eq_some (getEntry?_eq (l := l) ▸ h)
+theorem toList_filter {f : (a : α) → β a → Bool} {l : AssocList α β} :
+    (l.filter f).toList ~ l.toList.filter fun p => f p.1 p.2 := by
+  rw [filter]
+  suffices ∀ l l', (filter.go f l l').toList ~ l.toList ++ l'.toList.filter fun p => f p.1 p.2 by
+    simpa using this .nil l
+  intros l l'
+  induction l' generalizing l
+  · simp [filter.go]
+  · next k v t ih =>
+    simp only [filter.go, toList_cons, filter_cons, cond_eq_if]
+    split
+    · exact (ih _).trans (by simpa using perm_middle.symm)
+    · exact ih _
 
 end MyLean.AssocList

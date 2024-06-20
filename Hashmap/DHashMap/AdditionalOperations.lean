@@ -3,7 +3,7 @@ Copyright (c) 2024 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
-import Hashmap.DHashMap.WF
+import Hashmap.DHashMap.Internal.WF
 
 /-!
 This file defines operations on `DHashMap` which cannot be defined in `Basic.lean` due to universe issues.

@@ -852,6 +852,9 @@ theorem DistinctKeys.congr [BEq α] [PartialEquivBEq α] {l l' : List (Σ a, β 
 theorem distinctKeys_of_sublist_keys [BEq α] {l : List (Σ a, β a)} {l' : List (Σ a, γ a)} (h : l'.keys <+ l.keys) : l.DistinctKeys → l'.DistinctKeys :=
   fun ⟨h'⟩ => ⟨h'.sublist h⟩
 
+theorem distinctKeys_of_sublist [BEq α] {l l' : List (Σ a, β a)} (h : l' <+ l) : l.DistinctKeys → l'.DistinctKeys :=
+  distinctKeys_of_sublist_keys (by simpa only [keys_eq_map] using h.map _)
+
 theorem DistinctKeys.of_keys_eq [BEq α] {l : List (Σ a, β a)} {l' : List (Σ a, γ a)} (h : l.keys = l'.keys) : l.DistinctKeys → l'.DistinctKeys :=
   distinctKeys_of_sublist_keys (h ▸ Sublist.refl _)
 
@@ -1328,6 +1331,10 @@ theorem DistinctKeys.filterMap [BEq α] [PartialEquivBEq α] {l : List (Σ a, β
 theorem DistinctKeys.map [BEq α] {l : List (Σ a, β a)} {f : (a : α) → β a → γ a}
     (h : l.DistinctKeys) : (l.map fun p => ⟨p.1, f p.1 p.2⟩).DistinctKeys :=
   h.of_keys_eq keys_map.symm
+
+theorem DistinctKeys.filter [BEq α] {l : List (Σ a, β a)} {f : (a : α) → β a → Bool}
+    (h : l.DistinctKeys) : (l.filter fun p => f p.1 p.2).DistinctKeys :=
+  distinctKeys_of_sublist (filter_sublist _) h
 
 section
 

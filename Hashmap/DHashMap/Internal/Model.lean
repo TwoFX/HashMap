@@ -232,9 +232,6 @@ def replaceₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : R
 def consₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   ⟨⟨m.1.size + 1, updateBucket m.1.buckets m.2 a (fun l => l.cons a b)⟩, by simpa using m.2⟩
 
-def getEntry?ₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (Σ a, β a) :=
-  (bucket m.1.buckets m.2 a).getEntry? a
-
 def get?ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Option (β a) :=
   (bucket m.1.buckets m.2 a).getCast? a
 
@@ -268,6 +265,9 @@ def filterMapₘ (m : Raw₀ α β) (f : (a : α) → β a → Option (δ a)) : 
 def mapₘ (m : Raw₀ α β) (f : (a : α) → β a → δ a) : Raw₀ α δ :=
   ⟨⟨m.1.size, updateAllBuckets m.1.buckets (AssocList.map f)⟩, by simpa using m.2⟩
 
+def filterₘ (m : Raw₀ α β) (f : (a : α) → β a → Bool) : Raw₀ α β :=
+  ⟨withComputedSize (updateAllBuckets m.1.buckets fun l => l.filter f), by simpa using m.2⟩
+
 section
 
 variable {β : Type v}
@@ -290,9 +290,6 @@ end
 
 theorem reinsertAux_eq [Hashable α] (data : { d : Array (AssocList α β) // 0 < d.size }) (a : α) (b : β a) :
     (reinsertAux hash data a b).1 = updateBucket data.1 data.2 a (fun l => l.cons a b) := rfl
-
-theorem getEntry?_eq_getEntry?ₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
-    getEntry? m a = getEntry?ₘ m a := rfl
 
 theorem get?_eq_get?ₘ [BEq α] [LawfulBEq α] [Hashable α] (m : Raw₀ α β) (a : α) :
     get? m a = get?ₘ m a := rfl
@@ -352,23 +349,6 @@ theorem getThenInsertIfNew?_eq_get?ₘ [BEq α] [Hashable α] [LawfulBEq α] (m 
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
   split <;> simp_all
 
-theorem insertIfNewThenGet_eq_insertIfNewₘ [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (f : Unit → β a) :
-    (m.insertIfNewThenGet a f).1 = m.insertIfNewₘ a (f ()) := by
-  rw [insertIfNewThenGet, insertIfNewₘ, containsₘ, bucket]
-  dsimp only [Array.ugetElem_eq_getElem, Array.uset]
-  split
-  · next x h =>
-    -- TODO: clean up
-    simp at h
-    rw [AssocList.contains_eq, List.containsKey_eq_isSome_getValueCast?, h, Option.isSome_none]
-    simp
-    rfl
-  · next x v h =>
-    -- TODO: clean up
-    simp at h
-    rw [AssocList.contains_eq, List.containsKey_eq_isSome_getValueCast?, h, Option.isSome_some]
-    simp
-
 theorem remove_eq_removeₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : m.remove a = m.removeₘ a := by
   rw [remove, removeₘ, containsₘ, bucket]
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
@@ -383,6 +363,9 @@ theorem filterMap_eq_filterMapₘ (m : Raw₀ α β) (f : (a : α) → β a → 
 
 theorem map_eq_mapₘ (m : Raw₀ α β) (f : (a : α) → β a → δ a) :
     m.map f = m.mapₘ f := rfl
+
+theorem filter_eq_filterₘ (m : Raw₀ α β) (f : (a : α) → β a → Bool) :
+    m.filter f = m.filterₘ f := rfl
 
 section
 
