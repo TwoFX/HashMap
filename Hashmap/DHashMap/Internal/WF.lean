@@ -420,12 +420,11 @@ theorem wfImp_insertIfNewₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashabl
   · apply wfImp_expandIfNecessary
     apply wfImp_consₘ _ h _ _ (by simp_all)
 
-/-! # `insertIfNewThenGet` -/
-
--- TODO: toListModel_insertIfNew
+/-! # `insertIfNew` -/
 
 theorem toListModel_insertIfNew [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β}
-    (h : m.1.WFImp) {a : α} {b : β a} : toListModel (m.insertIfNew a b).1.buckets ~ (toListModel m.1.buckets).insertEntryIfNew a b := by
+    (h : m.1.WFImp) {a : α} {b : β a} :
+    toListModel (m.insertIfNew a b).1.buckets ~ (toListModel m.1.buckets).insertEntryIfNew a b := by
   rw [insertIfNew_eq_insertIfNewₘ]
   exact toListModel_insertIfNewₘ h
 
