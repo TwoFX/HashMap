@@ -103,7 +103,7 @@ where
     let buckets' := buckets.uset i (AssocList.cons a b bkt) h
     (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, false)
 
-@[inline] def insertIfNew [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
+@[inline] def insertIfNew [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) : Raw₀ α β :=
   let ⟨⟨size, buckets⟩, hm⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
   let bkt := buckets[i]

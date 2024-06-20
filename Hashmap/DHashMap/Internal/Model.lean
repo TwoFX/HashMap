@@ -337,7 +337,7 @@ theorem containsThenInsert_eq_containsₘ [BEq α] [Hashable α] (m : Raw₀ α 
   dsimp only [Array.ugetElem_eq_getElem, Array.uset]
   split <;> simp_all
 
-theorem insertIfNew_eq_insertIfNewₘ [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (b : β a) :
+theorem insertIfNew_eq_insertIfNewₘ [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) (b : β a) :
     m.insertIfNew a b = m.insertIfNewₘ a b := rfl
 
 theorem getThenInsertIfNew?_eq_insertIfNewₘ [BEq α] [Hashable α] [LawfulBEq α] (m : Raw₀ α β) (a : α) (b : β a) :

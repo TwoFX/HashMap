@@ -422,13 +422,13 @@ theorem wfImp_insertIfNewₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashabl
 
 /-! # `insertIfNew` -/
 
-theorem toListModel_insertIfNew [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β}
+theorem toListModel_insertIfNew [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
     (h : m.1.WFImp) {a : α} {b : β a} :
     toListModel (m.insertIfNew a b).1.buckets ~ (toListModel m.1.buckets).insertEntryIfNew a b := by
   rw [insertIfNew_eq_insertIfNewₘ]
   exact toListModel_insertIfNewₘ h
 
-theorem wfImp_insertIfNew [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (h : m.1.WFImp) {a : α} {b : β a} :
+theorem wfImp_insertIfNew [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (h : m.1.WFImp) {a : α} {b : β a} :
     (m.insertIfNew a b).1.WFImp := by
   rw [insertIfNew_eq_insertIfNewₘ]
   exact wfImp_insertIfNewₘ h
@@ -569,6 +569,7 @@ alias containsThenInsert := Raw₀.wfImp_containsThenInsert
 alias remove := Raw₀.wfImp_remove
 alias filterMap := Raw₀.wfImp_filterMap
 alias map := Raw₀.wfImp_map
+alias insertIfNew := Raw₀.wfImp_insertIfNew
 alias insertIfNewThenGet := Raw₀.wfImp_insertIfNewThenGet
 
 end WFImp

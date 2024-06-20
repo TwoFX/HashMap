@@ -42,7 +42,7 @@ namespace Raw₀
 variable (m : Raw₀ α β) (h : m.1.WF)
 
 macro "wf_trivial" : tactic => `(tactic|
-  repeat (first | apply Raw.WFImp.insert | apply Raw.WFImp.remove | apply Raw.WF.out | assumption | apply wfImp_empty | apply Raw.WFImp.distinct))
+  repeat (first | apply Raw.WFImp.insert | apply Raw.WFImp.insertIfNew | apply Raw.WFImp.remove | apply Raw.WF.out | assumption | apply wfImp_empty | apply Raw.WFImp.distinct))
 
 macro "empty" : tactic => `(tactic| { intros; simp_all [List.isEmpty_iff] } )
 
@@ -121,7 +121,7 @@ theorem size_insert [EquivBEq α] [LawfulHashable α] (a : α) (b : β a) : (m.i
   simp_to_model using List.length_insertEntry
 
 theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] (a : α) (b : β a) : m.1.size ≤ (m.insert a b).1.size := by
-  simp_to_model using List.length_le_length_insert
+  simp_to_model using List.length_le_length_insertEntry
 
 @[simp]
 theorem remove_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).remove a = empty c := by
@@ -440,6 +440,67 @@ theorem getD_eq_getD [LawfulBEq α] {a : α} {fallback : β} :
 theorem getD_congr [EquivBEq α] [LawfulHashable α] {a b : α} {fallback : β} (hab : a == b) :
     getD m a fallback = getD m b fallback := by
   simp_to_model using List.getValueD_congr
+
+end Const
+
+theorem isEmpty_insertIfNew [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} :
+    (m.insertIfNew a b).1.isEmpty = false := by
+  simp_to_model using List.isEmpty_insertEntryIfNew
+
+theorem contains_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} :
+    (m.insertIfNew a b).contains k = (a == k || m.contains k) := by
+  simp_to_model using List.containsKey_insertEntryIfNew
+
+/-- This is a restatement of `contains_insertIfNew` that is written to exactly match the proof obligation in the statement of
+    `get_insertIfNew`. -/
+theorem contains_of_contains_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} :
+    (m.insertIfNew a b).contains k → ¬((a == k) ∧ m.contains a = false) → m.contains k := by
+  simp_to_model using List.containsKey_of_containsKey_insertEntryIfNew
+
+theorem size_insertIfNew [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} :
+    (m.insertIfNew a b).1.size = bif m.contains a then m.1.size else m.1.size + 1 := by
+  simp_to_model using List.length_insertEntryIfNew
+
+theorem size_le_size_insertIfNew [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} :
+    m.1.size ≤ (m.insertIfNew a b).1.size := by
+  simp_to_model using List.length_le_length_insertEntryIfNew
+
+theorem get?_insertIfNew [LawfulBEq α] {a k : α} {b : β a} :
+    (m.insertIfNew a b).get? k = if h : a == k ∧ m.contains a = false then some (cast (congrArg β (eq_of_beq h.1)) b) else m.get? k := by
+  simp_to_model using List.getValueCast?_insertEntryIfNew
+
+theorem get_insertIfNew [LawfulBEq α] {a k : α} {b : β a} {h₁} :
+    (m.insertIfNew a b).get k h₁ = if h₂ : a == k ∧ m.contains a = false then cast (congrArg β (eq_of_beq h₂.1)) b else m.get k
+      (contains_of_contains_insertIfNew _ h h₁ h₂) := by
+  simp_to_model using List.getValueCast_insertEntryIfNew
+
+theorem get!_insertIfNew [LawfulBEq α] {a k : α} [Inhabited (β k)] {b : β a} :
+    (m.insertIfNew a b).get! k = if h : a == k ∧ m.contains a = false then cast (congrArg β (eq_of_beq h.1)) b else m.get! k := by
+  simp_to_model using List.getValueCast!_insertEntryIfNew
+
+theorem getD_insertIfNew [LawfulBEq α] {a k : α} {fallback : β k} {b : β a} :
+    (m.insertIfNew a b).getD k fallback = if h : a == k ∧ m.contains a = false then cast (congrArg β (eq_of_beq h.1)) b else m.getD k fallback := by
+  simp_to_model using List.getValueCastD_insertEntryIfNew
+
+namespace Const
+
+variable {β : Type v} (m : DHashMap.Raw₀ α (fun _ => β)) (h : m.1.WF)
+
+theorem get?_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {b : β} :
+    get? (m.insertIfNew a b) k = bif a == k && !m.contains a then some b else get? m k := by
+  simp_to_model using List.getValue?_insertEntryIfNew
+
+theorem get_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {b : β} {h₁} :
+    get (m.insertIfNew a b) k h₁ = if h₂ : a == k ∧ m.contains a = false then b else get m k (contains_of_contains_insertIfNew _ h h₁ h₂) := by
+  simp_to_model using List.getValue_insertEntryIfNew
+
+theorem get!_insertIfNew [EquivBEq α] [LawfulHashable α] [Inhabited β] {a k : α} {b : β} :
+    get! (m.insertIfNew a b) k = bif a == k && !m.contains a then b else get! m k := by
+  simp_to_model using List.getValue!_insertEntryIfNew
+
+theorem getD_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {fallback b : β} :
+    getD (m.insertIfNew a b) k fallback = bif a == k && !m.contains a then b else getD m k fallback := by
+  simp_to_model using List.getValueD_insertEntryIfNew
 
 end Const
 
