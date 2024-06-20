@@ -504,6 +504,28 @@ theorem getD_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {fallback 
 
 end Const
 
+@[simp]
+theorem fst_getThenInsertIfNew? [LawfulBEq α] {a : α} {b : β a} : (m.getThenInsertIfNew? a b).1 = m.insertIfNew a b := by
+  rw [getThenInsertIfNew?_eq_insertIfNewₘ, insertIfNew_eq_insertIfNewₘ]
+
+@[simp]
+theorem snd_getThenInsertIfNew? [LawfulBEq α] {a : α} {b : β a} : (m.getThenInsertIfNew? a b).2 = m.get? a := by
+  rw [getThenInsertIfNew?_eq_get?ₘ, get?_eq_get?ₘ]
+
+namespace Const
+
+variable {β : Type v} (m : DHashMap.Raw₀ α (fun _ => β)) (h : m.1.WF)
+
+@[simp]
+theorem fst_getThenInsertIfNew? {a : α} {b : β} : (getThenInsertIfNew? m a b).1 = m.insertIfNew a b := by
+  rw [getThenInsertIfNew?_eq_insertIfNewₘ, insertIfNew_eq_insertIfNewₘ]
+
+@[simp]
+theorem snd_getThenInsertIfNew? {a : α} {b : β} : (getThenInsertIfNew? m a b).2 = get? m a := by
+  rw [getThenInsertIfNew?_eq_get?ₘ, get?_eq_get?ₘ]
+
+end Const
+
 end Raw₀
 
 end MyLean.DHashMap

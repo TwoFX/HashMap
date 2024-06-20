@@ -402,6 +402,18 @@ theorem Const.get!_eq_get!ₘ [BEq α] [Hashable α] [Inhabited β] (m : Raw₀ 
     Const.get! m a = Const.get!ₘ m a := by
   simp [get!, get!ₘ, get?ₘ, List.getValue!_eq_getValue?, bucket]
 
+theorem Const.getThenInsertIfNew?_eq_insertIfNewₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (b : β) :
+    (Const.getThenInsertIfNew? m a b).1 = m.insertIfNewₘ a b := by
+  rw [getThenInsertIfNew?, insertIfNewₘ, containsₘ, bucket]
+  dsimp only [Array.ugetElem_eq_getElem, Array.uset]
+  split <;> simp_all [consₘ, updateBucket, List.containsKey_eq_isSome_getValue?, -Option.not_isSome]
+
+theorem Const.getThenInsertIfNew?_eq_get?ₘ [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (b : β) :
+    (Const.getThenInsertIfNew? m a b).2 = Const.get?ₘ m a := by
+  rw [getThenInsertIfNew?, get?ₘ, bucket]
+  dsimp only [Array.ugetElem_eq_getElem, Array.uset]
+  split <;> simp_all [-getValue?_eq_none]
+
 end
 
 end Raw₀

@@ -244,7 +244,8 @@ variable {β : Type v}
   let idx := mkIdx buckets.size h (hash a)
   buckets[idx.1].get! a
 
-@[inline] def Const.getThenInsertIfNew [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (b : β) : Raw₀ α (fun _ => β) × Option β :=
+@[inline] def Const.getThenInsertIfNew? [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (a : α) (b : β) :
+    Raw₀ α (fun _ => β) × Option β :=
   let ⟨⟨size, buckets⟩, hm⟩ := m
   let ⟨i, h⟩ := mkIdx buckets.size hm (hash a)
   let bkt := buckets[i]
@@ -252,7 +253,7 @@ variable {β : Type v}
   | none =>
     let size'    := size + 1
     let buckets' := buckets.uset i (AssocList.cons a b bkt) h
-    (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, some b)
+    (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, none)
   | some v => (⟨⟨size, buckets⟩, hm⟩, some v)
 
 end
