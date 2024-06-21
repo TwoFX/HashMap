@@ -18,6 +18,18 @@ variable {α : Type u} {β : α → Type v} {γ : Type w} {δ : α → Type w}
 
 namespace MyLean.DHashMap
 
+namespace Raw
+
+theorem WF.filterMap [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a : α) → β a → Option (δ a)} :
+    (m.filterMap f).WF := by
+  simpa only [filterMap_eq h] using .wf (Raw₀.filterMap f ⟨m, h.size_buckets_pos⟩).2 (.filterMap h.out)
+
+theorem WF.map [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a : α) → β a → δ a} :
+    (m.map f).WF := by
+  simpa only [map_eq h] using .wf (Raw₀.map f ⟨m, h.size_buckets_pos⟩).2 (.map h.out)
+
+end Raw
+
 @[specialize, inline] def filterMap [BEq α] [Hashable α] (f : (a : α) → β a → Option (δ a)) (m : DHashMap α β) : DHashMap α δ :=
   ⟨Raw₀.filterMap f ⟨m.1, m.2.size_buckets_pos⟩, .wf (Raw₀.filterMap f ⟨m.1, m.2.size_buckets_pos⟩).2 m.2.out.filterMap⟩
 

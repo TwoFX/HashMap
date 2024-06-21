@@ -42,7 +42,7 @@ namespace Raw₀
 variable (m : Raw₀ α β) (h : m.1.WF)
 
 macro "wf_trivial" : tactic => `(tactic|
-  repeat (first | apply Raw.WFImp.insert | apply Raw.WFImp.insertIfNew | apply Raw.WFImp.remove | apply Raw.WF.out | assumption | apply wfImp_empty | apply Raw.WFImp.distinct))
+  repeat (first | apply Raw.WFImp.insert | apply Raw.WFImp.insertIfNew | apply Raw.WFImp.remove | apply Raw.WF.out | assumption | apply wfImp_empty | apply Raw.WFImp.distinct | apply Raw.WF.empty₀))
 
 macro "empty" : tactic => `(tactic| { intros; simp_all [List.isEmpty_iff] } )
 

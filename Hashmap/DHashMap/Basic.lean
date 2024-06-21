@@ -58,6 +58,9 @@ instance : EmptyCollection (Raw α β) where
 instance [BEq α] [Hashable α] : Membership α (Raw α β) where
   mem a m := m.contains a
 
+instance [BEq α] [Hashable α] {m : Raw α β} {a : α} : Decidable (a ∈ m) :=
+  show Decidable (m.contains a) from inferInstance
+
 theorem mem_iff_contains [BEq α] [Hashable α] {m : Raw α β} {a : α} : a ∈ m ↔ m.contains a := Iff.rfl
 
 @[inline] def get [BEq α] [Hashable α] [LawfulBEq α] (m : Raw α β) (a : α) (h : a ∈ m) : β a :=
@@ -280,6 +283,9 @@ or switch to a non-dependent `HashMap`.
 
 instance [BEq α] [Hashable α] : Membership α (DHashMap α β) where
   mem a m := m.contains a
+
+instance [BEq α] [Hashable α] {m : DHashMap α β} {a : α} : Decidable (a ∈ m) :=
+  show Decidable (m.contains a) from inferInstance
 
 @[inline] def get [BEq α] [Hashable α] [LawfulBEq α] (m : DHashMap α β) (a : α) (h : a ∈ m) : β a :=
   Raw₀.get ⟨m.1, m.2.size_buckets_pos⟩ a h
