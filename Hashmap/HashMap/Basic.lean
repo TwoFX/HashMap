@@ -88,6 +88,12 @@ instance [BEq α] [Hashable α] : GetElem (Raw α β) α β (fun m a => a ∈ m)
 @[inline] def toArray (m : Raw α β) : Array (α × β) :=
   DHashMap.Raw.Const.toArray m.inner
 
+@[inline] def keys (m : Raw α β) : List α :=
+  m.inner.keys
+
+@[inline] def keysArray (m : Raw α β) : Array α :=
+  m.inner.keysArray
+
 @[inline] def values (m : Raw α β) : List β :=
   m.inner.values
 
@@ -193,6 +199,12 @@ instance [BEq α] [Hashable α] : GetElem (HashMap α β) α β (fun m a => a �
 
 @[inline] def toArray (m : Raw α β) : Array (α × β) :=
   DHashMap.Raw.Const.toArray m.inner
+
+@[inline] def keys [BEq α] [Hashable α] (m : HashMap α β) : List α :=
+  m.inner.keys
+
+@[inline] def keysArray [BEq α] [Hashable α] (m : HashMap α β) : Array α :=
+  m.inner.keysArray
 
 @[inline] def values [BEq α] [Hashable α] (m : HashMap α β) : List β :=
   m.inner.values

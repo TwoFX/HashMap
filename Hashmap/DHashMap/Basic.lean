@@ -144,6 +144,12 @@ end
 @[inline] def Const.toArray {β : Type v} (m : Raw α (fun _ => β)) : Array (α × β) :=
   m.foldl (fun acc k v => acc.push ⟨k, v⟩) #[]
 
+@[inline] def keys (m : Raw α β) : List α :=
+  m.foldl (fun acc k _ => k :: acc) []
+
+@[inline] def keysArray (m : Raw α β) : Array α :=
+  m.foldl (fun acc k _ => acc.push k) #[]
+
 @[inline] def values {β : Type v} (m : Raw α (fun _ => β)) : List β :=
   m.foldl (fun acc _ v => v :: acc) []
 
@@ -338,6 +344,12 @@ end
 
 @[inline] def Const.toArray {β : Type v} [BEq α] [Hashable α] (m : DHashMap α (fun _ => β)) : Array (α × β) :=
   Raw.Const.toArray m.1
+
+@[inline] def keys [BEq α] [Hashable α] (m : DHashMap α β) : List α :=
+  m.1.keys
+
+@[inline] def keysArray [BEq α] [Hashable α] (m : DHashMap α β) : Array α :=
+  m.1.keysArray
 
 @[inline] def values {β : Type v} [BEq α] [Hashable α] (m : DHashMap α (fun _ => β)) : List β :=
   m.1.values

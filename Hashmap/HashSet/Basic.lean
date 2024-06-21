@@ -51,6 +51,12 @@ instance [BEq α] [Hashable α] : Membership α (Raw α) where
 @[inline] def foldl {β : Type v} (f : β → α → β) (init : β) (m : Raw α) : β :=
   m.inner.foldl (fun b a _ => f b a) init
 
+@[inline] def toList (m : Raw α) : List α :=
+  m.inner.keys
+
+@[inline] def toArray (m : Raw α) : Array α :=
+  m.inner.keysArray
+
 @[inline] def size (m : Raw α) : Nat :=
   m.inner.size
 
@@ -117,6 +123,12 @@ instance [BEq α] [Hashable α] : Membership α (HashSet α) where
 
 @[inline] def foldl [BEq α] [Hashable α] {β : Type v} (f : β → α → β) (init : β) (m : HashSet α) : β :=
   m.inner.foldl (fun b a _ => f b a) init
+
+@[inline] def toList [BEq α] [Hashable α] (m : HashSet α) : List α :=
+  m.inner.keys
+
+@[inline] def toArray [BEq α] [Hashable α] (m : HashSet α) : Array α :=
+  m.inner.keysArray
 
 @[inline] def size [BEq α] [Hashable α] (m : HashSet α) : Nat :=
   m.inner.size
