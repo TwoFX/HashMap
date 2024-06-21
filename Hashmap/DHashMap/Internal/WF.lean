@@ -644,12 +644,20 @@ theorem insertIfNew_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α
     m.insertIfNew a b = (Raw₀.insertIfNew ⟨m, h.size_buckets_pos⟩ a b).1 := by
   simp [insertIfNew, h.size_buckets_pos]
 
-theorem containsThenInsert_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
+theorem fst_containsThenInsert_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
     (m.containsThenInsert a b).1 = (Raw₀.containsThenInsert ⟨m, h.size_buckets_pos⟩ a b).1.1 := by
   simp [containsThenInsert, h.size_buckets_pos]
 
-theorem getThenInsertIfNew?_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
+theorem snd_containsThenInsert_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
+    (m.containsThenInsert a b).2 = (Raw₀.containsThenInsert ⟨m, h.size_buckets_pos⟩ a b).2 := by
+  simp [containsThenInsert, h.size_buckets_pos]
+
+theorem fst_getThenInsertIfNew?_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
     (m.getThenInsertIfNew? a b).1 = (Raw₀.getThenInsertIfNew? ⟨m, h.size_buckets_pos⟩ a b).1.1 := by
+  simp [getThenInsertIfNew?, h.size_buckets_pos]
+
+theorem snd_getThenInsertIfNew_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
+    (m.getThenInsertIfNew? a b).2 = (Raw₀.getThenInsertIfNew? ⟨m, h.size_buckets_pos⟩ a b).2 := by
   simp [getThenInsertIfNew?, h.size_buckets_pos]
 
 theorem get?_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} (h : m.WF) {a : α} :
@@ -660,12 +668,20 @@ theorem contains_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} :
     m.contains a = Raw₀.contains ⟨m, h.size_buckets_pos⟩ a := by
   simp [contains, h.size_buckets_pos]
 
-theorem get_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} {a : α} {h : m.contains a} :
-    m.get a h = Raw₀.get ⟨m, by rw [contains] at h; split at h <;> simp_all⟩ a (by rw [contains] at h; split at h <;> simp_all) := rfl
+theorem get_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} {a : α} {h : a ∈ m} :
+    m.get a h = Raw₀.get ⟨m, by rw [mem_iff_contains, contains] at h; split at h <;> simp_all⟩ a (by rw [mem_iff_contains, contains] at h; split at h <;> simp_all) := rfl
 
 theorem getD_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} (h : m.WF) {a : α} {fallback : β a} :
     m.getD a fallback = Raw₀.getD ⟨m, h.size_buckets_pos⟩ a fallback := by
   simp [getD, h.size_buckets_pos]
+
+theorem get!_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} (h : m.WF) {a : α} [Inhabited (β a)] :
+    m.get! a = Raw₀.get! ⟨m, h.size_buckets_pos⟩ a := by
+  simp [get!, h.size_buckets_pos]
+
+theorem remove_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} :
+    m.remove a = Raw₀.remove ⟨m, h.size_buckets_pos⟩ a := by
+  simp [remove, h.size_buckets_pos]
 
 theorem filterMap_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a : α) → β a → Option (δ a)} :
     m.filterMap f = Raw₀.filterMap f ⟨m, h.size_buckets_pos⟩ := by
@@ -674,6 +690,10 @@ theorem filterMap_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a :
 theorem map_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a : α) → β a → δ a} :
     m.map f = Raw₀.map f ⟨m, h.size_buckets_pos⟩ := by
   simp [map, h.size_buckets_pos]
+
+theorem filter_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a : α) → β a → Bool} :
+    m.filter f = Raw₀.filter f ⟨m, h.size_buckets_pos⟩ := by
+  simp [filter, h.size_buckets_pos]
 
 theorem WF.filterMap [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a : α) → β a → Option (δ a)} :
     (m.filterMap f).WF := by
@@ -690,6 +710,26 @@ variable {β : Type v}
 theorem Const.get?_eq [BEq α] [Hashable α] {m : Raw α (fun _ => β)} (h : m.WF) {a : α} :
     Const.get? m a = Raw₀.Const.get? ⟨m, h.size_buckets_pos⟩ a := by
   simp [Const.get?, h.size_buckets_pos]
+
+theorem Const.get_eq [BEq α] [Hashable α] {m : Raw α (fun _ => β)} {a : α} {h : a ∈ m} :
+    Const.get m a h = Raw₀.Const.get ⟨m, by rw [mem_iff_contains, contains] at h; split at h <;> simp_all⟩ a (by rw [mem_iff_contains, contains] at h; split at h <;> simp_all) :=
+  rfl
+
+theorem Const.getD_eq [BEq α] [Hashable α] {m : Raw α (fun _ => β)} (h : m.WF) {a : α} {fallback : β} :
+    Const.getD m a fallback = Raw₀.Const.getD ⟨m, h.size_buckets_pos⟩ a fallback := by
+  simp [Const.getD, h.size_buckets_pos]
+
+theorem Const.get!_eq [BEq α] [Hashable α] [Inhabited β] {m : Raw α (fun _ => β)} (h : m.WF) {a : α} :
+    Const.get! m a = Raw₀.Const.get! ⟨m, h.size_buckets_pos⟩ a := by
+  simp [Const.get!, h.size_buckets_pos]
+
+theorem Const.fst_getThenInsertIfNew?_eq [BEq α] [Hashable α] {m : Raw α (fun _ => β)} (h : m.WF) {a : α} {b : β} :
+    (Const.getThenInsertIfNew? m a b).1 = (Raw₀.Const.getThenInsertIfNew? ⟨m, h.size_buckets_pos⟩ a b).1.1 := by
+  simp [Const.getThenInsertIfNew?, h.size_buckets_pos]
+
+theorem Const.snd_getThenInsertIfNew?_eq [BEq α] [Hashable α] {m : Raw α (fun _ => β)} (h : m.WF) {a : α} {b : β} :
+    (Const.getThenInsertIfNew? m a b).2 = (Raw₀.Const.getThenInsertIfNew? ⟨m, h.size_buckets_pos⟩ a b).2 := by
+  simp [Const.getThenInsertIfNew?, h.size_buckets_pos]
 
 end
 

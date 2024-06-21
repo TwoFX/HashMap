@@ -55,8 +55,13 @@ instance : EmptyCollection (Raw α β) where
     Raw₀.contains ⟨m, h⟩ a
   else false -- will never happen for well-formed inputs
 
-@[inline] def get [BEq α] [Hashable α] [LawfulBEq α] (m : Raw α β) (a : α) (h : m.contains a) : β a :=
-  Raw₀.get ⟨m, by rw [contains] at h; split at h <;> simp_all⟩ a (by rw [contains] at h; split at h <;> simp_all)
+instance [BEq α] [Hashable α] : Membership α (Raw α β) where
+  mem a m := m.contains a
+
+theorem mem_iff_contains [BEq α] [Hashable α] {m : Raw α β} {a : α} : a ∈ m ↔ m.contains a := Iff.rfl
+
+@[inline] def get [BEq α] [Hashable α] [LawfulBEq α] (m : Raw α β) (a : α) (h : a ∈ m) : β a :=
+  Raw₀.get ⟨m, by rw [mem_iff_contains, contains] at h; split at h <;> simp_all⟩ a (by rw [mem_iff_contains, contains] at h; split at h <;> simp_all)
 
 @[inline] def getD [BEq α] [Hashable α] [LawfulBEq α] (m : Raw α β) (a : α) (fallback : β a) : β a :=
   if h : 0 < m.buckets.size then
@@ -97,8 +102,8 @@ variable {β : Type v}
     Raw₀.Const.get? ⟨m, h⟩ a
   else none -- will never happen for well-formed inputs
 
-@[inline] def Const.get [BEq α] [Hashable α] (m : Raw α (fun _ => β)) (a : α) (h : m.contains a) : β :=
-  Raw₀.Const.get ⟨m, by rw [contains] at h; split at h <;> simp_all⟩ a (by rw [contains] at h; split at h <;> simp_all)
+@[inline] def Const.get [BEq α] [Hashable α] (m : Raw α (fun _ => β)) (a : α) (h : a ∈ m) : β :=
+  Raw₀.Const.get ⟨m, by rw [mem_iff_contains, contains] at h; split at h <;> simp_all⟩ a (by rw [mem_iff_contains, contains] at h; split at h <;> simp_all)
 
 @[inline] def Const.getD [BEq α] [Hashable α] (m : Raw α (fun _ => β)) (a : α) (fallback : β) : β :=
   if h : 0 < m.buckets.size then
@@ -267,7 +272,10 @@ or switch to a non-dependent `HashMap`.
 @[inline] def contains [BEq α] [Hashable α] (m : DHashMap α β) (a : α) : Bool :=
   Raw₀.contains ⟨m.1, m.2.size_buckets_pos⟩ a
 
-@[inline] def get [BEq α] [Hashable α] [LawfulBEq α] (m : DHashMap α β) (a : α) (h : m.contains a) : β a :=
+instance [BEq α] [Hashable α] : Membership α (DHashMap α β) where
+  mem a m := m.contains a
+
+@[inline] def get [BEq α] [Hashable α] [LawfulBEq α] (m : DHashMap α β) (a : α) (h : a ∈ m) : β a :=
   Raw₀.get ⟨m.1, m.2.size_buckets_pos⟩ a h
 
 @[inline] def get! [BEq α] [Hashable α] [LawfulBEq α] (m : DHashMap α β) (a : α) [Inhabited (β a)] : β a :=
@@ -294,6 +302,15 @@ Retrieves the value associated with the given key, if it exists. -/
 @[inline] def Const.get? [BEq α] [Hashable α] (m : DHashMap α (fun _ => β)) (a : α) : Option β :=
   Raw₀.Const.get? ⟨m.1, m.2.size_buckets_pos⟩ a
 
+@[inline] def Const.get [BEq α] [Hashable α] (m : DHashMap α (fun _ => β)) (a : α) (h : a ∈ m) : β :=
+  Raw₀.Const.get ⟨m.1, m.2.size_buckets_pos⟩ a h
+
+@[inline] def Const.getD [BEq α] [Hashable α] (m : DHashMap α (fun _ => β)) (a : α) (fallback : β) : β :=
+  Raw₀.Const.getD ⟨m.1, m.2.size_buckets_pos⟩ a fallback
+
+@[inline] def Const.get! [BEq α] [Hashable α] [Inhabited β] (m : DHashMap α (fun _ => β)) (a : α) : β :=
+  Raw₀.Const.get! ⟨m.1, m.2.size_buckets_pos⟩ a
+
 @[inline] def Const.getThenInsertIfNew? [BEq α] [Hashable α] (m : DHashMap α (fun _ => β)) (a : α) (b : β) :
     DHashMap α (fun _ => β) × Option β :=
   let m' := Raw₀.Const.getThenInsertIfNew? ⟨m.1, m.2.size_buckets_pos⟩ a b
@@ -303,6 +320,12 @@ end
 
 @[inline] def size [BEq α] [Hashable α] (m : DHashMap α β) : Nat :=
   m.1.size
+
+@[inline] def foldlM [BEq α] [Hashable α] (f : δ → (a : α) → β a → m δ) (init : δ) (b : DHashMap α β) : m δ :=
+  b.1.foldlM f init
+
+@[inline] def foldl [BEq α] [Hashable α] (f : δ → (a : α) → β a → δ) (init : δ) (b : DHashMap α β) : δ :=
+  b.1.foldl f init
 
 @[inline] def toList [BEq α] [Hashable α] (m : DHashMap α β) : List (Σ a, β a) :=
   m.1.toList

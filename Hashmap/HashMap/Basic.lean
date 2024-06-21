@@ -47,6 +47,23 @@ instance : EmptyCollection (Raw α β) where
 @[inline] def contains [BEq α] [Hashable α] (m : Raw α β) (a : α) : Bool :=
   m.inner.contains a
 
+instance [BEq α] [Hashable α] : Membership α (Raw α β) where
+  mem a m := m.contains a
+
+@[inline] def get [BEq α] [Hashable α] (m : Raw α β) (a : α) (h : a ∈ m) : β :=
+  DHashMap.Raw.Const.get m.inner a h
+
+@[inline] def getD [BEq α] [Hashable α] (m : Raw α β) (a : α) (fallback : β) : β :=
+  DHashMap.Raw.Const.getD m.inner a fallback
+
+@[inline] def get! [BEq α] [Hashable α] [Inhabited β] (m : Raw α β) (a : α) : β :=
+  DHashMap.Raw.Const.get! m.inner a
+
+instance [BEq α] [Hashable α] : GetElem (Raw α β) α β (fun m a => a ∈ m) where
+  getElem m a h := m.get a h
+  getElem? m a := m.get? a
+  getElem! m a := m.get! a
+
 @[inline] def remove [BEq α] [Hashable α] (m : Raw α β) (a : α) : Raw α β :=
   ⟨m.inner.remove a⟩
 
@@ -125,15 +142,57 @@ instance [BEq α] [Hashable α] : EmptyCollection (HashMap α β) where
 @[inline] def insert [BEq α] [Hashable α] (m : HashMap α β) (a : α) (b : β) : HashMap α β :=
   ⟨m.inner.insert a b⟩
 
+@[inline] def insertIfNew [BEq α] [Hashable α] (m : HashMap α β) (a : α) (b : β) : HashMap α β :=
+  ⟨m.inner.insertIfNew a b⟩
+
 @[inline] def containsThenInsert [BEq α] [Hashable α] (m : HashMap α β) (a : α) (b : β) : HashMap α β × Bool :=
   let ⟨r, replaced⟩ := m.inner.containsThenInsert a b
   ⟨⟨r⟩, replaced⟩
+
+@[inline] def getThenInsertIfNew? [BEq α] [Hashable α] (m : HashMap α β) (a : α) (b : β) : HashMap α β × Option β :=
+  let ⟨r, previous⟩ := DHashMap.Const.getThenInsertIfNew? m.inner a b
+  ⟨⟨r⟩, previous⟩
 
 @[inline] def get? [BEq α] [Hashable α] (m : HashMap α β) (a : α) : Option β :=
   DHashMap.Const.get? m.inner a
 
 @[inline] def contains [BEq α] [Hashable α] (m : HashMap α β) (a : α) : Bool :=
   m.inner.contains a
+
+instance [BEq α] [Hashable α] : Membership α (HashMap α β) where
+  mem a m := m.contains a
+
+@[inline] def get [BEq α] [Hashable α] (m : HashMap α β) (a : α) (h : a ∈ m) : β :=
+  DHashMap.Const.get m.inner a h
+
+@[inline] def getD [BEq α] [Hashable α] (m : HashMap α β) (a : α) (fallback : β) : β :=
+  DHashMap.Const.getD m.inner a fallback
+
+@[inline] def get! [BEq α] [Hashable α] [Inhabited β] (m : HashMap α β) (a : α) : β :=
+  DHashMap.Const.get! m.inner a
+
+instance [BEq α] [Hashable α] : GetElem (HashMap α β) α β (fun m a => a ∈ m) where
+  getElem m a h := m.get a h
+  getElem? m a := m.get? a
+  getElem! m a := m.get! a
+
+@[inline] def remove [BEq α] [Hashable α] (m : HashMap α β) (a : α) : HashMap α β :=
+  ⟨m.inner.remove a⟩
+
+@[inline] def filter [BEq α] [Hashable α] (f : α → β → Bool) (m : HashMap α β) : HashMap α β :=
+  ⟨m.inner.filter f⟩
+
+@[inline] def foldlM [BEq α] [Hashable α] {m : Type w → Type w} [Monad m] {γ : Type w} (f : γ → α → β → m γ) (init : γ) (b : HashMap α β) : m γ :=
+  b.inner.foldlM f init
+
+@[inline] def foldl [BEq α] [Hashable α] {γ : Type w} (f : γ → α → β → γ) (init : γ) (b : HashMap α β) : γ :=
+  b.inner.foldl f init
+
+@[inline] def toList (m : Raw α β) : List (α × β) :=
+  DHashMap.Raw.Const.toList m.inner
+
+@[inline] def toArray (m : Raw α β) : Array (α × β) :=
+  DHashMap.Raw.Const.toArray m.inner
 
 @[inline] def values [BEq α] [Hashable α] (m : HashMap α β) : List β :=
   m.inner.values
