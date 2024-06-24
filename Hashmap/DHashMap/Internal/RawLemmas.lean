@@ -101,7 +101,7 @@ theorem isEmpty_eq_false_iff_exists_contains_eq_true [EquivBEq α] [LawfulHashab
   simp only [contains_eq_containsKey h.out]
   simp_to_model using List.isEmpty_eq_false_iff_exists_containsKey
 
-theorem contains_insert [EquivBEq α] [LawfulHashable α] (a k : α) (b : β a) : (m.insert a b).contains k = ((a == k) || m.contains k) := by
+theorem contains_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} : (m.insert a b).contains k = ((a == k) || m.contains k) := by
   simp_to_model using List.containsKey_insertEntry
 
 theorem contains_of_contains_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} :
@@ -117,10 +117,10 @@ theorem size_empty {c} : (empty c : Raw₀ α β).1.size = 0 := rfl
 theorem isEmpty_eq_size_eq_zero : m.1.isEmpty = (m.1.size == 0) := by
   simp [Raw.isEmpty]
 
-theorem size_insert [EquivBEq α] [LawfulHashable α] (a : α) (b : β a) : (m.insert a b).1.size = bif m.contains a then m.1.size else m.1.size + 1 := by
+theorem size_insert [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} : (m.insert a b).1.size = bif m.contains a then m.1.size else m.1.size + 1 := by
   simp_to_model using List.length_insertEntry
 
-theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] (a : α) (b : β a) : m.1.size ≤ (m.insert a b).1.size := by
+theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} : m.1.size ≤ (m.insert a b).1.size := by
   simp_to_model using List.length_le_length_insertEntry
 
 @[simp]
