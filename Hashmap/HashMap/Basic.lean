@@ -48,7 +48,10 @@ instance : EmptyCollection (Raw α β) where
   m.inner.contains a
 
 instance [BEq α] [Hashable α] : Membership α (Raw α β) where
-  mem a m := m.contains a
+  mem a m := a ∈ m.inner
+
+instance [BEq α] [Hashable α] {m : Raw α β} {a : α} : Decidable (a ∈ m) :=
+  inferInstanceAs (Decidable (a ∈ m.inner))
 
 @[inline] def get [BEq α] [Hashable α] (m : Raw α β) (a : α) (h : a ∈ m) : β :=
   DHashMap.Raw.Const.get m.inner a h
@@ -166,7 +169,10 @@ instance [BEq α] [Hashable α] : EmptyCollection (HashMap α β) where
   m.inner.contains a
 
 instance [BEq α] [Hashable α] : Membership α (HashMap α β) where
-  mem a m := m.contains a
+  mem a m := a ∈ m.inner
+
+instance [BEq α] [Hashable α] {m : HashMap α β} {a : α} : Decidable (a ∈ m) :=
+  inferInstanceAs (Decidable (a ∈ m.inner))
 
 @[inline] def get [BEq α] [Hashable α] (m : HashMap α β) (a : α) (h : a ∈ m) : β :=
   DHashMap.Const.get m.inner a h

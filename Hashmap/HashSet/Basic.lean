@@ -37,7 +37,10 @@ instance : EmptyCollection (Raw α) where
   m.inner.contains a
 
 instance [BEq α] [Hashable α] : Membership α (Raw α) where
-  mem a m := m.contains a
+  mem a m := a ∈ m.inner
+
+instance [BEq α] [Hashable α] {m : Raw α} {a : α} : Decidable (a ∈ m) :=
+  inferInstanceAs (Decidable (a ∈ m.inner))
 
 @[inline] def remove [BEq α] [Hashable α] (m : Raw α) (a : α) : Raw α :=
   ⟨m.inner.remove a⟩
@@ -110,7 +113,10 @@ instance [BEq α] [Hashable α] : EmptyCollection (HashSet α) where
   m.inner.contains a
 
 instance [BEq α] [Hashable α] : Membership α (HashSet α) where
-  mem a m := m.contains a
+  mem a m := a ∈ m.inner
+
+instance [BEq α] [Hashable α] {m : HashSet α} {a : α} : Decidable (a ∈ m) :=
+  inferInstanceAs (Decidable (a ∈ m.inner))
 
 @[inline] def remove [BEq α] [Hashable α] (m : HashSet α) (a : α) : HashSet α :=
   ⟨m.inner.remove a⟩
