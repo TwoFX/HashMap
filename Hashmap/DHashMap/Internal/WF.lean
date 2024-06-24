@@ -25,7 +25,7 @@ namespace MyLean.DHashMap
 theorem toListModel_mkArray_nil {c} : toListModel (mkArray c (AssocList.nil : AssocList α β)) = [] := by
   suffices ∀ d, (List.replicate d AssocList.nil).bind AssocList.toList = [] from this _
   intro d
-  induction d <;> simp_all
+  induction d <;> simp_all [List.replicate]
 
 @[simp]
 theorem computeSize_eq {buckets : Array (AssocList α β)} : computeSize buckets = (toListModel buckets).length := by
@@ -188,8 +188,8 @@ theorem toListModel_expand [BEq α] [Hashable α] [PartialEquivBEq α] {buckets 
         rw [expand.go_pos hi]
         refine ih.trans ?_
         rw [Array.size_eq_length_data] at hi
-        rw [List.drop_eq_get_cons hi, List.cons_bind, Array.data_set, List.drop_set_of_lt _ _ (Nat.lt_succ_self i),
-          Array.get_eq_getElem, Array.getElem_eq_data_get]
+        rw [List.drop_eq_getElem_cons hi, List.bind_cons, Array.data_set, List.drop_set_of_lt _ _ (Nat.lt_succ_self i),
+          Array.get_eq_getElem, Array.getElem_eq_data_getElem]
         refine ((toListModel_foldl_reinsertAux _ _).append_left _).trans ?_
         simp only [Nat.succ_eq_add_one, Array.data_length, append_assoc]
         exact perm_append_comm_assoc _ _ _

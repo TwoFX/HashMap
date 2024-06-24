@@ -20,20 +20,13 @@ theorem Nat.toNat_toUSize {a : Nat} (h : a < USize.size) : a.toUSize.toNat = a :
 theorem USize.ext : {a b : USize} → a.toNat = b.toNat → a = b
 | ⟨⟨_, _⟩⟩, ⟨⟨_, _⟩⟩, rfl => rfl
 
+theorem USize.ext_small : {a b : USize} → a.val = b.val → a = b
+| ⟨_⟩, ⟨_⟩, rfl => rfl
+
 -- Is this not just Fin.coe_sub_iff_le?
-theorem USize.toNat_sub_le {a b : Nat} (h : b ≤ a) : a.toUSize - b.toUSize = (a - b).toUSize := by
-  apply USize.ext
-  change _ % _ = ((a - b) % _)
-  obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_le h
-  rw [Nat.mod_add_mod]
-  rw [← Nat.add_sub_assoc (Nat.le_of_lt (Nat.mod_lt _ _)), Nat.add_assoc, Nat.add_comm b, Nat.add_sub_assoc, Nat.add_mod]
-  · have : (b - b % size) % size = 0 := by
-      rw (config := {occs := .pos [1]}) [← Nat.div_add_mod b size]
-      rw [Nat.add_sub_cancel]
-      simp only [Nat.mul_mod_right]
-    rw [this, Nat.add_zero, Nat.mod_mod, Nat.add_mod_right, Nat.add_comm, Nat.add_sub_cancel]
-  · exact Nat.mod_le _ _
-  · exact Nat.succ_pos _
+theorem USize.toNat_sub_le {a b : USize} (h : b ≤ a) : (a - b).toNat = a.toNat - b.toNat := by
+  erw [Fin.coe_sub_iff_le]
+  exact h
 
 theorem Nat.toUSize_one : (1 : Nat).toUSize = 1 := rfl
 
@@ -143,9 +136,20 @@ def MyLean.DHashMap.Raw₀.erase._rarg (x_1 : obj) (x_2 : obj) (x_3 : obj) (x_4 
     by_cases h' : sz < USize.size
     · rw [USize.toNat_and, ← Nat.toUSize_one, USize.toNat_sub_le, Nat.toNat_toUSize]
       · refine Nat.lt_of_le_of_lt and_le_right ?_
-        exact Nat.sub_lt h Nat.one_pos
-      · exact Nat.lt_of_le_of_lt (Nat.sub_le _ _) h'
-      · exact h
+        refine Nat.sub_lt h ?_
+        rw [Nat.toNat_toUSize]
+        · exact Nat.one_pos
+        · exact Nat.lt_of_le_of_lt h h'
+      · exact h'
+      · rw [USize.le_def]
+        rw [Fin.le_def]
+        change _ ≤ (_ % _)
+        rw [Nat.mod_eq_of_lt h']
+        rw [Nat.toUSize, USize.ofNat]
+        simp
+        rw [Nat.mod_eq_of_lt]
+        · exact h
+        · exact Nat.lt_of_le_of_lt h h'
     · exact Nat.lt_of_lt_of_le USize.toNat_lt' (Nat.le_of_not_lt h')⟩
 
 namespace List

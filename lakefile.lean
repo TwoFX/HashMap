@@ -11,14 +11,12 @@ lean_lib «Hashmap» where
 lean_exe «hashmap» where
   root := `Main
 
-@[default_target]
 lean_exe «insert» where
   root := `Hashmap.Benchmark.Insert
 
 lean_exe «insert_replace» where
   root := `Hashmap.Benchmark.InsertReplace
 
-@[default_target]
 lean_exe «empty» where
   root := `Hashmap.Benchmark.Empty
 

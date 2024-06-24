@@ -800,11 +800,8 @@ theorem length_removeKey [BEq α] {l : List (Σ a, β a)} {k : α} :
     · simp
 
 theorem length_removeKey_le [BEq α] {l : List (Σ a, β a)} {k : α} :
-    (l.removeKey k).length ≤ l.length := by
-  rw [length_removeKey]
-  cases l.containsKey k
-  · simp
-  · simpa using Nat.sub_le ..
+    (l.removeKey k).length ≤ l.length :=
+  sublist_removeKey.length_le
 
 theorem isEmpty_removeKey [BEq α] {l : List (Σ a, β a)} {k : α} :
     (l.removeKey k).isEmpty = (l.isEmpty || (l.length == 1 && l.containsKey k)) := by

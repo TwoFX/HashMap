@@ -12,7 +12,7 @@ theorem List.bind_eq_foldl (f : α → List β) (l : List α) :
       induction l generalizing l'
       · simp
       · next h t ih =>
-        rw [List.cons_bind, ← List.append_assoc, ih, List.foldl_cons]
+        rw [List.bind_cons, ← List.append_assoc, ih, List.foldl_cons]
 
 
 section
