@@ -162,6 +162,12 @@ theorem getElem?_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {b : β}
 theorem contains_eq_isSome_getElem? [EquivBEq α] [LawfulHashable α] {a : α} : m.contains a = m[a]?.isSome :=
   DHashMap.Raw.Const.contains_eq_isSome_get? h.out
 
+theorem getElem?_eq_none_of_contains_eq_false [EquivBEq α] [LawfulHashable α] {a : α} : m.contains a = false → m[a]? = none :=
+  DHashMap.Raw.Const.get?_eq_none_of_contains_eq_false h.out
+
+theorem getElem?_eq_none [EquivBEq α] [LawfulHashable α] {a : α} : ¬a ∈ m → m[a]? = none :=
+  DHashMap.Raw.Const.get?_eq_none h.out
+
 theorem getElem?_remove [EquivBEq α] [LawfulHashable α] {a k : α} :
     (m.remove a)[k]? = bif a == k then none else m[k]? :=
   DHashMap.Raw.Const.get?_remove h.out
@@ -519,6 +525,13 @@ theorem getElem?_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {b : β}
 theorem contains_eq_isSome_getElem? [EquivBEq α] [LawfulHashable α] {a : α} : m.contains a = m[a]?.isSome :=
   DHashMap.Const.contains_eq_isSome_get?
 
+theorem getElem?_eq_none_of_contains_eq_false [EquivBEq α] [LawfulHashable α] {a : α} :
+    m.contains a = false → m[a]? = none :=
+  DHashMap.Const.get?_eq_none_of_contains_eq_false
+
+theorem getElem?_eq_none [EquivBEq α] [LawfulHashable α] {a : α} : ¬a ∈ m → m[a]? = none :=
+  DHashMap.Const.get?_eq_none
+
 theorem getElem?_remove [EquivBEq α] [LawfulHashable α] {a k : α} :
     (m.remove a)[k]? = bif a == k then none else m[k]? :=
   DHashMap.Const.get?_remove
@@ -550,59 +563,59 @@ theorem getElem_congr [LawfulBEq α] {a b : α} (hab : a == b) {h'} : m[a]'h' = 
   DHashMap.Const.get_congr hab (h' := h')
 
 @[simp]
-theorem getElem!_empty [Inhabited β] {a : α} {c} : (empty c : HashMap α β)[a]! = default :=
+theorem getElem!_empty [Inhabited β] {a : α} {c} [Decidable (a ∈ (empty c : HashMap α β))] : (empty c : HashMap α β)[a]! = default :=
   DHashMap.Const.get!_empty
 
 @[simp]
-theorem getElem!_emptyc [Inhabited β] {a : α} : (∅ : HashMap α β)[a]! = default :=
+theorem getElem!_emptyc [Inhabited β] {a : α} [Decidable (a ∈ (∅ : HashMap α β))] : (∅ : HashMap α β)[a]! = default :=
   DHashMap.Const.get!_emptyc
 
-theorem getElem!_of_isEmpty [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} : m.isEmpty = true → m[a]! = default :=
+theorem getElem!_of_isEmpty [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} [Decidable (a ∈ m)] : m.isEmpty = true → m[a]! = default :=
   DHashMap.Const.get!_of_isEmpty
 
-theorem getElem!_insert [EquivBEq α] [LawfulHashable α] [Inhabited β] {a k : α} {b : β} :
+theorem getElem!_insert [EquivBEq α] [LawfulHashable α] [Inhabited β] {a k : α} {b : β} [Decidable (k ∈ m.insert a b)] [Decidable (k ∈ m)] :
     (m.insert a b)[k]! = bif a == k then b else m[k]! :=
   DHashMap.Const.get!_insert
 
 @[simp]
-theorem getElem!_insert_self [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} {b : β} :
+theorem getElem!_insert_self [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} {b : β} [Decidable (a ∈ m.insert a b)] :
     (m.insert a b)[a]! = b :=
   DHashMap.Const.get!_insert_self
 
-theorem getElem!_eq_default_of_contains_eq_false [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} :
+theorem getElem!_eq_default_of_contains_eq_false [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} [Decidable (a ∈ m)] :
     m.contains a = false → m[a]! = default :=
   DHashMap.Const.get!_eq_default_of_contains_eq_false
 
-theorem getElem!_eq_default [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} :
+theorem getElem!_eq_default [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} [Decidable (a ∈ m)] :
     ¬a ∈ m → m[a]! = default :=
   DHashMap.Const.get!_eq_default
 
-theorem getElem!_remove [EquivBEq α] [LawfulHashable α] [Inhabited β] {a k : α} :
+theorem getElem!_remove [EquivBEq α] [LawfulHashable α] [Inhabited β] {a k : α} [Decidable (k ∈ m.remove a)] [Decidable (k ∈ m)] :
     (m.remove a)[k]! = bif a == k then default else m[k]! :=
   DHashMap.Const.get!_remove
 
 @[simp]
-theorem getElem!_remove_self [EquivBEq α] [LawfulHashable α] [Inhabited β] {k : α} :
+theorem getElem!_remove_self [EquivBEq α] [LawfulHashable α] [Inhabited β] {k : α} [Decidable (k ∈ m.remove k)] :
     (m.remove k)[k]! = default :=
   DHashMap.Const.get!_remove_self
 
-theorem getElem?_eq_some_getElem!_of_contains [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} :
+theorem getElem?_eq_some_getElem!_of_contains [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} [Decidable (a ∈ m)] :
     m.contains a = true → m[a]? = some m[a]! :=
   DHashMap.Const.get?_eq_some_get!_of_contains
 
-theorem getElem?_eq_some_getElem! [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} :
+theorem getElem?_eq_some_getElem! [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} [Decidable (a ∈ m)] :
     a ∈ m → m[a]? = some m[a]! :=
   DHashMap.Const.get?_eq_some_get!
 
-theorem getElem!_eq_get!_getElem? [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} :
+theorem getElem!_eq_get!_getElem? [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} [Decidable (a ∈ m)] :
     m[a]! = m[a]?.get! :=
   DHashMap.Const.get!_eq_get!_get?
 
-theorem getElem_eq_getElem! [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} {h'} :
+theorem getElem_eq_getElem! [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} {h'} [Decidable (a ∈ m)] :
     m[a]'h' = m[a]! :=
   @DHashMap.Const.get_eq_get! _ _ _ _ _ _ _ _ _ h'
 
-theorem getElem!_congr [EquivBEq α] [LawfulHashable α] [Inhabited β] {a b : α} (hab : a == b) :
+theorem getElem!_congr [EquivBEq α] [LawfulHashable α] [Inhabited β] {a b : α} (hab : a == b) [Decidable (a ∈ m)] [Decidable (b ∈ m)] :
     m[a]! = m[b]! :=
   DHashMap.Const.get!_congr hab
 
@@ -659,7 +672,7 @@ theorem getElem_eq_getD [EquivBEq α] [LawfulHashable α] {a : α} {fallback : �
     m[a]'h' = m.getD a fallback :=
   @DHashMap.Const.get_eq_getD _ _ _ _ _ _ _ _ _ h'
 
-theorem getElem!_eq_getD_default [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} :
+theorem getElem!_eq_getD_default [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} [Decidable (a ∈ m)] :
     m[a]! = m.getD a default :=
   DHashMap.Const.get!_eq_getD_default
 
@@ -710,7 +723,8 @@ theorem getElem_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {b : β
     (m.insertIfNew a b)[k]'h₁ = if h₂ : a == k ∧ ¬a ∈ m then b else m[k]'(mem_of_mem_insertIfNew h₁ h₂) :=
   DHashMap.Const.get_insertIfNew (h₁ := h₁)
 
-theorem getElem!_insertIfNew [EquivBEq α] [LawfulHashable α] [Inhabited β] {a k : α} {b : β} :
+theorem getElem!_insertIfNew [EquivBEq α] [LawfulHashable α] [Inhabited β] {a k : α} {b : β}
+    [Decidable (k ∈ m.insertIfNew a b)] [Decidable (k ∈ m)] :
     (m.insertIfNew a b)[k]! = bif a == k && !m.contains a then b else m[k]! :=
   DHashMap.Const.get!_insertIfNew
 
@@ -725,6 +739,10 @@ theorem fst_getThenInsertIfNew? {a : α} {b : β} : (getThenInsertIfNew? m a b).
 @[simp]
 theorem snd_getThenInsertIfNew? {a : α} {b : β} : (getThenInsertIfNew? m a b).2 = get? m a :=
   DHashMap.Const.snd_getThenInsertIfNew?
+
+instance [EquivBEq α] [LawfulHashable α] : LawfulGetElem (HashMap α β) α β (fun m a => a ∈ m) where
+  getElem?_def m a _ := by split; exacts [getElem?_eq_some_getElem, getElem?_eq_none ‹_›]
+  getElem!_def _ m a := by rw [getElem!_eq_get!_getElem?]; split <;> simp_all
 
 end
 

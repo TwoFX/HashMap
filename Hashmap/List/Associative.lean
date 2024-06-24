@@ -364,6 +364,10 @@ theorem containsKey_eq_isSome_getValueCast? [BEq α] [LawfulBEq α] {l : List (�
     l.containsKey a = (l.getValueCast? a).isSome := by
   simp [containsKey_eq_isSome_getEntry?, getValueCast?_eq_getEntry?]
 
+theorem getValueCast?_eq_none [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a : α}
+    (h : l.containsKey a = false) : l.getValueCast? a = none := by
+  rwa [← Option.not_isSome_iff_eq_none, ← containsKey_eq_isSome_getValueCast?, Bool.not_eq_true]
+
 theorem containsKey_eq_of_beq [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {a b : α} (h : a == b) :
     l.containsKey a = l.containsKey b := by
   simp [containsKey_eq_isSome_getEntry?, getEntry?_eq_of_beq h]

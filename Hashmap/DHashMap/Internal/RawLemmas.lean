@@ -167,6 +167,9 @@ theorem get?_insert_self [LawfulBEq α] {a : α} {b : β a} : (m.insert a b).get
 theorem contains_eq_isSome_get? [LawfulBEq α] {a : α} : m.contains a = (m.get? a).isSome := by
   simp_to_model using List.containsKey_eq_isSome_getValueCast?
 
+theorem get?_eq_none [LawfulBEq α] {a : α} : m.contains a = false → m.get? a = none := by
+  simp_to_model using List.getValueCast?_eq_none
+
 theorem get?_remove [LawfulBEq α] {a k : α} : (m.remove a).get? k = bif a == k then none else m.get? k := by
   simp_to_model using List.getValueCast?_removeKey
 
@@ -194,6 +197,9 @@ theorem get?_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {b : β} :
 
 theorem contains_eq_isSome_get? [EquivBEq α] [LawfulHashable α] {a : α} : m.contains a = (get? m a).isSome := by
   simp_to_model using List.containsKey_eq_isSome_getValue?
+
+theorem get?_eq_none [EquivBEq α] [LawfulHashable α] {a : α} : m.contains a = false → get? m a = none := by
+  simp_to_model using List.getValue?_eq_none.2
 
 theorem get?_remove [EquivBEq α] [LawfulHashable α] {a k : α} :
     Const.get? (m.remove a) k = bif a == k then none else get? m k := by

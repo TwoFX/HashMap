@@ -196,6 +196,12 @@ theorem get?_insert_self [LawfulBEq α] {a : α} {b : β a} : (m.insert a b).get
 theorem contains_eq_isSome_get? [LawfulBEq α] {a : α} : m.contains a = (m.get? a).isSome := by
   simp_to_raw using Raw₀.contains_eq_isSome_get?
 
+theorem get?_eq_none_of_contains_eq_false [LawfulBEq α] {a : α} : m.contains a = false → m.get? a = none := by
+  simp_to_raw using Raw₀.get?_eq_none
+
+theorem get?_eq_none [LawfulBEq α] {a : α} : ¬a ∈ m → m.get? a = none := by
+  simpa [mem_iff_contains] using get?_eq_none_of_contains_eq_false h
+
 theorem get?_remove [LawfulBEq α] {a k : α} : (m.remove a).get? k = bif a == k then none else m.get? k := by
   simp_to_raw using Raw₀.get?_remove
 
@@ -229,6 +235,13 @@ theorem get?_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {b : β} :
 
 theorem contains_eq_isSome_get? [EquivBEq α] [LawfulHashable α] {a : α} : m.contains a = (get? m a).isSome := by
   simp_to_raw using Raw₀.Const.contains_eq_isSome_get?
+
+theorem get?_eq_none_of_contains_eq_false [EquivBEq α] [LawfulHashable α] {a : α} :
+    m.contains a = false → get? m a = none := by
+  simp_to_raw using Raw₀.Const.get?_eq_none
+
+theorem get?_eq_none [EquivBEq α] [LawfulHashable α] {a : α} : ¬a ∈ m → get? m a = none := by
+    simpa [mem_iff_contains] using get?_eq_none_of_contains_eq_false h
 
 theorem get?_remove [EquivBEq α] [LawfulHashable α] {a k : α} :
     Const.get? (m.remove a) k = bif a == k then none else get? m k := by
@@ -785,6 +798,12 @@ theorem get?_insert_self [LawfulBEq α] {a : α} {b : β a} : (m.insert a b).get
 theorem contains_eq_isSome_get? [LawfulBEq α] {a : α} : m.contains a = (m.get? a).isSome :=
   Raw₀.contains_eq_isSome_get? ⟨m.1, _⟩ m.2
 
+theorem get?_eq_none_of_contains_eq_false [LawfulBEq α] {a : α} : m.contains a = false → m.get? a = none :=
+  Raw₀.get?_eq_none ⟨m.1, _⟩ m.2
+
+theorem get?_eq_none [LawfulBEq α] {a : α} : ¬a ∈ m → m.get? a = none := by
+  simpa [mem_iff_contains] using get?_eq_none_of_contains_eq_false
+
 theorem get?_remove [LawfulBEq α] {a k : α} : (m.remove a).get? k = bif a == k then none else m.get? k :=
   Raw₀.get?_remove ⟨m.1, _⟩ m.2
 
@@ -818,6 +837,12 @@ theorem get?_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {b : β} :
 
 theorem contains_eq_isSome_get? [EquivBEq α] [LawfulHashable α] {a : α} : m.contains a = (get? m a).isSome :=
   Raw₀.Const.contains_eq_isSome_get? ⟨m.1, _⟩ m.2
+
+theorem get?_eq_none_of_contains_eq_false [EquivBEq α] [LawfulHashable α] {a : α} : m.contains a = false → get? m a = none :=
+  Raw₀.Const.get?_eq_none ⟨m.1, _⟩ m.2
+
+theorem get?_eq_none [EquivBEq α] [LawfulHashable α] {a : α } : ¬a ∈ m → get? m a = none := by
+  simpa [mem_iff_contains] using get?_eq_none_of_contains_eq_false
 
 theorem get?_remove [EquivBEq α] [LawfulHashable α] {a k : α} :
     Const.get? (m.remove a) k = bif a == k then none else get? m k :=
