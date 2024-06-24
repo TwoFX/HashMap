@@ -9,7 +9,7 @@ set_option autoImplicit false
 
 universe u v
 
-variable {α : Type u} {β : α → Type v} [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
+variable {α : Type u} {β : α → Type v} [BEq α] [Hashable α]
 
 namespace MyLean.DHashMap
 
@@ -127,10 +127,10 @@ theorem size_emptyc : (∅ : Raw α β).size = 0 :=
 theorem isEmpty_eq_size_eq_zero : m.isEmpty = (m.size == 0) := by
   simp [isEmpty]
 
-theorem size_insert [EquivBEq α] [LawfulHashable α] (a : α) (b : β a) : (m.insert a b).size = bif m.contains a then m.size else m.size + 1 := by
+theorem size_insert [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} : (m.insert a b).size = bif m.contains a then m.size else m.size + 1 := by
   simp_to_raw using Raw₀.size_insert
 
-theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] (a : α) (b : β a) : m.size ≤ (m.insert a b).size := by
+theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} : m.size ≤ (m.insert a b).size := by
   simp_to_raw using Raw₀.size_le_size_insert ⟨m, _⟩ h
 
 @[simp]
@@ -282,7 +282,7 @@ theorem get_remove [EquivBEq α] [LawfulHashable α] {a k : α} {h'} :
     get (m.remove a) k h' = get m k (mem_of_mem_remove h h') := by
   simp_to_raw using Raw₀.Const.get_remove ⟨m, _⟩
 
-theorem get?_eq_some_get [EquivBEq α] [LawfulHashable α] {a : α} {h} : get? m a = some (get m a h) := by
+theorem get?_eq_some_get [EquivBEq α] [LawfulHashable α] {a : α} {h : a ∈ m} : get? m a = some (get m a h) := by
   simp_to_raw using Raw₀.Const.get?_eq_some_get
 
 theorem get_eq_get [LawfulBEq α] {a : α} {h} : get m a h = m.get a h := by
@@ -630,7 +630,7 @@ theorem snd_getThenInsertIfNew? [LawfulBEq α] {a : α} {b : β a} : (m.getThenI
 
 namespace Const
 
-variable {β : Type v} {m : DHashMap.Raw₀ α (fun _ => β)} (h : m.1.WF)
+variable {β : Type v} {m : DHashMap.Raw α (fun _ => β)} (h : m.WF)
 
 @[simp]
 theorem fst_getThenInsertIfNew? {a : α} {b : β} : (getThenInsertIfNew? m a b).1 = m.insertIfNew a b := by
@@ -643,6 +643,7 @@ theorem snd_getThenInsertIfNew? {a : α} {b : β} : (getThenInsertIfNew? m a b).
 end Const
 
 end Raw
+
 section
 
 variable {m : DHashMap α β}
@@ -714,11 +715,11 @@ theorem size_emptyc : (∅ : DHashMap α β).size = 0 :=
 
 theorem isEmpty_eq_size_eq_zero : m.isEmpty = (m.size == 0) := rfl
 
-theorem size_insert [EquivBEq α] [LawfulHashable α] (a : α) (b : β a) :
+theorem size_insert [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} :
     (m.insert a b).size = bif m.contains a then m.size else m.size + 1 :=
   Raw₀.size_insert ⟨m.1, _⟩ m.2
 
-theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] (a : α) (b : β a) : m.size ≤ (m.insert a b).size :=
+theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} : m.size ≤ (m.insert a b).size :=
   Raw₀.size_le_size_insert ⟨m.1, _⟩ m.2
 
 @[simp]
