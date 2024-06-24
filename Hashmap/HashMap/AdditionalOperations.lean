@@ -19,10 +19,10 @@ namespace HashMap
 namespace Raw
 
 theorem WF.filterMap [BEq α] [Hashable α] {m : Raw α β} {f : α → β → Option γ} (h : m.WF) : (m.filterMap f).WF :=
-  DHashMap.Raw.WF.filterMap h
+  ⟨DHashMap.Raw.WF.filterMap h.out⟩
 
 theorem WF.map [BEq α] [Hashable α] {m : Raw α β} {f : α → β → γ} (h : m.WF) : (m.map f).WF :=
-  DHashMap.Raw.WF.map h
+  ⟨DHashMap.Raw.WF.map h.out⟩
 
 end Raw
 
