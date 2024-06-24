@@ -103,32 +103,32 @@ instance [BEq α] [Hashable α] : GetElem (Raw α β) α β (fun m a => a ∈ m)
 @[inline] def isEmpty (m : Raw α β) : Bool :=
   m.inner.isEmpty
 
-def WF [BEq α] [Hashable α] : Raw α β → Prop :=
-  fun r => r.inner.WF
+structure WF [BEq α] [Hashable α] (m : Raw α β) : Prop where
+  out : m.inner.WF
 
 theorem WF.empty [BEq α] [Hashable α] {c} : (empty c : Raw α β).WF :=
-  DHashMap.Raw.WF.empty
+  ⟨DHashMap.Raw.WF.empty⟩
 
 theorem WF.emptyc [BEq α] [Hashable α] : (∅ : Raw α β).WF :=
   WF.empty
 
 theorem WF.insert [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β} (h : m.WF) : (m.insert a b).WF :=
-  DHashMap.Raw.WF.insert h
+  ⟨DHashMap.Raw.WF.insert h.out⟩
 
 theorem WF.insertIfNew [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β} (h : m.WF) : (m.insertIfNew a b).WF :=
-  DHashMap.Raw.WF.insertIfNew h
+  ⟨DHashMap.Raw.WF.insertIfNew h.out⟩
 
 theorem WF.containsThenInsert [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β} (h : m.WF) : (m.containsThenInsert a b).1.WF :=
-  DHashMap.Raw.WF.containsThenInsert h
+  ⟨DHashMap.Raw.WF.containsThenInsert h.out⟩
 
 theorem WF.getThenInsertIfNew? [BEq α] [Hashable α] {m : Raw α β} {a : α} {b : β} (h : m.WF) : (m.getThenInsertIfNew? a b).1.WF :=
-  DHashMap.Raw.WF.Const.getThenInsertIfNew? h
+  ⟨DHashMap.Raw.WF.Const.getThenInsertIfNew? h.out⟩
 
 theorem WF.remove [BEq α] [Hashable α] {m : Raw α β} {a : α} (h : m.WF) : (m.remove a).WF :=
-  DHashMap.Raw.WF.remove h
+  ⟨DHashMap.Raw.WF.remove h.out⟩
 
 theorem WF.filter [BEq α] [Hashable α] {m : Raw α β} {f : α → β → Bool} (h : m.WF) : (m.filter f).WF :=
-  DHashMap.Raw.WF.filter h
+  ⟨DHashMap.Raw.WF.filter h.out⟩
 
 end Raw
 

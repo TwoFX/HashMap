@@ -63,26 +63,26 @@ instance [BEq α] [Hashable α] : Membership α (Raw α) where
 @[inline] def isEmpty (m : Raw α) : Bool :=
   m.inner.isEmpty
 
-def WF [BEq α] [Hashable α] : Raw α → Prop :=
-  fun r => r.inner.WF
+structure WF [BEq α] [Hashable α] (m : Raw α) : Prop where
+  out : m.inner.WF
 
 theorem WF.empty [BEq α] [Hashable α] {c} : (empty c : Raw α).WF :=
-  HashMap.Raw.WF.empty
+  ⟨HashMap.Raw.WF.empty⟩
 
 theorem WF.emptyc [BEq α] [Hashable α] : (∅ : Raw α).WF :=
-  HashMap.Raw.WF.empty
+  ⟨HashMap.Raw.WF.empty⟩
 
 theorem WF.insert [BEq α] [Hashable α] {m : Raw α} {a : α} (h : m.WF) : (m.insert a).WF :=
-  HashMap.Raw.WF.insert h
+  ⟨HashMap.Raw.WF.insert h.out⟩
 
 theorem WF.containsThenInsert [BEq α] [Hashable α] {m : Raw α} {a : α} (h : m.WF) : (m.containsThenInsert a).1.WF :=
-  HashMap.Raw.WF.containsThenInsert h
+  ⟨HashMap.Raw.WF.containsThenInsert h.out⟩
 
 theorem WF.remove [BEq α] [Hashable α] {m : Raw α} {a : α} (h : m.WF) : (m.remove a).WF :=
-  HashMap.Raw.WF.remove h
+  ⟨HashMap.Raw.WF.remove h.out⟩
 
 theorem WF.filter [BEq α] [Hashable α] {m : Raw α} {f : α → Bool} (h : m.WF) : (m.filter f).WF :=
-  HashMap.Raw.WF.filter h
+  ⟨HashMap.Raw.WF.filter h.out⟩
 
 end Raw
 
