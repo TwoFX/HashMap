@@ -92,9 +92,11 @@ theorem mem_congr [EquivBEq α] [LawfulHashable α] {a b : α} (hab : a == b) : 
 @[simp] theorem not_mem_emptyc {a : α} : ¬a ∈ (∅ : Raw α β) :=
   not_mem_empty
 
+@[simp]
 theorem contains_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} : (m.insert a b).contains k = (a == k || m.contains k) := by
   simp_to_raw using Raw₀.contains_insert
 
+@[simp]
 theorem mem_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} : k ∈ m.insert a b ↔ a == k ∨ k ∈ m := by
   simp [mem_iff_contains, contains_insert h]
 
@@ -106,9 +108,11 @@ theorem mem_of_mem_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a
     k ∈ m.insert a b → (a == k) = false → k ∈ m := by
   simpa [mem_iff_contains] using contains_of_contains_insert h
 
+@[simp]
 theorem contains_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} : (m.insert a b).contains a := by
   simp_to_raw using Raw₀.contains_insert_self
 
+@[simp]
 theorem mem_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} : a ∈ m.insert a b := by
   simp [mem_iff_contains, contains_insert_self h]
 
@@ -138,12 +142,15 @@ theorem remove_empty {a : α} {c : Nat} : (empty c : Raw α β).remove a = empty
 theorem remove_emptyc {a : α} : (∅ : Raw α β).remove a = ∅ :=
   remove_empty
 
+@[simp]
 theorem isEmpty_remove [EquivBEq α] [LawfulHashable α] {a : α} : (m.remove a).isEmpty = (m.isEmpty || (m.size == 1 && m.contains a)) := by
   simp_to_raw using Raw₀.isEmpty_remove
 
+@[simp]
 theorem contains_remove [EquivBEq α] [LawfulHashable α] {k a : α} : (m.remove k).contains a = (!(k == a) && m.contains a) := by
   simp_to_raw using Raw₀.contains_remove
 
+@[simp]
 theorem mem_remove [EquivBEq α] [LawfulHashable α] {k a : α} : a ∈ m.remove k ↔ (k == a) = false ∧ a ∈ m := by
   simp [mem_iff_contains, contains_remove h]
 
@@ -192,6 +199,7 @@ theorem contains_eq_isSome_get? [LawfulBEq α] {a : α} : m.contains a = (m.get?
 theorem get?_remove [LawfulBEq α] {a k : α} : (m.remove a).get? k = bif a == k then none else m.get? k := by
   simp_to_raw using Raw₀.get?_remove
 
+@[simp]
 theorem get?_remove_self [LawfulBEq α] {a : α} : (m.remove a).get? a = none := by
   simp_to_raw using Raw₀.get?_remove_self
 
@@ -538,10 +546,12 @@ theorem isEmpty_insertIfNew [EquivBEq α] [LawfulHashable α] {a : α} {b : β a
     (m.insertIfNew a b).isEmpty = false := by
   simp_to_raw using Raw₀.isEmpty_insertIfNew
 
+@[simp]
 theorem contains_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} :
     (m.insertIfNew a b).contains k = (a == k || m.contains k) := by
   simp_to_raw using Raw₀.contains_insertIfNew
 
+@[simp]
 theorem mem_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} :
     k ∈ m.insertIfNew a b ↔ a == k ∨ k ∈ m := by
   simp [mem_iff_contains, contains_insertIfNew h]
@@ -552,6 +562,8 @@ theorem contains_of_contains_insertIfNew [EquivBEq α] [LawfulHashable α] {a k 
     (m.insertIfNew a b).contains k → ¬((a == k) ∧ m.contains a = false) → m.contains k := by
   simp_to_raw using Raw₀.contains_of_contains_insertIfNew
 
+/-- This is a restatement of `mem_insertIfNew` that is written to exactly match the proof obligation in the statement of
+    `get_insertIfNew`. -/
 theorem mem_of_mem_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} :
     k ∈ m.insertIfNew a b → ¬((a == k) ∧ ¬a ∈ m) → k ∈ m := by
   simpa [mem_iff_contains] using contains_of_contains_insertIfNew h
