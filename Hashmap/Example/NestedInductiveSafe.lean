@@ -34,7 +34,7 @@ def children : RawTrie α → HashMap.Raw α (RawTrie α)
 @[simp] theorem children_mk {b : Bool} {m : HashMap.Raw α (RawTrie α)} : (RawTrie.mk b m).children = m := rfl
 
 def child? [BEq α] [Hashable α] (a : α) (t : RawTrie α) : Option (RawTrie α) :=
-  t.children.find? a
+  t.children[a]?
 
 def empty : RawTrie α :=
   ⟨false, ∅⟩
@@ -69,25 +69,25 @@ def insert [BEq α] [Hashable α] : List α → RawTrie α → RawTrie α
   | (a::as), t => ⟨t.contained, t.children.insert a ((t.child a).insert as)⟩
 
 inductive WF [BEq α] [Hashable α] : RawTrie α → Prop where
-  | mk {t : RawTrie α} : t.children.WF → (∀ [EquivBEq α] [LawfulHashable α] c, c ∈ t.children.values → c.WF) → t.WF
+  | mk {t : RawTrie α} : t.children.WF → (∀ [EquivBEq α] [LawfulHashable α] (a : α) (c : RawTrie α), t.children[a]? = some c → c.WF) → t.WF
 
 theorem WF.WF_children [BEq α] [Hashable α] {t : RawTrie α} : t.WF → t.children.WF
   | ⟨h, _⟩ => h
 
-theorem WF.WF_of_hasValue [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {t : RawTrie α} : t.WF → ∀ c, c ∈ t.children.values → c.WF
-  | ⟨_, h⟩ => fun c => h c
+theorem WF.WF_of_hasValue [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {t : RawTrie α} : t.WF → ∀ (a : α) (c : RawTrie α), t.children[a]? = some c → c.WF
+  | ⟨_, h⟩ => fun c hc => h c hc
 
 @[simp]
 theorem WF.empty [BEq α] [Hashable α] : (RawTrie.empty : RawTrie α).WF :=
-  ⟨by simpa using HashMap.Raw.WF.emptyc, fun _ => by simp⟩
+  ⟨by simpa using HashMap.Raw.WF.emptyc, by simp⟩
 
 @[simp]
 theorem WF.emptyc [BEq α] [Hashable α] : (∅ : RawTrie α).WF :=
   WF.empty
 
 theorem WF.child? [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {r : RawTrie α} (h : r.WF) {c : α}
-    {s : RawTrie α} (h₂ : r.child? c = some s) : s.WF :=
-  h.WF_of_hasValue _ ((HashMap.Raw.mem_values_iff_exists_find?_eq_some _ h.WF_children).2 ⟨_, h₂⟩)
+    {s : RawTrie α} (h₂ : r.child? c = some s) : s.WF := by
+  exact h.WF_of_hasValue _ _ h₂
 
 theorem WF.child [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {r : RawTrie α} (h : r.WF) {c : α} : (r.child c).WF := by
   rw [RawTrie.child]
@@ -101,10 +101,14 @@ theorem WF.insert [BEq α] [Hashable α] {l : List α} {t : RawTrie α} (h : t.W
     exact ⟨by simpa using h.WF_children, fun _ => by simpa using h.WF_of_hasValue _⟩
   · next a as u ih =>
     rw [RawTrie.insert]
-    refine ⟨h.WF_children.insert, fun v hv => ((HashMap.Raw.mem_values_insert h.WF_children).1 hv).elim ?_ ?_⟩
-    · exact fun hx => hx ▸ ih h.child
-    · rintro ⟨a', -, ha'₂⟩
-      exact h.WF_of_hasValue _ ((HashMap.Raw.mem_values_iff_exists_find?_eq_some _ h.WF_children).2 ⟨a', ha'₂⟩)
+    refine ⟨h.WF_children.insert, fun v hv => ?_⟩
+    simp only [children_mk, HashMap.Raw.getElem?_insert h.WF_children]
+    cases a == v
+    · rw [cond_false]
+      exact h.WF_of_hasValue _ _
+    · rw [cond_true, Option.some_inj]
+      rintro rfl
+      exact ih h.child
 
 @[simp]
 theorem contains_empty [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {l : List α} :
@@ -131,7 +135,7 @@ theorem contains_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
     cases m
     · rw [contains_nil_mk, List.cons_beq_nil, Bool.false_or, contains]
     · next b bs =>
-      rw [contains, child?, children_mk, HashMap.Raw.find?_insert _ h.WF_children]
+      rw [contains, child?, children_mk, HashMap.Raw.getElem?_insert h.WF_children]
       cases hab : a == b
       · rw [cond_false, List.cons_beq_cons, hab, Bool.false_and, contains, Bool.false_or, child?]
       · rw [cond_true]
@@ -140,7 +144,7 @@ theorem contains_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
         congr 1
         rw [contains, child]
         have hch : child? a u = child? b u := by
-          rw [child?, child?, HashMap.Raw.find?_congr _ h.WF_children hab]
+          rw [child?, child?, HashMap.Raw.getElem?_congr h.WF_children hab]
         rw [hch]
         cases child? b u
         · rw [Option.getD_none, contains_emptyc]

@@ -66,13 +66,15 @@ theorem Nat.div_pos (hba : b ≤ a) (hb : 0 < b) : 0 < a / b :=
 
 abbrev M := StateM (DHashMap Nat fun n => { d : Nat // IsSmallestPrimeFactor n d })
 
-@[inline]
-def Prod.swap : α × β → β × α
-  | (a, b) => (b, a)
-
-def findFactor (n : Nat) (hn : 1 < n) : M { d : Nat // IsSmallestPrimeFactor n d } :=
+def findFactor (n : Nat) (hn : 1 < n) : M { d : Nat // IsSmallestPrimeFactor n d } := do
   dbg_trace "Requesting {n}"
-  modifyGet (Prod.swap ∘ (·.computeIfAbsent n fun _ => compute n hn))
+  let cache ← get
+  match cache.get? n with
+  | none =>
+      let ans := compute n hn
+      set (cache.insert n ans)
+      return ans
+  | some ans => return ans
 where
   compute (n : Nat) (hn : 1 < n) : { d : Nat // IsSmallestPrimeFactor n d } :=
     dbg_trace "Cache miss {n}"
