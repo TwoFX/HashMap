@@ -5,12 +5,13 @@ Authors: Markus Himmel
 -/
 import Hashmap.BEq
 import Hashmap.List.Defs
-import Batteries.Data.List.Lemmas
-import Batteries.Data.List.Perm
-import Hashmap.LawfulHashable
 import Hashmap.Or
 import Hashmap.ForUpstream
 import Hashmap.Option
+import Hashmap.List.Perm
+import Hashmap.List.Sublist
+
+open MyLean.DHashMap.Internal
 
 universe u v w
 
@@ -772,14 +773,14 @@ theorem removeKey_of_containsKey_eq_false [BEq α] {l : List (Σ a, β a)} {k : 
     simp only [containsKey_cons, Bool.or_eq_false_iff] at h
     rw [removeKey_cons_of_false h.1, ih h.2]
 
-theorem sublist_removeKey [BEq α] {l : List (Σ a, β a)} {k : α} : (l.removeKey k).Sublist l := by
+theorem sublist_removeKey [BEq α] {l : List (Σ a, β a)} {k : α} : Sublist (l.removeKey k) l := by
   induction l using assoc_induction
   · simp
   · next k' v' t ih =>
     rw [removeKey_cons]
     cases k' == k
     · simpa
-    · simp
+    · simpa using Sublist.cons_right Sublist.refl
 
 theorem length_removeKey [BEq α] {l : List (Σ a, β a)} {k : α} :
     (l.removeKey k).length = bif l.containsKey k then l.length - 1 else l.length := by
@@ -840,27 +841,28 @@ theorem DistinctKeys.nil [BEq α] : ([] : List (Σ a, β a)).DistinctKeys :=
 open List
 
 theorem DistinctKeys.perm_keys [BEq α] [PartialEquivBEq α] {l l' : List (Σ a, β a)}
-    (h : l'.keys ~ l.keys) : l.DistinctKeys → l'.DistinctKeys
-  | ⟨h'⟩ => ⟨h'.perm h.symm BEq.symm_false⟩
+    (h : Perm l'.keys l.keys) : l.DistinctKeys → l'.DistinctKeys
+  | ⟨h'⟩ => ⟨h'.perm BEq.symm_false h.symm⟩
 
-theorem DistinctKeys.perm [BEq α] [PartialEquivBEq α] {l l' : List (Σ a, β a)} (h : l' ~ l) :
+theorem DistinctKeys.perm [BEq α] [PartialEquivBEq α] {l l' : List (Σ a, β a)} (h : Perm l' l) :
     l.DistinctKeys → l'.DistinctKeys := by
   apply DistinctKeys.perm_keys
   rw [keys_eq_map, keys_eq_map]
   exact h.map _
 
-theorem DistinctKeys.congr [BEq α] [PartialEquivBEq α] {l l' : List (Σ a, β a)} (h : l ~ l') :
+theorem DistinctKeys.congr [BEq α] [PartialEquivBEq α] {l l' : List (Σ a, β a)} (h : Perm l l') :
     l.DistinctKeys ↔ l'.DistinctKeys :=
   ⟨fun h' => h'.perm h.symm, fun h' => h'.perm h⟩
 
-theorem distinctKeys_of_sublist_keys [BEq α] {l : List (Σ a, β a)} {l' : List (Σ a, γ a)} (h : l'.keys <+ l.keys) : l.DistinctKeys → l'.DistinctKeys :=
+theorem distinctKeys_of_sublist_keys [BEq α] {l : List (Σ a, β a)} {l' : List (Σ a, γ a)}
+    (h : Sublist l'.keys l.keys) : l.DistinctKeys → l'.DistinctKeys :=
   fun ⟨h'⟩ => ⟨h'.sublist h⟩
 
-theorem distinctKeys_of_sublist [BEq α] {l l' : List (Σ a, β a)} (h : l' <+ l) : l.DistinctKeys → l'.DistinctKeys :=
+theorem distinctKeys_of_sublist [BEq α] {l l' : List (Σ a, β a)} (h : Sublist l' l) : l.DistinctKeys → l'.DistinctKeys :=
   distinctKeys_of_sublist_keys (by simpa only [keys_eq_map] using h.map _)
 
 theorem DistinctKeys.of_keys_eq [BEq α] {l : List (Σ a, β a)} {l' : List (Σ a, γ a)} (h : l.keys = l'.keys) : l.DistinctKeys → l'.DistinctKeys :=
-  distinctKeys_of_sublist_keys (h ▸ Sublist.refl _)
+  distinctKeys_of_sublist_keys (h ▸ Sublist.refl)
 
 -- TODO
 theorem List.contains_iff_exists_mem_beq [BEq α] (l : List α) (a : α) : l.contains a ↔ ∃ a' ∈ l, a == a' := by
@@ -878,9 +880,9 @@ theorem containsKey_eq_false_iff_forall_mem_keys [BEq α] [PartialEquivBEq α] {
 theorem distinctKeys_cons_iff [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k : α} {v : β k} :
     (⟨k, v⟩ :: l).DistinctKeys ↔ l.DistinctKeys ∧ (l.containsKey k) = false := by
   refine ⟨fun ⟨h⟩ => ?_, fun ⟨⟨h₁⟩, h₂⟩ => ⟨?_⟩⟩
-  · rw [keys_cons, List.pairwise_cons] at h
+  · rw [keys_cons, pairwise_cons] at h
     exact ⟨⟨h.2⟩, containsKey_eq_false_iff_forall_mem_keys.2 h.1⟩
-  · rw [keys_cons, List.pairwise_cons, ← containsKey_eq_false_iff_forall_mem_keys]
+  · rw [keys_cons, pairwise_cons, ← containsKey_eq_false_iff_forall_mem_keys]
     exact ⟨h₂, h₁⟩
 
 theorem DistinctKeys.tail [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k : α} {v : β k} :
@@ -1274,7 +1276,7 @@ theorem keys_removeKey [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k 
     · simp [ih]
 
 theorem DistinctKeys.removeKey [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k : α} : l.DistinctKeys → (l.removeKey k).DistinctKeys := by
-  apply distinctKeys_of_sublist_keys (by simpa using List.erase_sublist _ _)
+  apply distinctKeys_of_sublist_keys (by simpa using erase_sublist _ _)
 
 theorem getEntry?_removeKey_self [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {k : α} (h : l.DistinctKeys) :
     (l.removeKey k).getEntry? k = none := by
@@ -1455,46 +1457,46 @@ theorem getValue_removeKey {β : Type v} [BEq α] [PartialEquivBEq α] {l : List
   rw [← Option.some_inj, ← getValue?_eq_some_getValue, getValue?_removeKey hl, h.1, cond_false, ← getValue?_eq_some_getValue]
 
 theorem getEntry?_of_perm [BEq α] [PartialEquivBEq α] {l l' : List (Σ a, β a)} {k : α} (hl : l.DistinctKeys)
-    (h : l ~ l') : l.getEntry? k = l'.getEntry? k := by
+    (h : Perm l l') : l.getEntry? k = l'.getEntry? k := by
   induction h
   · simp
-  · next p t₁ t₂ _ ih₂ =>
+  · next t₁ t₂ p _ ih₂ =>
     rcases p with ⟨k', v'⟩
     simp only [getEntry?_cons, ih₂ hl.tail]
-  · next p p' t =>
+  · next p p' _ _ =>
     rcases p with ⟨k₁, v₁⟩
     rcases p' with ⟨k₂, v₂⟩
     simp only [getEntry?_cons]
     cases h₂ : k₂ == k <;> cases h₁ : k₁ == k <;> try simp; done
     simp only [distinctKeys_cons_iff, containsKey_cons, Bool.or_eq_false_iff] at hl
-    exact ((Bool.eq_false_iff.1 hl.2.1).elim (BEq.trans h₁ (BEq.symm h₂))).elim
+    exact ((Bool.eq_false_iff.1 hl.2.1).elim (BEq.trans h₂ (BEq.symm h₁))).elim
   · next l₁ l₂ l₃ hl₁₂ _ ih₁ ih₂ => exact (ih₁ hl).trans (ih₂ (hl.perm (hl₁₂.symm)))
 
 theorem containsKey_of_perm [BEq α] [PartialEquivBEq α] {l l' : List (Σ a, β a)} {k : α}
-    (h : l ~ l') : l.containsKey k = l'.containsKey k := by
+    (h : Perm l l') : l.containsKey k = l'.containsKey k := by
   induction h
   · simp
   · next p t₁ t₂ _ ih₂ => rw [containsKey_cons, containsKey_cons, ih₂]
-  · next p p' t =>
+  · next p p' _ =>
     rw [containsKey_cons, containsKey_cons, containsKey_cons, containsKey_cons]
     ac_rfl
   · next _ _ _ _ _ ih₁ ih₂ => exact ih₁.trans ih₂
 
 theorem getValueCast?_of_perm [BEq α] [LawfulBEq α] {l l' : List (Σ a, β a)} {k : α} (hl : l.DistinctKeys)
-    (h : l ~ l') : l.getValueCast? k = l'.getValueCast? k := by
+    (h : Perm l l') : l.getValueCast? k = l'.getValueCast? k := by
   rw [getValueCast?_eq_getEntry?, getValueCast?_eq_getEntry?, Option.dmap_congr (getEntry?_of_perm hl h)]
 
 theorem getValueCast_of_perm [BEq α] [LawfulBEq α] {l l' : List (Σ a, β a)} {k : α} {h'} (hl : l.DistinctKeys)
-    (h : l ~ l') : l.getValueCast k h' = l'.getValueCast k ((containsKey_of_perm h).symm.trans h') := by
+    (h : Perm l l') : l.getValueCast k h' = l'.getValueCast k ((containsKey_of_perm h).symm.trans h') := by
   rw [← Option.some_inj, ← getValueCast?_eq_some_getValueCast, ← getValueCast?_eq_some_getValueCast,
     getValueCast?_of_perm hl h]
 
 theorem getValueCast!_of_perm [BEq α] [LawfulBEq α] {l l' : List (Σ a, β a)} {k : α} [Inhabited (β k)] (hl : l.DistinctKeys)
-    (h : l ~ l') : l.getValueCast! k = l'.getValueCast! k := by
+    (h : Perm l l') : l.getValueCast! k = l'.getValueCast! k := by
   simp only [getValueCast!_eq_getValueCast?, getValueCast?_of_perm hl h]
 
 theorem getValueCastD_of_perm [BEq α] [LawfulBEq α] {l l' : List (Σ a, β a)} {k : α} {fallback : β k} (hl : l.DistinctKeys)
-    (h : l ~ l') : l.getValueCastD k fallback = l'.getValueCastD k fallback := by
+    (h : Perm l l') : l.getValueCastD k fallback = l'.getValueCastD k fallback := by
   simp only [getValueCastD_eq_getValueCast?, getValueCast?_of_perm hl h]
 
 section
@@ -1502,30 +1504,30 @@ section
 variable {β : Type v}
 
 theorem getValue?_of_perm [BEq α] [PartialEquivBEq α] {l l' : List ((_ : α) × β)} {k : α} (hl : l.DistinctKeys)
-    (h : l ~ l') : l.getValue? k = l'.getValue? k := by
+    (h : Perm l l') : l.getValue? k = l'.getValue? k := by
   simp only [getValue?_eq_getEntry?, getEntry?_of_perm hl h]
 
 theorem getValue_of_perm [BEq α] [PartialEquivBEq α] {l l' : List ((_ : α) × β)} {k : α} {h'} (hl : l.DistinctKeys)
-    (h : l ~ l') : l.getValue k h' = l'.getValue k ((containsKey_of_perm h).symm.trans h') := by
+    (h : Perm l l') : l.getValue k h' = l'.getValue k ((containsKey_of_perm h).symm.trans h') := by
   rw [← Option.some_inj, ← getValue?_eq_some_getValue, ← getValue?_eq_some_getValue, getValue?_of_perm hl h]
 
 theorem getValue!_of_perm [BEq α] [PartialEquivBEq α] [Inhabited β] {l l' : List ((_ : α) × β)} {k : α} (hl : l.DistinctKeys)
-    (h : l ~ l') : l.getValue! k = l'.getValue! k := by
+    (h : Perm l l') : l.getValue! k = l'.getValue! k := by
   simp only [getValue!_eq_getValue?, getValue?_of_perm hl h]
 
 theorem getValueD_of_perm [BEq α] [PartialEquivBEq α] {l l' : List ((_ : α) × β)} {k : α} {fallback : β} (hl : l.DistinctKeys)
-    (h : l ~ l') : l.getValueD k fallback = l'.getValueD k fallback := by
+    (h : Perm l l') : l.getValueD k fallback = l'.getValueD k fallback := by
   simp only [getValueD_eq_getValue?, getValue?_of_perm hl h]
 
 theorem mem_values_of_perm [BEq α] [EquivBEq α] {l l' : List ((_ : α) × β)} {v : β} (hl : l.DistinctKeys)
-    (h : l ~ l') : v ∈ l.values ↔ v ∈ l'.values := by
+    (h : Perm l l') : v ∈ l.values ↔ v ∈ l'.values := by
   rw [mem_values_iff_exists_getValue?_eq_some hl, mem_values_iff_exists_getValue?_eq_some (hl.perm h.symm)]
   simp only [getValue?_of_perm hl h]
 
 end
 
 theorem perm_cons_getEntry [BEq α] {l : List (Σ a, β a)} {k : α} (h : l.containsKey k) :
-    ∃ l', l ~ l.getEntry k h :: l' := by
+    ∃ l', Perm l (l.getEntry k h :: l') := by
   induction l using assoc_induction
   · simp at h
   · next k' v' t ih =>
@@ -1533,15 +1535,15 @@ theorem perm_cons_getEntry [BEq α] {l : List (Σ a, β a)} {k : α} (h : l.cont
     cases hk : k' == k
     · obtain ⟨l', hl'⟩ := ih (h.resolve_left (Bool.not_eq_true _ ▸ hk))
       rw [getEntry_cons_of_false hk]
-      exact ⟨⟨k', v'⟩ :: l', (hl'.cons _).trans (Perm.swap _ _ _)⟩
-    · exact ⟨t, by rw [getEntry_cons_of_beq hk]⟩
+      exact ⟨⟨k', v'⟩ :: l', (hl'.cons _).trans (Perm.swap _ _ (Perm.refl _))⟩
+    · exact ⟨t, by rw [getEntry_cons_of_beq hk]; exact Perm.refl _⟩
 
 -- Note: this theorem becomes false if you don't assume that BEq is reflexive on α.
 theorem getEntry?_ext [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} (hl : l.DistinctKeys) (hl' : l'.DistinctKeys)
-    (h : ∀ k, l.getEntry? k = l'.getEntry? k) : l ~ l' := by
+    (h : ∀ k, l.getEntry? k = l'.getEntry? k) : Perm l l' := by
   induction l using assoc_induction generalizing l'
   · induction l' using assoc_induction
-    · rfl
+    · exact Perm.refl _
     · next k _ _ _ => simpa using h k
   · next k v t ih =>
     have hl'k₁ : l'.getEntry? k = some ⟨k, v⟩ := by rw [← h, getEntry?_cons_self]
@@ -1549,7 +1551,7 @@ theorem getEntry?_ext [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} (hl : l.
       rw [containsKey_eq_isSome_getEntry?, hl'k₁, Option.isSome_some]
     obtain ⟨l'', hl''⟩ := perm_cons_getEntry hl'k₂
     rw [getEntry_eq_of_getEntry?_eq_some hl'k₁] at hl''
-    suffices t ~ l'' from (this.cons _).trans hl''.symm
+    suffices Perm t l'' from (this.cons _).trans hl''.symm
     apply ih hl.tail (hl'.perm hl''.symm).tail
     intro k'
     cases hk' : k' == k
@@ -1559,17 +1561,17 @@ theorem getEntry?_ext [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} (hl : l.
           getEntry?_eq_none.2 (hl'.perm hl''.symm).containsKey_eq_false]
 
 theorem replaceEntry_of_perm [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k : α} {v : β k}
-    (hl : l.DistinctKeys) (h : l ~ l') : l.replaceEntry k v ~ l'.replaceEntry k v := by
+    (hl : l.DistinctKeys) (h : Perm l l') : Perm (l.replaceEntry k v) (l'.replaceEntry k v) := by
   apply getEntry?_ext hl.replaceEntry (hl.perm h.symm).replaceEntry
   simp [getEntry?_replaceEntry, getEntry?_of_perm hl h, containsKey_of_perm h]
 
 theorem insertEntry_of_perm [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k : α} {v : β k}
-    (hl : l.DistinctKeys) (h : l ~ l') : l.insertEntry k v ~ l'.insertEntry k v := by
+    (hl : l.DistinctKeys) (h : Perm l l') : Perm (l.insertEntry k v) (l'.insertEntry k v) := by
   apply getEntry?_ext hl.insertEntry (hl.perm h.symm).insertEntry
   simp [getEntry?_insertEntry, getEntry?_of_perm hl h]
 
 theorem removeKey_of_perm [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k : α}
-    (hl : l.DistinctKeys) (h : l ~ l') : l.removeKey k ~ l'.removeKey k := by
+    (hl : l.DistinctKeys) (h : Perm l l') : Perm (l.removeKey k) (l'.removeKey k) := by
   apply getEntry?_ext hl.removeKey (hl.perm h.symm).removeKey
   simp [getEntry?_removeKey hl, getEntry?_removeKey (hl.perm h.symm), getEntry?_of_perm hl h]
 

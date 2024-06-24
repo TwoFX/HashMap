@@ -3,7 +3,9 @@ Copyright (c) 2024 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
-import Batteries.Data.List.Basic
+import Hashmap.List.Pairwise
+
+open MyLean.DHashMap.Internal
 
 universe u v w
 
@@ -17,7 +19,7 @@ def keys : List (Σ a, β a) → List α
 
 /-- The well-formedness predicate for `AssocList` says that keys are pairwise distinct. -/
 structure DistinctKeys [BEq α] (l : List (Σ a, β a)) : Prop where
-  distinct : l.keys.Pairwise fun a b => (a == b) = false
+  distinct : Pairwise (fun a b => (a == b) = false) l.keys
 
 def values {β : Type v} : List ((_ : α) × β) → List β
   | nil => []

@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
 import Hashmap.PowerOfTwo
-import Batteries.Data.UInt
 import Hashmap.LawfulHashable
 
 -- This file needs a lot of clean-up, but I don't really want to get bogged down with this too much at the moment
@@ -17,6 +16,9 @@ theorem USize.toNat_and {a b : USize} : (a &&& b).toNat = a.toNat &&& b.toNat :=
 
 theorem Nat.toNat_toUSize {a : Nat} (h : a < USize.size) : a.toUSize.toNat = a :=
   Nat.mod_eq_of_lt h -- Oooooooooooooooofffffffff
+
+theorem USize.ext : {a b : USize} → a.toNat = b.toNat → a = b
+| ⟨⟨_, _⟩⟩, ⟨⟨_, _⟩⟩, rfl => rfl
 
 -- Is this not just Fin.coe_sub_iff_le?
 theorem USize.toNat_sub_le {a b : Nat} (h : b ≤ a) : a.toUSize - b.toUSize = (a - b).toUSize := by

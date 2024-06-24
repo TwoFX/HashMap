@@ -741,7 +741,10 @@ theorem snd_getThenInsertIfNew? {a : α} {b : β} : (getThenInsertIfNew? m a b).
   DHashMap.Const.snd_getThenInsertIfNew?
 
 instance [EquivBEq α] [LawfulHashable α] : LawfulGetElem (HashMap α β) α β (fun m a => a ∈ m) where
-  getElem?_def m a _ := by split; exacts [getElem?_eq_some_getElem, getElem?_eq_none ‹_›]
+  getElem?_def m a _ := by
+    split
+    · exact getElem?_eq_some_getElem
+    · exact getElem?_eq_none ‹_›
   getElem!_def _ m a := by rw [getElem!_eq_get!_getElem?]; split <;> simp_all
 
 end

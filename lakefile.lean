@@ -24,5 +24,3 @@ lean_exe «empty» where
 
 lean_exe «filtermap» where
   root := `Hashmap.Benchmark.FilterMap
-
-require batteries from git "https://github.com/leanprover-community/batteries" @ "main"

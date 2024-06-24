@@ -7,6 +7,8 @@ import Hashmap.AssocList.Basic
 import Hashmap.List.Associative
 import Hashmap.Option
 
+open MyLean.DHashMap.Internal
+
 set_option autoImplicit false
 
 universe w v u
@@ -110,43 +112,43 @@ theorem toList_remove [BEq α] {l : AssocList α β} {a : α} : (l.remove a).toL
 open List
 
 theorem toList_filterMap {f : (a : α) → β a → Option (γ a)} {l : AssocList α β} :
-    (l.filterMap f).toList ~ l.toList.filterMap fun p => (f p.1 p.2).map (⟨p.1, ·⟩) := by
+    Perm (l.filterMap f).toList (l.toList.filterMap fun p => (f p.1 p.2).map (⟨p.1, ·⟩)) := by
   rw [filterMap]
-  suffices ∀ l l', (filterMap.go f l l').toList ~ l.toList ++ l'.toList.filterMap fun p => (f p.1 p.2).map (⟨p.1, ·⟩) by
+  suffices ∀ l l', Perm (filterMap.go f l l').toList (l.toList ++ l'.toList.filterMap fun p => (f p.1 p.2).map (⟨p.1, ·⟩)) by
     simpa using this .nil l
   intros l l'
   induction l' generalizing l
-  · simp [filterMap.go]
+  · simpa [filterMap.go] using Perm.refl _
   · next k v t ih =>
     simp only [filterMap.go, toList_cons, filterMap_cons]
     split
-    · next h => exact (ih _).trans (by simp [h])
+    · next h => exact (ih _).trans (by simpa [h] using Perm.refl _)
     · next h =>
       refine (ih _).trans ?_
       simp only [toList_cons, cons_append]
-      exact perm_middle.symm.trans (by simp [h])
+      exact perm_middle.symm.trans (by simpa [h] using Perm.refl _)
 
 theorem toList_map {f : (a : α) → β a → γ a} {l : AssocList α β} :
-    (l.map f).toList ~ l.toList.map fun p => ⟨p.1, f p.1 p.2⟩ := by
+    Perm (l.map f).toList (l.toList.map fun p => ⟨p.1, f p.1 p.2⟩) := by
   rw [map]
-  suffices ∀ l l', (map.go f l l').toList ~ l.toList ++ l'.toList.map fun p => ⟨p.1, f p.1 p.2⟩ by
+  suffices ∀ l l', Perm (map.go f l l').toList (l.toList ++ l'.toList.map fun p => ⟨p.1, f p.1 p.2⟩) by
     simpa using this .nil l
   intros l l'
   induction l' generalizing l
-  · simp [map.go]
+  · simpa [map.go] using Perm.refl _
   · next k v t ih =>
     simp only [map.go, toList_cons, map_cons]
     refine (ih _).trans ?_
     simpa using perm_middle.symm
 
 theorem toList_filter {f : (a : α) → β a → Bool} {l : AssocList α β} :
-    (l.filter f).toList ~ l.toList.filter fun p => f p.1 p.2 := by
+    Perm (l.filter f).toList (l.toList.filter fun p => f p.1 p.2) := by
   rw [filter]
-  suffices ∀ l l', (filter.go f l l').toList ~ l.toList ++ l'.toList.filter fun p => f p.1 p.2 by
+  suffices ∀ l l', Perm (filter.go f l l').toList (l.toList ++ l'.toList.filter fun p => f p.1 p.2) by
     simpa using this .nil l
   intros l l'
   induction l' generalizing l
-  · simp [filter.go]
+  · simpa [filter.go] using Perm.refl _
   · next k v t ih =>
     simp only [filter.go, toList_cons, filter_cons, cond_eq_if]
     split

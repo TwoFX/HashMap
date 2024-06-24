@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
 import Hashmap.DHashMap.Internal.WF
+import Lean.Elab.Command
 
 set_option autoImplicit false
 
@@ -57,7 +58,7 @@ def modifyNames : List Name :=
   [ ``toListModel_insert, ``toListModel_remove, ``toListModel_insertIfNew ]
 
 def congrNames : MetaM (List (TSyntax `term)) := do
-  return [← `(List.Perm.isEmpty_eq), ← `(List.containsKey_of_perm), ← `(List.Perm.length_eq),
+  return [← `(MyLean.DHashMap.Internal.Perm.isEmpty_eq), ← `(List.containsKey_of_perm), ← `(MyLean.DHashMap.Internal.Perm.length_eq),
     ← `(List.getValueCast?_of_perm _), ← `(List.getValue?_of_perm _), ← `(List.getValue_of_perm _),
     ← `(List.getValueCast_of_perm _), ← `(List.getValueCast!_of_perm _), ← `(List.getValueCastD_of_perm _),
     ← `(List.getValue!_of_perm _), ← `(List.getValueD_of_perm _) ]
