@@ -54,6 +54,18 @@ instance [BEq α] [Hashable α] {m : Raw α} {a : α} : Decidable (a ∈ m) :=
 @[inline] def foldl {β : Type v} (f : β → α → β) (init : β) (m : Raw α) : β :=
   m.inner.foldl (fun b a _ => f b a) init
 
+@[inline] def forM {m : Type v → Type v} [Monad m] (f : α → m PUnit) (b : Raw α) : m PUnit :=
+  b.inner.forM (fun a _ => f a)
+
+@[inline] def forIn {m : Type v → Type v} [Monad m] {β : Type v} (f : α → β → m (ForInStep β)) (init : β) (b : Raw α) : m β :=
+  b.inner.forIn (fun a _ acc => f a acc) init
+
+instance {m : Type v → Type v} : ForM m (Raw α) α where
+  forM m f := m.forM f
+
+instance {m : Type v → Type v} : ForIn m (Raw α) α where
+  forIn m init f := m.forIn f init
+
 @[inline] def toList (m : Raw α) : List α :=
   m.inner.keys
 
@@ -129,6 +141,18 @@ instance [BEq α] [Hashable α] {m : HashSet α} {a : α} : Decidable (a ∈ m) 
 
 @[inline] def foldl [BEq α] [Hashable α] {β : Type v} (f : β → α → β) (init : β) (m : HashSet α) : β :=
   m.inner.foldl (fun b a _ => f b a) init
+
+@[inline] def forM [BEq α] [Hashable α] {m : Type v → Type v} [Monad m] (f : α → m PUnit) (b : HashSet α) : m PUnit :=
+  b.inner.forM (fun a _ => f a)
+
+@[inline] def forIn [BEq α] [Hashable α] {m : Type v → Type v} [Monad m] {β : Type v} (f : α → β → m (ForInStep β)) (init : β) (b : HashSet α) : m β :=
+  b.inner.forIn (fun a _ acc => f a acc) init
+
+instance [BEq α] [Hashable α] {m : Type v → Type v} : ForM m (HashSet α) α where
+  forM m f := m.forM f
+
+instance [BEq α] [Hashable α] {m : Type v → Type v} : ForIn m (HashSet α) α where
+  forIn m init f := m.forIn f init
 
 @[inline] def toList [BEq α] [Hashable α] (m : HashSet α) : List α :=
   m.inner.keys

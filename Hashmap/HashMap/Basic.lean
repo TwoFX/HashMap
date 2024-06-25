@@ -85,6 +85,18 @@ instance [BEq α] [Hashable α] : GetElem (Raw α β) α β (fun m a => a ∈ m)
 @[inline] def foldl {γ : Type w} (f : γ → α → β → γ) (init : γ) (b : Raw α β) : γ :=
   b.inner.foldl f init
 
+@[inline] def forM {m : Type w → Type w} [Monad m] (f : (a : α) → β → m PUnit) (b : Raw α β) : m PUnit :=
+  b.inner.forM f
+
+@[inline] def forIn {m : Type w → Type w} [Monad m] {γ : Type w} (f : (a : α) → β → γ → m (ForInStep γ)) (init : γ) (b : Raw α β) : m γ :=
+  b.inner.forIn f init
+
+instance {m : Type w → Type w} : ForM m (Raw α β) (α × β) where
+  forM m f := m.forM (fun a b => f (a, b))
+
+instance {m : Type w → Type w} : ForIn m (Raw α β) (α × β) where
+  forIn m init f := m.forIn (fun a b acc => f (a, b) acc) init
+
 @[inline] def toList (m : Raw α β) : List (α × β) :=
   DHashMap.Raw.Const.toList m.inner
 
@@ -199,6 +211,18 @@ instance [BEq α] [Hashable α] : GetElem (HashMap α β) α β (fun m a => a �
 
 @[inline] def foldl [BEq α] [Hashable α] {γ : Type w} (f : γ → α → β → γ) (init : γ) (b : HashMap α β) : γ :=
   b.inner.foldl f init
+
+@[inline] def forM [BEq α] [Hashable α] {m : Type w → Type w} [Monad m] (f : (a : α) → β → m PUnit) (b : HashMap α β) : m PUnit :=
+  b.inner.forM f
+
+@[inline] def forIn [BEq α] [Hashable α] {m : Type w → Type w} [Monad m] {γ : Type w} (f : (a : α) → β → γ → m (ForInStep γ)) (init : γ) (b : HashMap α β) : m γ :=
+  b.inner.forIn f init
+
+instance [BEq α] [Hashable α] {m : Type w → Type w} : ForM m (HashMap α β) (α × β) where
+  forM m f := m.forM (fun a b => f (a, b))
+
+instance [BEq α] [Hashable α] {m : Type w → Type w} : ForIn m (HashMap α β) (α × β) where
+  forIn m init f := m.forIn (fun a b acc => f (a, b) acc) init
 
 @[inline] def toList (m : Raw α β) : List (α × β) :=
   DHashMap.Raw.Const.toList m.inner

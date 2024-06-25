@@ -36,6 +36,18 @@ namespace AssocList
 @[inline] def foldl (f : δ → (α : α) → β α → δ) (init : δ) (as : AssocList α β) : δ :=
   Id.run (foldlM f init as)
 
+@[inline] def forM (f : (a : α) → β a → m PUnit) (as : AssocList α β) : m PUnit :=
+  as.foldlM (fun _ => f) ⟨⟩
+
+@[inline] def forInStep (as : AssocList α β) (init : δ) (f : (a : α) → β a → δ → m (ForInStep δ)) : m (ForInStep δ) :=
+  go as init
+where @[specialize] go : AssocList α β → δ → m (ForInStep δ)
+  | .nil, acc => pure (ForInStep.yield acc)
+  | .cons k v t, acc => do
+    match ← f k v acc with
+    | ForInStep.done d => pure (ForInStep.done d)
+    | ForInStep.yield d => go t d
+
 /--
 `O(n)`. Convert an `AssocList α β` into the equivalent `List (α × β)`.
 This is used to give specifications for all the `AssocList` functions

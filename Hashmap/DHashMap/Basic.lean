@@ -135,6 +135,18 @@ end
 @[inline] def foldl (f : δ → (a : α) → β a → δ) (init : δ) (b : Raw α β) : δ :=
   Id.run (b.foldlM f init)
 
+@[inline] def forM (f : (a : α) → β a → m PUnit) (b : Raw α β) : m PUnit :=
+  b.buckets.forM (AssocList.forM f)
+
+@[inline] def forIn (f : (a : α) → β a → δ → m (ForInStep δ)) (init : δ) (b : Raw α β) : m δ :=
+  b.buckets.forIn init (fun bucket acc => bucket.forInStep acc f)
+
+instance : ForM m (Raw α β) (Σ a, β a) where
+  forM m f := m.forM (fun a b => f ⟨a, b⟩)
+
+instance : ForIn m (Raw α β) (Σ a, β a) where
+  forIn m init f := m.forIn (fun a b acc => f ⟨a, b⟩ acc) init
+
 @[inline] def toList (m : Raw α β) : List (Σ a, β a) :=
   m.foldl (fun acc k v => ⟨k, v⟩ :: acc) []
 
@@ -338,6 +350,18 @@ end
 
 @[inline] def foldl [BEq α] [Hashable α] (f : δ → (a : α) → β a → δ) (init : δ) (b : DHashMap α β) : δ :=
   b.1.foldl f init
+
+@[inline] def forM [BEq α] [Hashable α] (f : (a : α) → β a → m PUnit) (b : DHashMap α β) : m PUnit :=
+  b.1.forM f
+
+@[inline] def forIn [BEq α] [Hashable α] (f : (a : α) → β a → δ → m (ForInStep δ)) (init : δ) (b : DHashMap α β) : m δ :=
+  b.1.forIn f init
+
+instance [BEq α] [Hashable α] : ForM m (DHashMap α β) (Σ a, β a) where
+  forM m f := m.forM (fun a b => f ⟨a, b⟩)
+
+instance [BEq α] [Hashable α] : ForIn m (DHashMap α β) (Σ a, β a) where
+  forIn m init f := m.forIn (fun a b acc => f ⟨a, b⟩ acc) init
 
 @[inline] def toList [BEq α] [Hashable α] (m : DHashMap α β) : List (Σ a, β a) :=
   m.1.toList
