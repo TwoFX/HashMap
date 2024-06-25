@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Leonardo de Moura, Mario Carneiro, Markus Himmel
 -/
 import Hashmap.DHashMap.Raw
-import Hashmap.List.Defs
+import Hashmap.DHashMap.Internal.List.Defs
 import Hashmap.BEq
 import Hashmap.LawfulHashable
 import Hashmap.DHashMap.Internal.Index

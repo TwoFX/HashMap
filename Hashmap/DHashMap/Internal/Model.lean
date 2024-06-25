@@ -3,7 +3,7 @@ Copyright (c) 2024 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
-import Hashmap.List.Associative
+import Hashmap.DHashMap.Internal.List.Associative
 import Hashmap.DHashMap.Basic
 import Hashmap.ForUpstream
 import Hashmap.Leftovers

@@ -3,8 +3,9 @@ Copyright (c) 2024 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
-import Hashmap.List.Perm
-import Hashmap.List.Sublist
+import Hashmap.DHashMap.Internal.List.Defs
+import Hashmap.DHashMap.Internal.List.Perm
+import Hashmap.DHashMap.Internal.List.Sublist
 
 namespace MyLean.DHashMap.Internal
 
@@ -13,10 +14,6 @@ set_option autoImplicit false
 universe u
 
 variable {α : Type u}
-
-def Pairwise (P : α → α → Prop) : List α → Prop
-| [] => True
-| (x::xs) => (∀ y ∈ xs, P x y) ∧ Pairwise P xs
 
 @[simp]
 theorem Pairwise.nil {P : α → α → Prop} : Pairwise P [] :=

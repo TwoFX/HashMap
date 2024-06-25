@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
 import Hashmap.AssocList.Basic
-import Hashmap.List.Associative
+import Hashmap.DHashMap.Internal.List.Associative
 import Hashmap.Option
 
 open MyLean.DHashMap.Internal

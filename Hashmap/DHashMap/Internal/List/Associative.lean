@@ -4,12 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
 import Hashmap.BEq
-import Hashmap.List.Defs
 import Hashmap.Or
 import Hashmap.ForUpstream
 import Hashmap.Option
-import Hashmap.List.Perm
-import Hashmap.List.Sublist
+import Hashmap.DHashMap.Internal.List.Pairwise
 
 open MyLean.DHashMap.Internal
 
