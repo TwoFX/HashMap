@@ -7,7 +7,7 @@ import Hashmap.DHashMap.Basic
 import Hashmap.ForUpstream
 import Hashmap.DHashMap.Internal.Model
 import Hashmap.Leftovers
-import Hashmap.AssocList.Lemmas
+import Hashmap.DHashMap.Internal.AssocList.Lemmas
 
 open MyLean.DHashMap.Internal
 
