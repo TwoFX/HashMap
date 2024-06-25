@@ -24,14 +24,14 @@ namespace DHashMap
 structure IsHashSelf [BEq α] [Hashable α] (m : Array (AssocList α β)) : Prop where
   hashes_to (i : Nat) (h : i < m.size) : m[i].toList.HashesTo i m.size
 
-private def numBucketsForCapacity (capacity : Nat) : Nat :=
+@[inline] private def numBucketsForCapacity (capacity : Nat) : Nat :=
   -- a "load factor" of 0.75 is the usual standard for hash maps
   capacity * 4 / 3
 
 def toListModel (buckets : Array (AssocList α β)) : List (Σ a, β a) :=
   buckets.data.bind AssocList.toList
 
-def computeSize (buckets : Array (AssocList α β)) : Nat :=
+@[inline] def computeSize (buckets : Array (AssocList α β)) : Nat :=
   buckets.foldl (fun d b => d + b.length) 0
 
 abbrev Raw₀ (α : Type u) (β : α → Type v) :=
