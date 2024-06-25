@@ -162,18 +162,18 @@ where
 
 -- Computing the size after the fact was determined to be faster than computing it inline,
 -- see Benchmark/FilterMap.lean
-@[specialize] def filterMap {γ : α → Type w} (f : (a : α) → β a → Option (γ a))
+@[inline] def filterMap {γ : α → Type w} (f : (a : α) → β a → Option (γ a))
     (m : Raw₀ α β) : Raw₀ α γ :=
   let ⟨⟨_, buckets⟩, hb⟩ := m
   let newBuckets := buckets.map (AssocList.filterMap f)
   ⟨⟨computeSize newBuckets, newBuckets⟩, by simpa [newBuckets] using hb⟩
 
-@[specialize] def map {γ : α → Type w} (f : (a : α) → β a → γ a) (m : Raw₀ α β) : Raw₀ α γ :=
+@[inline] def map {γ : α → Type w} (f : (a : α) → β a → γ a) (m : Raw₀ α β) : Raw₀ α γ :=
   let ⟨⟨size, buckets⟩, hb⟩ := m
   let newBuckets := buckets.map (AssocList.map f)
   ⟨⟨size, newBuckets⟩, by simpa [newBuckets] using hb⟩
 
-@[specialize] def filter (f : (a : α) → β a → Bool) (m : Raw₀ α β) : Raw₀ α β :=
+@[inline] def filter (f : (a : α) → β a → Bool) (m : Raw₀ α β) : Raw₀ α β :=
   let ⟨⟨_, buckets⟩, hb⟩ := m
   let newBuckets := buckets.map (AssocList.filter f)
   ⟨⟨computeSize newBuckets, newBuckets⟩, by simpa [newBuckets] using hb⟩

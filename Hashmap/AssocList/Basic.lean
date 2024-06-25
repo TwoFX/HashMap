@@ -110,7 +110,7 @@ def remove [BEq α] (a : α) : AssocList α β → AssocList α β
   | nil => nil
   | cons k v l => bif k == a then l else cons k v (l.remove a)
 
-@[specialize] def filterMap (f : (a : α) → β a → Option (γ a)) :
+@[inline] def filterMap (f : (a : α) → β a → Option (γ a)) :
     AssocList α β → AssocList α γ :=
   go .nil
 where
@@ -120,14 +120,14 @@ where
     | none => go acc t
     | some v' => go (cons k v' acc) t
 
-@[specialize] def map (f : (a : α) → β a → γ a) : AssocList α β → AssocList α γ :=
+@[inline] def map (f : (a : α) → β a → γ a) : AssocList α β → AssocList α γ :=
   go .nil
 where
   @[specialize] go (acc : AssocList α γ) : AssocList α β → AssocList α γ
   | nil => acc
   | cons k v t => go (cons k (f k v) acc) t
 
-@[specialize] def filter (f : (a : α) → β a → Bool) : AssocList α β → AssocList α β :=
+@[inline] def filter (f : (a : α) → β a → Bool) : AssocList α β → AssocList α β :=
   go .nil
 where
   @[specialize] go (acc : AssocList α β) : AssocList α β → AssocList α β

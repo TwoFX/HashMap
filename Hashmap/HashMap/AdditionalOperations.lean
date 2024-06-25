@@ -26,10 +26,10 @@ theorem WF.map [BEq α] [Hashable α] {m : Raw α β} {f : α → β → γ} (h 
 
 end Raw
 
-@[specialize, inline] def filterMap [BEq α] [Hashable α] (f : α → β → Option γ) (m : HashMap α β) : HashMap α γ :=
+@[inline] def filterMap [BEq α] [Hashable α] (f : α → β → Option γ) (m : HashMap α β) : HashMap α γ :=
   ⟨m.inner.filterMap f⟩
 
-@[specialize, inline] def map [BEq α] [Hashable α] (f : α → β → γ) (m : HashMap α β) : HashMap α γ :=
+@[inline] def map [BEq α] [Hashable α] (f : α → β → γ) (m : HashMap α β) : HashMap α γ :=
   ⟨m.inner.map f⟩
 
 end HashMap
