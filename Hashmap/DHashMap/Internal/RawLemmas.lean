@@ -91,7 +91,7 @@ theorem isEmpty_insert [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} : (
   simp_to_model using List.isEmpty_insertEntry
 
 theorem contains_congr [EquivBEq α] [LawfulHashable α] {a b : α} (hab : a == b) : m.contains a = m.contains b := by
-  simp_to_model using List.containsKey_eq_of_beq hab
+  simp_to_model using List.containsKey_congr hab
 
 @[simp]
 theorem contains_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).contains a = false := by
@@ -215,7 +215,7 @@ theorem get?_eq_get? [LawfulBEq α] {a : α} : get? m a = m.get? a := by
   simp_to_model with List.getValueCast?_eq_getValue?
 
 theorem get?_congr [EquivBEq α] [LawfulHashable α] {a b : α} (hab : a == b) : get? m a = get? m b := by
-  simp_to_model using List.getValue?_eq_of_beq
+  simp_to_model using List.getValue?_congr
 
 end Const
 
