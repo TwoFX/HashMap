@@ -54,9 +54,9 @@ syntax "dhashmap_simp_to_raw" ("using" term)? : tactic
 macro_rules
 | `(tactic| dhashmap_simp_to_raw $[using $using?]?) => do
   `(tactic|
-    (try simp (discharger := wf_trivial) only [$[$(Array.map Lean.mkIdent baseNames):term],*]
+    (try simp (discharger := dhashmap_wf_trivial) only [$[$(Array.map Lean.mkIdent baseNames):term],*]
      $[apply $(using?.toArray):term];*)
-     <;> wf_trivial)
+     <;> dhashmap_wf_trivial)
 
 end
 
@@ -133,7 +133,7 @@ theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] {a : α} {b : β a
 
 @[simp]
 theorem remove_empty {a : α} {c : Nat} : (empty c : Raw α β).remove a = empty c := by
-  rw [remove_eq (by wf_trivial)]
+  rw [remove_eq (by dhashmap_wf_trivial)]
   exact congrArg Subtype.val Raw₀.remove_empty
 
 @[simp]

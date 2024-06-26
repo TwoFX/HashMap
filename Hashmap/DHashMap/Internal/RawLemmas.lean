@@ -50,10 +50,10 @@ macro "dhashmap_empty" : tactic => `(tactic| { intros; simp_all [List.isEmpty_if
 
 open Lean Elab Meta Tactic
 
-def queryNames : MacroM (Array (TSyntax `term)) := do
-  return #[← `(contains_eq_containsKey), ← `(Raw.isEmpty_eq_isEmpty), ← `(Raw.size_eq_length), ← `(get?_eq_getValueCast?),
-    ← `(Const.get?_eq_getValue?), ← `(get_eq_getValueCast), ← `(Const.get_eq_getValue), ← `(get!_eq_getValueCast!),
-    ← `(getD_eq_getValueCastD), ← `(Const.get!_eq_getValue!), ← `(Const.getD_eq_getValueD)]
+def queryNames : Array Name :=
+  #[``contains_eq_containsKey, ``Raw.isEmpty_eq_isEmpty, ``Raw.size_eq_length, ``get?_eq_getValueCast?,
+    ``Const.get?_eq_getValue?, ``get_eq_getValueCast, ``Const.get_eq_getValue, ``get!_eq_getValueCast!,
+    ``getD_eq_getValueCastD, ``Const.get!_eq_getValue!, ``Const.getD_eq_getValueD]
 
 def modifyNames : Array Name :=
   #[``toListModel_insert, ``toListModel_remove, ``toListModel_insertIfNew]
@@ -73,7 +73,7 @@ macro_rules
     for modify in modifyNames do
       congrModify := congrModify.push (← `($congr:term ($(mkIdent modify) ..)))
   `(tactic|
-    (simp (discharger := dhashmap_wf_trivial) only [$[$(← queryNames):term],*, $[$congrModify:term],*]
+    (simp (discharger := dhashmap_wf_trivial) only [$[$(Array.map Lean.mkIdent queryNames):term],*, $[$congrModify:term],*]
      $[apply $(using?.toArray):term];*)
     <;> dhashmap_wf_trivial)
 
