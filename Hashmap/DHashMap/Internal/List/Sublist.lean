@@ -9,7 +9,7 @@ universe u v
 
 variable {α : Type u} {β : Type v}
 
-namespace MyLean.DHashMap.Internal
+namespace MyLean.DHashMap.Internal.List
 
 inductive Sublist : List α → List α → Prop where
 | refl {l} : Sublist l l
@@ -78,4 +78,4 @@ theorem filter_sublist (l : List α) {f : α → Bool} : Sublist (l.filter f) l 
     · exact .cons ih
     · exact .cons_right ih
 
-end MyLean.DHashMap.Internal
+end MyLean.DHashMap.Internal.List

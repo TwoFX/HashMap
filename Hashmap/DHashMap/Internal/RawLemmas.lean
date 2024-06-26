@@ -6,13 +6,15 @@ Authors: Markus Himmel
 import Hashmap.DHashMap.Internal.WF
 import Lean.Elab.Command
 
+open MyLean.DHashMap.Internal.List
+
 set_option autoImplicit false
 
 universe u v
 
 variable {α : Type u} {β : α → Type v} [BEq α] [Hashable α]
 
-namespace MyLean.DHashMap
+namespace MyLean.DHashMap.Internal
 
 section empty
 
@@ -21,8 +23,8 @@ theorem Raw₀.buckets_empty {c} {i : Nat} {h} : (empty c : Raw₀ α β).1.buck
   simp [empty]
 
 @[simp]
-theorem Raw.buckets_empty {c} {i : Nat} {h} : (empty c : Raw α β).buckets[i]'h = AssocList.nil := by
-  simp [empty]
+theorem Raw.buckets_empty {c} {i : Nat} {h} : (Raw.empty c : Raw α β).buckets[i]'h = AssocList.nil := by
+  simp [Raw.empty]
 
 @[simp]
 theorem Raw.buckets_emptyc {i : Nat} {h} : (∅ : Raw α β).buckets[i]'h = AssocList.nil :=
@@ -58,10 +60,10 @@ def modifyNames : List Name :=
   [ ``toListModel_insert, ``toListModel_remove, ``toListModel_insertIfNew ]
 
 def congrNames : MetaM (List (TSyntax `term)) := do
-  return [← `(MyLean.DHashMap.Internal.Perm.isEmpty_eq), ← `(List.containsKey_of_perm), ← `(MyLean.DHashMap.Internal.Perm.length_eq),
-    ← `(List.getValueCast?_of_perm _), ← `(List.getValue?_of_perm _), ← `(List.getValue_of_perm _),
-    ← `(List.getValueCast_of_perm _), ← `(List.getValueCast!_of_perm _), ← `(List.getValueCastD_of_perm _),
-    ← `(List.getValue!_of_perm _), ← `(List.getValueD_of_perm _) ]
+  return [← `(MyLean.DHashMap.Internal.List.Perm.isEmpty_eq), ← `(containsKey_of_perm), ← `(MyLean.DHashMap.Internal.List.Perm.length_eq),
+    ← `(getValueCast?_of_perm _), ← `(getValue?_of_perm _), ← `(getValue_of_perm _),
+    ← `(getValueCast_of_perm _), ← `(getValueCast!_of_perm _), ← `(getValueCastD_of_perm _),
+    ← `(getValue!_of_perm _), ← `(getValueD_of_perm _) ]
 
 syntax "simp_to_model" ("with" term)? ("using" term)? : tactic
 
@@ -179,7 +181,7 @@ theorem get?_remove_self [LawfulBEq α] {a : α} : (m.remove a).get? a = none :=
 
 namespace Const
 
-variable {β : Type v} (m : DHashMap.Raw₀ α (fun _ => β)) (h : m.1.WF)
+variable {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF)
 
 @[simp]
 theorem get?_empty {a : α} {c} : get? (empty c : Raw₀ α (fun _ => β)) a = none := by
@@ -237,7 +239,7 @@ theorem get?_eq_some_get [LawfulBEq α] {a : α} {h} : m.get? a = some (m.get a 
 
 namespace Const
 
-variable {β : Type v} (m : DHashMap.Raw₀ α (fun _ => β)) (h : m.1.WF)
+variable {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF)
 
 theorem get_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β} {h₁} :
     get (m.insert a b) k h₁ = if h₂ : a == k then b else get m k (contains_of_contains_insert _ h h₁ (Bool.eq_false_iff.2 h₂)) := by
@@ -302,7 +304,7 @@ theorem get_eq_get! [LawfulBEq α] {a : α} [Inhabited (β a)] {h} :
 
 namespace Const
 
-variable {β : Type v} (m : DHashMap.Raw₀ α (fun _ => β)) (h : m.1.WF)
+variable {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF)
 
 theorem get!_empty [Inhabited β] {a : α} {c} : get! (empty c : Raw₀ α (fun _ => β)) a = default := by
   simp [get!, empty]
@@ -396,7 +398,7 @@ theorem get!_eq_getD_default [LawfulBEq α] {a : α} [Inhabited (β a)] :
 
 namespace Const
 
-variable {β : Type v} (m : DHashMap.Raw₀ α (fun _ => β)) (h : m.1.WF)
+variable {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF)
 
 theorem getD_empty {a : α} {fallback : β} {c} : getD (empty c : Raw₀ α (fun _ => β)) a fallback = fallback := by
   simp [getD, empty]
@@ -491,7 +493,7 @@ theorem getD_insertIfNew [LawfulBEq α] {a k : α} {fallback : β k} {b : β a} 
 
 namespace Const
 
-variable {β : Type v} (m : DHashMap.Raw₀ α (fun _ => β)) (h : m.1.WF)
+variable {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF)
 
 theorem get?_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {b : β} :
     get? (m.insertIfNew a b) k = bif a == k && !m.contains a then some b else get? m k := by
@@ -521,7 +523,7 @@ theorem snd_getThenInsertIfNew? [LawfulBEq α] {a : α} {b : β a} : (m.getThenI
 
 namespace Const
 
-variable {β : Type v} (m : DHashMap.Raw₀ α (fun _ => β)) (h : m.1.WF)
+variable {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF)
 
 @[simp]
 theorem fst_getThenInsertIfNew? {a : α} {b : β} : (getThenInsertIfNew? m a b).1 = m.insertIfNew a b := by
@@ -535,4 +537,4 @@ end Const
 
 end Raw₀
 
-end MyLean.DHashMap
+end MyLean.DHashMap.Internal

@@ -9,7 +9,7 @@ universe u v
 
 variable {α : Type u} {β : Type v}
 
-namespace MyLean.DHashMap.Internal
+namespace MyLean.DHashMap.Internal.List
 
 inductive Perm : List α → List α → Prop where
 | refl (l) : Perm l l
@@ -86,29 +86,4 @@ theorem reverse_perm {l : List α} : Perm l.reverse l := by
     refine Perm.trans perm_append_comm ?_
     simpa only [List.singleton_append] using Perm.cons _ ih
 
-
--- theorem perm_cons_iff {a : α} {l l' : List α} : Perm (a::l) (a::l') ↔ Perm l l' := by
---   refine ⟨fun h => ?_, Perm.cons _⟩
---   obtain ⟨a', l'', h⟩ := exists_of_perm_cons h
---   simp at h
---   rcases h with ⟨⟨rfl, rfl⟩, h⟩
---   exact h rfl
-
-  -- cases h
-  -- · exact .refl _
-  -- · exact ‹_›
-  -- · exact .refl _
-  -- · next l₂ ih₁ ih₂ =>
-
-  --   obtain ⟨l₃, h₁, h₂⟩ := exists_of_perm_cons ih₁
-
-  --   refine Perm.trans h₁ ?_
-
-  --   -- have : l₃.length < l.length :=
-  --   --   have := h₁.length_eq
-  --   --   sorry
-  --   exact perm_cons_iff.1 (Perm.trans (Perm.symm h₂) ih₂)
--- termination_by l.length
-
-
-end MyLean.DHashMap.Internal
+end MyLean.DHashMap.Internal.List

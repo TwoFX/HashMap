@@ -5,6 +5,8 @@ Authors: Markus Himmel
 -/
 import Hashmap.DHashMap.Internal.RawLemmas
 
+open MyLean.DHashMap.Internal
+
 set_option autoImplicit false
 
 universe u v
@@ -14,6 +16,8 @@ variable {α : Type u} {β : α → Type v} [BEq α] [Hashable α]
 namespace MyLean.DHashMap
 
 namespace Raw
+
+open Internal.Raw
 
 variable {m : Raw α β} (h : m.WF)
 
@@ -25,7 +29,7 @@ syntax "simp_to_raw" ("using" term)? : tactic
 
 def baseNames : List Name :=
   [
-    ``empty_eq, ``emptyc_eq,
+    ``Raw.empty_eq, ``Raw.emptyc_eq,
     ``insert_eq, ``insert_val,
     ``insertIfNew_eq, ``insertIfNew_val,
     ``snd_containsThenInsert_eq, ``snd_containsThenInsert_val,

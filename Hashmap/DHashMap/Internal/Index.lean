@@ -33,6 +33,8 @@ theorem Nat.toUSize_one : (1 : Nat).toUSize = 1 := rfl
 theorem USize.toNat_lt' {a : USize} : a.toNat < USize.size :=
   a.1.2
 
+namespace MyLean.DHashMap.Internal
+
 /--
 Scramble the hash code in order to protect against bad hash functions.
 
@@ -161,16 +163,18 @@ structure HashesTo [BEq α] [Hashable α] (l : List (Σ a, β a)) (i : Nat) (siz
 
 @[simp]
 theorem hashesTo_nil [BEq α] [Hashable α] {i : Nat} {size : Nat} :
-    ([] : List (Σ a, β a)).HashesTo i size where
+    HashesTo ([] : List (Σ a, β a)) i size where
   hash_self := by simp
 
 theorem hashesTo_cons [BEq α] [Hashable α] [LawfulHashable α] {i : Nat} {size : Nat} {l : List (Σ a, β a)} {k : α}
     {v : β k} (h : (h' : 0 < size) → (mkIdx size h' (hash k)).1.toNat = i) :
-    l.HashesTo i size → (⟨k, v⟩ :: l).HashesTo i size := by
+    HashesTo l i size → HashesTo (⟨k, v⟩ :: l) i size := by
   refine fun ⟨ih⟩ => ⟨fun h' k' hk => ?_⟩
-  simp only [mem_cons] at hk
+  simp only [List.mem_cons] at hk
   rcases hk with (rfl|hk)
   · exact h h'
   · exact ih h' _ hk
 
 end List
+
+end MyLean.DHashMap.Internal

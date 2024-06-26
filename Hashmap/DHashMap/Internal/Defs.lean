@@ -18,11 +18,11 @@ variable {α : Type u} {β : α → Type v} {δ : Type w} {m : Type w → Type w
 
 namespace MyLean
 
-namespace DHashMap
+namespace DHashMap.Internal
 
 -- TODO: Move this to a better place
 structure IsHashSelf [BEq α] [Hashable α] (m : Array (AssocList α β)) : Prop where
-  hashes_to (i : Nat) (h : i < m.size) : m[i].toList.HashesTo i m.size
+  hashes_to (i : Nat) (h : i < m.size) : List.HashesTo m[i].toList i m.size
 
 @[inline] private def numBucketsForCapacity (capacity : Nat) : Nat :=
   -- a "load factor" of 0.75 is the usual standard for hash maps
@@ -218,4 +218,4 @@ end
 
 end Raw₀
 
-end MyLean.DHashMap
+end MyLean.DHashMap.Internal

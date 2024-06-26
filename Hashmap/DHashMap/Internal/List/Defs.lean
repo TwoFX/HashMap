@@ -8,28 +8,22 @@ universe u v w
 
 variable {α : Type u} {β : α → Type v} {γ : α → Type w}
 
-namespace MyLean.DHashMap.Internal
+namespace MyLean.DHashMap.Internal.List
 
 def Pairwise (P : α → α → Prop) : List α → Prop
 | [] => True
 | (x::xs) => (∀ y ∈ xs, P x y) ∧ Pairwise P xs
 
-end MyLean.DHashMap.Internal
-
-open MyLean.DHashMap.Internal
-
-namespace List
-
 def keys : List (Σ a, β a) → List α
-  | nil => []
-  | ⟨k, _⟩ :: l => k :: l.keys
+  | [] => []
+  | ⟨k, _⟩ :: l => k :: keys l
 
 /-- The well-formedness predicate for `AssocList` says that keys are pairwise distinct. -/
 structure DistinctKeys [BEq α] (l : List (Σ a, β a)) : Prop where
-  distinct : Pairwise (fun a b => (a == b) = false) l.keys
+  distinct : Pairwise (fun a b => (a == b) = false) (keys l)
 
 def values {β : Type v} : List ((_ : α) × β) → List β
-  | nil => []
-  | ⟨_, v⟩ :: l => v :: l.values
+  | [] => []
+  | ⟨_, v⟩ :: l => v :: values l
 
-end List
+end MyLean.DHashMap.Internal.List

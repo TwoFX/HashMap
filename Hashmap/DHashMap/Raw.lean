@@ -13,6 +13,6 @@ namespace MyLean.DHashMap
 
 structure Raw (α : Type u) (β : α → Type v) where
   size : Nat
-  buckets : Array (AssocList α β)
+  buckets : Array (DHashMap.Internal.AssocList α β)
 
 end MyLean.DHashMap

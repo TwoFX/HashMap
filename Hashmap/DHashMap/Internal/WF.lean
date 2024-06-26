@@ -9,7 +9,7 @@ import Hashmap.DHashMap.Internal.Model
 import Hashmap.Leftovers
 import Hashmap.DHashMap.Internal.AssocList.Lemmas
 
-open MyLean.DHashMap.Internal
+open MyLean.DHashMap.Internal.List
 
 set_option autoImplicit false
 
@@ -19,7 +19,7 @@ variable {α : Type u} {β : α → Type v} {γ : Type w} {δ : α → Type w}
 
 open List
 
-namespace MyLean.DHashMap
+namespace MyLean.DHashMap.Internal
 
 @[simp]
 theorem toListModel_mkArray_nil {c} : toListModel (mkArray c (AssocList.nil : AssocList α β)) = [] := by
@@ -63,32 +63,32 @@ theorem toList_perm_toListModel {m : Raw α β} : Perm m.toList (toListModel m.b
     exact h.append_right l.toList
 
 -- TODO: clean up
-theorem values_eq_values_toList {β : Type v} {m : Raw α (fun _ => β)} : m.values = m.toList.values := by
-  simp only [Raw.toList, List.values_eq_map, Raw.values, Raw.foldl, Raw.foldlM, Array.foldlM_eq_foldlM_data, ← List.foldl_eq_foldlM, Id.run]
-  suffices ∀ (l : List (AssocList α (fun _ => β))) (l' : List ((_ : α) × β)),
-      List.foldl (fun acc l => AssocList.foldlM (m := Id) (fun acc _ v => v :: acc) acc l) (l'.map (·.2)) l =
-      List.map (fun x => x.snd) (List.foldl (fun acc l => AssocList.foldlM (m := Id) (fun acc k v => ⟨k, v⟩ :: acc) acc l) l' l) by
-    simpa using this m.buckets.data []
-  intros l l'
-  induction l generalizing l'
-  · simp
-  · next h t ih =>
-    simp only [foldl_cons]
-    rw [← ih]
-    congr
-    induction h generalizing l'
-    · simp [AssocList.foldlM]
-    · next k v t ih' => simp [AssocList.foldlM, ← ih']
+-- theorem values_eq_values_toList {β : Type v} {m : Raw α (fun _ => β)} : m.values = values m.toList := by
+--   simp only [Raw.toList, List.values_eq_map, Raw.values, Raw.foldl, Raw.foldlM, Array.foldlM_eq_foldlM_data, ← List.foldl_eq_foldlM, Id.run]
+--   suffices ∀ (l : List (AssocList α (fun _ => β))) (l' : List ((_ : α) × β)),
+--       List.foldl (fun acc l => AssocList.foldlM (m := Id) (fun acc _ v => v :: acc) acc l) (l'.map (·.2)) l =
+--       List.map (fun x => x.snd) (List.foldl (fun acc l => AssocList.foldlM (m := Id) (fun acc k v => ⟨k, v⟩ :: acc) acc l) l' l) by
+--     simpa using this m.buckets.data []
+--   intros l l'
+--   induction l generalizing l'
+--   · simp
+--   · next h t ih =>
+--     simp only [foldl_cons]
+--     rw [← ih]
+--     congr
+--     induction h generalizing l'
+--     · simp [AssocList.foldlM]
+--     · next k v t ih' => simp [AssocList.foldlM, ← ih']
 
-theorem values_perm_values_toListModel {β : Type v} {m : Raw α (fun _ => β)} : Perm m.values ((toListModel m.buckets).values) := by
-  rw [values_eq_values_toList, values_eq_map, values_eq_map]
-  exact (toList_perm_toListModel (m := m)).map _
+-- theorem values_perm_values_toListModel {β : Type v} {m : Raw α (fun _ => β)} : Perm m.values ((toListModel m.buckets).values) := by
+--   rw [values_eq_values_toList, values_eq_map, values_eq_map]
+--   exact (toList_perm_toListModel (m := m)).map _
 
 theorem size_eq_length [BEq α] [Hashable α] {m : Raw α β} (h : m.WFImp) : m.size = (toListModel m.buckets).length :=
   h.size_eq
 
 theorem isEmpty_eq_isEmpty [BEq α] [Hashable α] {m : Raw α β} (h : m.WFImp) : m.isEmpty = (toListModel m.buckets).isEmpty := by
-  rw [isEmpty, Bool.eq_iff_iff, List.isEmpty_iff_length_eq_zero, size_eq_length h, Nat.beq_eq_true_eq]
+  rw [Raw.isEmpty, Bool.eq_iff_iff, List.isEmpty_iff_length_eq_zero, size_eq_length h, Nat.beq_eq_true_eq]
 
 end Raw
 
@@ -226,44 +226,44 @@ theorem wfImp_expandIfNecessary [BEq α] [Hashable α] [EquivBEq α] [LawfulHash
 /-! # Access operations -/
 
 theorem containsₘ_eq_containsKey [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} :
-    m.containsₘ a = (toListModel m.1.buckets).containsKey a :=
+    m.containsₘ a = containsKey a (toListModel m.1.buckets) :=
   apply_bucket hm AssocList.contains_eq (fun _ => List.containsKey_of_perm) List.containsKey_append_of_not_contains_right
 
 theorem contains_eq_containsKey [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} :
-    m.contains a = (toListModel m.1.buckets).containsKey a := by
+    m.contains a = containsKey a (toListModel m.1.buckets) := by
   rw [contains_eq_containsₘ, containsₘ_eq_containsKey hm]
 
 theorem get?ₘ_eq_getValueCast? [BEq α] [Hashable α] [LawfulBEq α]
-    {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} : m.get?ₘ a = (toListModel m.1.buckets).getValueCast? a :=
+    {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} : m.get?ₘ a = getValueCast? a (toListModel m.1.buckets) :=
   apply_bucket hm AssocList.getCast?_eq List.getValueCast?_of_perm List.getValueCast?_append_of_containsKey_eq_false
 
 theorem get?_eq_getValueCast? [BEq α] [Hashable α] [LawfulBEq α]
-    {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} : m.get? a = (toListModel m.1.buckets).getValueCast? a := by
+    {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} : m.get? a = getValueCast? a (toListModel m.1.buckets) := by
   rw [get?_eq_get?ₘ, get?ₘ_eq_getValueCast? hm]
 
 theorem getₘ_eq_getValue [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} {h : m.containsₘ a} :
-    m.getₘ a h = (toListModel m.1.buckets).getValueCast a (containsₘ_eq_containsKey hm ▸ h) :=
+    m.getₘ a h = getValueCast a (toListModel m.1.buckets) (containsₘ_eq_containsKey hm ▸ h) :=
   apply_bucket_with_proof hm a AssocList.getCast List.getValueCast AssocList.getCast_eq List.getValueCast_of_perm
     List.getValueCast_append_of_containsKey_eq_false
 
 theorem get_eq_getValueCast [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} {h : m.contains a} :
-    m.get a h = (toListModel m.1.buckets).getValueCast a (contains_eq_containsKey hm ▸ h) := by
+    m.get a h = getValueCast a (toListModel m.1.buckets) (contains_eq_containsKey hm ▸ h) := by
   rw [get_eq_getₘ, getₘ_eq_getValue hm]
 
 theorem get!ₘ_eq_getValueCast! [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} [Inhabited (β a)] :
-    m.get!ₘ a = (toListModel m.1.buckets).getValueCast! a := by
+    m.get!ₘ a = getValueCast! a (toListModel m.1.buckets) := by
   rw [get!ₘ, get?ₘ_eq_getValueCast? hm, List.getValueCast!_eq_getValueCast?]
 
 theorem get!_eq_getValueCast! [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} [Inhabited (β a)] :
-    m.get! a = (toListModel m.1.buckets).getValueCast! a := by
+    m.get! a = getValueCast! a (toListModel m.1.buckets) := by
   rw [get!_eq_get!ₘ, get!ₘ_eq_getValueCast! hm]
 
 theorem getDₘ_eq_getValueCastD [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} {fallback : β a} :
-    m.getDₘ a fallback = (toListModel m.1.buckets).getValueCastD a fallback := by
+    m.getDₘ a fallback = getValueCastD a (toListModel m.1.buckets) fallback := by
   rw [getDₘ, get?ₘ_eq_getValueCast? hm, List.getValueCastD_eq_getValueCast?]
 
 theorem getD_eq_getValueCastD [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α} {fallback : β a} :
-    m.getD a fallback = (toListModel m.1.buckets).getValueCastD a fallback := by
+    m.getD a fallback = getValueCastD a (toListModel m.1.buckets) fallback := by
   rw [getD_eq_getDₘ, getDₘ_eq_getValueCastD hm]
 
 section
@@ -271,47 +271,47 @@ section
 variable {β : Type v}
 
 theorem Const.get?ₘ_eq_getValue? [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
-    (hm : m.1.WFImp) {a : α} : Const.get?ₘ m a = (toListModel m.1.buckets).getValue? a :=
+    (hm : m.1.WFImp) {a : α} : Const.get?ₘ m a = getValue? a (toListModel m.1.buckets) :=
   apply_bucket hm AssocList.get?_eq List.getValue?_of_perm getValue?_append_of_containsKey_eq_false
 
 theorem Const.get?_eq_getValue? [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
-    (hm : m.1.WFImp) {a : α} : Const.get? m a = (toListModel m.1.buckets).getValue? a := by
+    (hm : m.1.WFImp) {a : α} : Const.get? m a = getValue? a (toListModel m.1.buckets) := by
   rw [Const.get?_eq_get?ₘ, Const.get?ₘ_eq_getValue? hm]
 
 theorem Const.getₘ_eq_getValue [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
-    (hm : m.1.WFImp) {a : α} {h} : Const.getₘ m a h = (toListModel m.1.buckets).getValue a (containsₘ_eq_containsKey hm ▸ h) :=
+    (hm : m.1.WFImp) {a : α} {h} : Const.getₘ m a h = getValue a (toListModel m.1.buckets) (containsₘ_eq_containsKey hm ▸ h) :=
   apply_bucket_with_proof hm a AssocList.get List.getValue AssocList.get_eq List.getValue_of_perm List.getValue_append_of_containsKey_eq_false
 
 theorem Const.get_eq_getValue [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
-    (hm : m.1.WFImp) {a : α} {h} : Const.get m a h = (toListModel m.1.buckets).getValue a (contains_eq_containsKey hm ▸ h) := by
+    (hm : m.1.WFImp) {a : α} {h} : Const.get m a h = getValue a (toListModel m.1.buckets) (contains_eq_containsKey hm ▸ h) := by
   rw [Const.get_eq_getₘ, Const.getₘ_eq_getValue hm]
 
 theorem Const.get!ₘ_eq_getValue! [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] [Inhabited β] {m : Raw₀ α (fun _ => β)}
-    (hm : m.1.WFImp) {a : α} : Const.get!ₘ m a = (toListModel m.1.buckets).getValue! a := by
+    (hm : m.1.WFImp) {a : α} : Const.get!ₘ m a = getValue! a (toListModel m.1.buckets) := by
   rw [get!ₘ, get?ₘ_eq_getValue? hm, List.getValue!_eq_getValue?]
 
 theorem Const.get!_eq_getValue! [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] [Inhabited β] {m : Raw₀ α (fun _ => β)}
-    (hm : m.1.WFImp) {a : α} : Const.get! m a = (toListModel m.1.buckets).getValue! a := by
+    (hm : m.1.WFImp) {a : α} : Const.get! m a = getValue! a (toListModel m.1.buckets) := by
   rw [get!_eq_get!ₘ, get!ₘ_eq_getValue! hm]
 
 theorem Const.getDₘ_eq_getValueD [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
-    (hm : m.1.WFImp) {a : α} {fallback : β} : Const.getDₘ m a fallback = (toListModel m.1.buckets).getValueD a fallback := by
+    (hm : m.1.WFImp) {a : α} {fallback : β} : Const.getDₘ m a fallback = getValueD a (toListModel m.1.buckets) fallback := by
   rw [getDₘ, get?ₘ_eq_getValue? hm, List.getValueD_eq_getValue?]
 
 theorem Const.getD_eq_getValueD [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
-    (hm : m.1.WFImp) {a : α} {fallback : β} : Const.getD m a fallback = (toListModel m.1.buckets).getValueD a fallback := by
+    (hm : m.1.WFImp) {a : α} {fallback : β} : Const.getD m a fallback = getValueD a (toListModel m.1.buckets) fallback := by
   rw [getD_eq_getDₘ, getDₘ_eq_getValueD hm]
 
-theorem mem_values_iff_mem_values_toListModel {m : Raw₀ α (fun _ => β)} {b : β} :
-    b ∈ m.1.values ↔ b ∈ (toListModel m.1.buckets).values :=
-  Raw.values_perm_values_toListModel.mem_iff
+-- theorem mem_values_iff_mem_values_toListModel {m : Raw₀ α (fun _ => β)} {b : β} :
+--     b ∈ m.1.values ↔ b ∈ values (toListModel m.1.buckets) :=
+--   Raw.values_perm_values_toListModel.mem_iff
 
 end
 
 /-! # `replaceₘ` -/
 
 theorem toListModel_replaceₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
-   (h : m.1.WFImp) (a : α) (b : β a) : Perm (toListModel (m.replaceₘ a b).1.buckets) ((toListModel m.1.2).replaceEntry a b) :=
+   (h : m.1.WFImp) (a : α) (b : β a) : Perm (toListModel (m.replaceₘ a b).1.buckets) (replaceEntry a b (toListModel m.1.2)) :=
   toListModel_updateBucket h AssocList.toList_replace List.replaceEntry_of_perm List.replaceEntry_append_of_containsKey_right_eq_false
 
 theorem isHashSelf_replaceₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
@@ -352,7 +352,7 @@ theorem wfImp_consₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (
     rwa [← containsₘ_eq_containsKey h]
 
 theorem toListModel_insertₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
-    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.insertₘ a b).1.2) ((toListModel m.1.2).insertEntry a b) := by
+    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.insertₘ a b).1.2) (insertEntry (toListModel m.1.2) a b) := by
   rw [insertₘ]
   split
   · next h' =>
@@ -376,7 +376,7 @@ theorem wfImp_insertₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
 /-! # `insert` -/
 
 theorem toListModel_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
-    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.insert a b).1.2) ((toListModel m.1.2).insertEntry a b) := by
+    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.insert a b).1.2) (insertEntry (toListModel m.1.2) a b) := by
   rw [insert_eq_insertₘ]
   exact toListModel_insertₘ h
 
@@ -388,7 +388,7 @@ theorem wfImp_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m
 /-! # `containsThenInsert` -/
 
 theorem toListModel_containsThenInsert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
-    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.containsThenInsert a b).1.1.2) ((toListModel m.1.2).insertEntry a b) := by
+    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.containsThenInsert a b).1.1.2) (insertEntry (toListModel m.1.2) a b) := by
   rw [containsThenInsert_eq_insertₘ]
   exact toListModel_insertₘ h
 
@@ -400,7 +400,7 @@ theorem wfImp_containsThenInsert [BEq α] [Hashable α] [EquivBEq α] [LawfulHas
 /-! # `insertIfNewₘ` -/
 
 theorem toListModel_insertIfNewₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
-    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.insertIfNewₘ a b).1.buckets) ((toListModel m.1.buckets).insertEntryIfNew a b) := by
+    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.insertIfNewₘ a b).1.buckets) (insertEntryIfNew (toListModel m.1.buckets) a b) := by
   rw [insertIfNewₘ, insertEntryIfNew, containsₘ_eq_containsKey h, cond_eq_if]
   split
   · next h' => exact Perm.refl _
@@ -418,7 +418,7 @@ theorem wfImp_insertIfNewₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashabl
 
 theorem toListModel_insertIfNew [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
     (h : m.1.WFImp) {a : α} {b : β a} :
-    Perm (toListModel (m.insertIfNew a b).1.buckets) ((toListModel m.1.buckets).insertEntryIfNew a b) := by
+    Perm (toListModel (m.insertIfNew a b).1.buckets) (insertEntryIfNew (toListModel m.1.buckets) a b) := by
   rw [insertIfNew_eq_insertIfNewₘ]
   exact toListModel_insertIfNewₘ h
 
@@ -430,7 +430,7 @@ theorem wfImp_insertIfNew [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable �
 /-! # `getThenInsertIfNew?` -/
 
 theorem toListModel_getThenInsertIfNew? [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} {a : α} {b : β a} (h : m.1.WFImp) :
-    Perm (toListModel (m.getThenInsertIfNew? a b).1.1.buckets) ((toListModel m.1.buckets).insertEntryIfNew a b) := by
+    Perm (toListModel (m.getThenInsertIfNew? a b).1.1.buckets) (insertEntryIfNew (toListModel m.1.buckets) a b) := by
   rw [getThenInsertIfNew?_eq_insertIfNewₘ]
   exact toListModel_insertIfNewₘ h
 
@@ -443,7 +443,7 @@ theorem wfImp_getThenInsertIfNew? [BEq α] [Hashable α] [LawfulBEq α] {m : Raw
 
 theorem Const.toListModel_getThenInsertIfNew? {β : Type v} [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
     {m : Raw₀ α (fun _ => β)} {a : α} {b : β} (h : m.1.WFImp) :
-    Perm (toListModel (Const.getThenInsertIfNew? m a b).1.1.buckets) ((toListModel m.1.buckets).insertEntryIfNew a b) := by
+    Perm (toListModel (Const.getThenInsertIfNew? m a b).1.1.buckets) (insertEntryIfNew (toListModel m.1.buckets) a b) := by
   rw [getThenInsertIfNew?_eq_insertIfNewₘ]
   exact toListModel_insertIfNewₘ h
 
@@ -455,7 +455,7 @@ theorem Const.wfImp_getThenInsertIfNew? {β : Type v} [BEq α] [Hashable α] [Eq
 /-! # `removeₘ` -/
 
 theorem toListModel_removeₘaux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β) (a : α)
-    (h : m.1.WFImp) : Perm (toListModel (m.removeₘaux a).1.buckets) ((toListModel m.1.buckets).removeKey a) :=
+    (h : m.1.WFImp) : Perm (toListModel (m.removeₘaux a).1.buckets) (removeKey a (toListModel m.1.buckets)) :=
   toListModel_updateBucket h AssocList.toList_remove List.removeKey_of_perm List.removeKey_append_of_containsKey_right_eq_false
 
 theorem isHashSelf_removeₘaux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β) (a : α)
@@ -475,13 +475,13 @@ theorem wfImp_removeₘaux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable 
 
 theorem toListModel_perm_removeKey_of_containsₘ_eq_false [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
     (m : Raw₀ α β) (a : α) (h : m.1.WFImp) (h' : m.containsₘ a = false) :
-    Perm (toListModel m.1.buckets) ((toListModel m.1.buckets).removeKey a) := by
+    Perm (toListModel m.1.buckets) (removeKey a (toListModel m.1.buckets)) := by
   rw [removeKey_of_containsKey_eq_false]
   · exact Perm.refl _
   · rw [← containsₘ_eq_containsKey h, h']
 
 theorem toListModel_removeₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} {a : α}
-    (h : m.1.WFImp) : Perm (toListModel (m.removeₘ a).1.buckets) ((toListModel m.1.buckets).removeKey a) := by
+    (h : m.1.WFImp) : Perm (toListModel (m.removeₘ a).1.buckets) (removeKey a (toListModel m.1.buckets)) := by
   rw [removeₘ]
   split
   · exact toListModel_removeₘaux m a h
@@ -498,7 +498,7 @@ theorem wfImp_removeₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
 /-! # `remove` -/
 
 theorem toListModel_remove [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} {a : α}
-    (h : m.1.WFImp) : Perm (toListModel (m.remove a).1.buckets) ((toListModel m.1.buckets).removeKey a) := by
+    (h : m.1.WFImp) : Perm (toListModel (m.remove a).1.buckets) (removeKey a (toListModel m.1.buckets)) := by
   rw [remove_eq_removeₘ]
   exact toListModel_removeₘ h
 
@@ -625,7 +625,7 @@ theorem filter [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} {f : (a : α
 
 end WFImp
 
-theorem WF.out [BEq α] [Hashable α] [i₁ : EquivBEq α] [i₂ : LawfulHashable α] {m : Raw α β} (h : m.WF) : m.WFImp := by
+theorem _root_.MyLean.DHashMap.Raw.WF.out [BEq α] [Hashable α] [i₁ : EquivBEq α] [i₂ : LawfulHashable α] {m : Raw α β} (h : m.WF) : m.WFImp := by
   induction h generalizing i₁ i₂
   · next h => apply h
   · exact WFImp.empty
@@ -639,185 +639,181 @@ theorem WF.out [BEq α] [Hashable α] [i₁ : EquivBEq α] [i₂ : LawfulHashabl
 
 -- TODO: rename the following theorems to make sure users don't apply them by accident
 
-theorem empty_eq [BEq α] [Hashable α] {c : Nat} : (empty c : Raw α β) = (Raw₀.empty c).1 := rfl
+theorem empty_eq [BEq α] [Hashable α] {c : Nat} : (Raw.empty c : Raw α β) = (Raw₀.empty c).1 := rfl
 
 theorem emptyc_eq [BEq α] [Hashable α] : (∅ : Raw α β) = Raw₀.empty.1 := rfl
 
 theorem insert_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
     m.insert a b = (Raw₀.insert ⟨m, h.size_buckets_pos⟩ a b).1 := by
-  simp [insert, h.size_buckets_pos]
+  simp [Raw.insert, h.size_buckets_pos]
 
 theorem insert_val [BEq α] [Hashable α] {m : Raw₀ α β} {a : α} {b : β a} :
     m.val.insert a b = m.insert a b := by
-  simp [insert, m.2]
+  simp [Raw.insert, m.2]
 
 theorem insertIfNew_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
     m.insertIfNew a b = (Raw₀.insertIfNew ⟨m, h.size_buckets_pos⟩ a b).1 := by
-  simp [insertIfNew, h.size_buckets_pos]
+  simp [Raw.insertIfNew, h.size_buckets_pos]
 
 theorem insertIfNew_val [BEq α] [Hashable α] {m : Raw₀ α β} {a : α} {b : β a} :
     m.val.insertIfNew a b = m.insertIfNew a b := by
-  simp [insertIfNew, m.2]
+  simp [Raw.insertIfNew, m.2]
 
 theorem fst_containsThenInsert_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
     (m.containsThenInsert a b).1 = (Raw₀.containsThenInsert ⟨m, h.size_buckets_pos⟩ a b).1.1 := by
-  simp [containsThenInsert, h.size_buckets_pos]
+  simp [Raw.containsThenInsert, h.size_buckets_pos]
 
 theorem fst_containsThenInsert_val [BEq α] [Hashable α] {m : Raw₀ α β} {a : α} {b : β a} :
     (m.val.containsThenInsert a b).1 = (m.containsThenInsert a b).1.1 := by
-  simp [containsThenInsert, m.2]
+  simp [Raw.containsThenInsert, m.2]
 
 theorem snd_containsThenInsert_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
     (m.containsThenInsert a b).2 = (Raw₀.containsThenInsert ⟨m, h.size_buckets_pos⟩ a b).2 := by
-  simp [containsThenInsert, h.size_buckets_pos]
+  simp [Raw.containsThenInsert, h.size_buckets_pos]
 
 theorem snd_containsThenInsert_val [BEq α] [Hashable α] {m : Raw₀ α β} {a : α} {b : β a} :
     (m.val.containsThenInsert a b).2 = (m.containsThenInsert a b).2 := by
-  simp [containsThenInsert, m.2]
+  simp [Raw.containsThenInsert, m.2]
 
 theorem fst_getThenInsertIfNew?_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
     (m.getThenInsertIfNew? a b).1 = (Raw₀.getThenInsertIfNew? ⟨m, h.size_buckets_pos⟩ a b).1.1 := by
-  simp [getThenInsertIfNew?, h.size_buckets_pos]
+  simp [Raw.getThenInsertIfNew?, h.size_buckets_pos]
 
 theorem fst_getThenInsertIfNew?_val [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} {a : α} {b : β a} :
     (m.val.getThenInsertIfNew? a b).1 = (m.getThenInsertIfNew? a b).1.1 := by
-  simp [getThenInsertIfNew?, m.2]
+  simp [Raw.getThenInsertIfNew?, m.2]
 
 theorem snd_getThenInsertIfNew?_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} (h : m.WF) {a : α} {b : β a} :
     (m.getThenInsertIfNew? a b).2 = (Raw₀.getThenInsertIfNew? ⟨m, h.size_buckets_pos⟩ a b).2 := by
-  simp [getThenInsertIfNew?, h.size_buckets_pos]
+  simp [Raw.getThenInsertIfNew?, h.size_buckets_pos]
 
 theorem snd_getThenInsertIfNew?_val [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} {a : α} {b : β a} :
     (m.val.getThenInsertIfNew? a b).2 = (m.getThenInsertIfNew? a b).2 := by
-  simp [getThenInsertIfNew?, m.2]
+  simp [Raw.getThenInsertIfNew?, m.2]
 
 theorem get?_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} (h : m.WF) {a : α} :
     m.get? a = Raw₀.get? ⟨m, h.size_buckets_pos⟩ a := by
-  simp [get?, h.size_buckets_pos]
+  simp [Raw.get?, h.size_buckets_pos]
 
 theorem get?_val [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} {a : α} :
     m.val.get? a = m.get? a := by
-  simp [get?, m.2]
+  simp [Raw.get?, m.2]
 
 theorem contains_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} :
     m.contains a = Raw₀.contains ⟨m, h.size_buckets_pos⟩ a := by
-  simp [contains, h.size_buckets_pos]
+  simp [Raw.contains, h.size_buckets_pos]
 
 theorem contains_val [BEq α] [Hashable α] {m : Raw₀ α β} {a : α} :
     m.val.contains a = m.contains a := by
-  simp [contains, m.2]
+  simp [Raw.contains, m.2]
 
 theorem get_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} {a : α} {h : a ∈ m} :
-    m.get a h = Raw₀.get ⟨m, by rw [mem_iff_contains, contains] at h; split at h <;> simp_all⟩ a (by rw [mem_iff_contains, contains] at h; split at h <;> simp_all) := rfl
+    m.get a h = Raw₀.get ⟨m, by rw [Raw.mem_iff_contains, Raw.contains] at h; split at h <;> simp_all⟩ a (by rw [Raw.mem_iff_contains, Raw.contains] at h; split at h <;> simp_all) := rfl
 
 theorem get_val [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} {a : α} {h : a ∈ m.val} :
     m.val.get a h = m.get a (contains_val (m := m) ▸ h) := rfl
 
 theorem getD_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} (h : m.WF) {a : α} {fallback : β a} :
     m.getD a fallback = Raw₀.getD ⟨m, h.size_buckets_pos⟩ a fallback := by
-  simp [getD, h.size_buckets_pos]
+  simp [Raw.getD, h.size_buckets_pos]
 
 theorem getD_val [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} {a : α} {fallback : β a} :
     m.val.getD a fallback = m.getD a fallback := by
-  simp [getD, m.2]
+  simp [Raw.getD, m.2]
 
 theorem get!_eq [BEq α] [Hashable α] [LawfulBEq α] {m : Raw α β} (h : m.WF) {a : α} [Inhabited (β a)] :
     m.get! a = Raw₀.get! ⟨m, h.size_buckets_pos⟩ a := by
-  simp [get!, h.size_buckets_pos]
+  simp [Raw.get!, h.size_buckets_pos]
 
 theorem get!_val [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} {a : α} [Inhabited (β a)] :
     m.val.get! a = m.get! a := by
-  simp [get!, m.2]
+  simp [Raw.get!, m.2]
 
 theorem remove_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {a : α} :
     m.remove a = Raw₀.remove ⟨m, h.size_buckets_pos⟩ a := by
-  simp [remove, h.size_buckets_pos]
+  simp [Raw.remove, h.size_buckets_pos]
 
 theorem remove_val [BEq α] [Hashable α] {m : Raw₀ α β} {a : α} :
     m.val.remove a = m.remove a := by
-  simp [remove, m.2]
+  simp [Raw.remove, m.2]
 
 theorem filterMap_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a : α) → β a → Option (δ a)} :
     m.filterMap f = Raw₀.filterMap f ⟨m, h.size_buckets_pos⟩ := by
-  simp [filterMap, h.size_buckets_pos]
+  simp [Raw.filterMap, h.size_buckets_pos]
 
 theorem filterMap_val [BEq α] [Hashable α] {m : Raw₀ α β} {f : (a : α) → β a → Option (δ a)} :
     m.val.filterMap f = m.filterMap f := by
-  simp [filterMap, m.2]
+  simp [Raw.filterMap, m.2]
 
 theorem map_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a : α) → β a → δ a} :
     m.map f = Raw₀.map f ⟨m, h.size_buckets_pos⟩ := by
-  simp [map, h.size_buckets_pos]
+  simp [Raw.map, h.size_buckets_pos]
 
 theorem map_val [BEq α] [Hashable α] {m : Raw₀ α β} {f : (a : α) → β a → δ a} :
     m.val.map f = m.map f := by
-  simp [map, m.2]
+  simp [Raw.map, m.2]
 
 theorem filter_eq [BEq α] [Hashable α] {m : Raw α β} (h : m.WF) {f : (a : α) → β a → Bool} :
     m.filter f = Raw₀.filter f ⟨m, h.size_buckets_pos⟩ := by
-  simp [filter, h.size_buckets_pos]
+  simp [Raw.filter, h.size_buckets_pos]
 
 theorem filter_val [BEq α] [Hashable α] {m : Raw₀ α β} {f : (a : α) → β a → Bool} :
     m.val.filter f = m.filter f := by
-  simp [filter, m.2]
+  simp [Raw.filter, m.2]
 
 section
 
 variable {β : Type v}
 
 theorem Const.get?_eq [BEq α] [Hashable α] {m : Raw α (fun _ => β)} (h : m.WF) {a : α} :
-    Const.get? m a = Raw₀.Const.get? ⟨m, h.size_buckets_pos⟩ a := by
-  simp [Const.get?, h.size_buckets_pos]
+    Raw.Const.get? m a = Raw₀.Const.get? ⟨m, h.size_buckets_pos⟩ a := by
+  simp [Raw.Const.get?, h.size_buckets_pos]
 
 theorem Const.get?_val [BEq α] [Hashable α] {m : Raw₀ α (fun _ => β)} {a : α} :
-    Const.get? m.val a = Raw₀.Const.get? m a := by
-  simp [Const.get?, m.2]
+    Raw.Const.get? m.val a = Raw₀.Const.get? m a := by
+  simp [Raw.Const.get?, m.2]
 
 theorem Const.get_eq [BEq α] [Hashable α] {m : Raw α (fun _ => β)} {a : α} {h : a ∈ m} :
-    Const.get m a h = Raw₀.Const.get ⟨m, by rw [mem_iff_contains, contains] at h; split at h <;> simp_all⟩ a (by rw [mem_iff_contains, contains] at h; split at h <;> simp_all) :=
+    Raw.Const.get m a h = Raw₀.Const.get ⟨m, by rw [Raw.mem_iff_contains, Raw.contains] at h; split at h <;> simp_all⟩ a (by rw [Raw.mem_iff_contains, Raw.contains] at h; split at h <;> simp_all) :=
   rfl
 
 theorem Const.get_val [BEq α] [Hashable α] {m : Raw₀ α (fun _ => β)} {a : α} {h : a ∈ m.val} :
-    Const.get m.val a h = Raw₀.Const.get m a (contains_val (m := m) ▸ h) := rfl
+    Raw.Const.get m.val a h = Raw₀.Const.get m a (contains_val (m := m) ▸ h) := rfl
 
 theorem Const.getD_eq [BEq α] [Hashable α] {m : Raw α (fun _ => β)} (h : m.WF) {a : α} {fallback : β} :
-    Const.getD m a fallback = Raw₀.Const.getD ⟨m, h.size_buckets_pos⟩ a fallback := by
-  simp [Const.getD, h.size_buckets_pos]
+    Raw.Const.getD m a fallback = Raw₀.Const.getD ⟨m, h.size_buckets_pos⟩ a fallback := by
+  simp [Raw.Const.getD, h.size_buckets_pos]
 
 theorem Const.getD_val [BEq α] [Hashable α] {m : Raw₀ α (fun _ => β)} {a : α} {fallback : β} :
-    Const.getD m.val a fallback = Raw₀.Const.getD m a fallback := by
-  simp [Const.getD, m.2]
+    Raw.Const.getD m.val a fallback = Raw₀.Const.getD m a fallback := by
+  simp [Raw.Const.getD, m.2]
 
 theorem Const.get!_eq [BEq α] [Hashable α] [Inhabited β] {m : Raw α (fun _ => β)} (h : m.WF) {a : α} :
-    Const.get! m a = Raw₀.Const.get! ⟨m, h.size_buckets_pos⟩ a := by
-  simp [Const.get!, h.size_buckets_pos]
+    Raw.Const.get! m a = Raw₀.Const.get! ⟨m, h.size_buckets_pos⟩ a := by
+  simp [Raw.Const.get!, h.size_buckets_pos]
 
 theorem Const.get!_val [BEq α] [Hashable α] [Inhabited β] {m : Raw₀ α (fun _ => β)} {a : α} :
-    Const.get! m.val a = Raw₀.Const.get! m a := by
-  simp [Const.get!, m.2]
+    Raw.Const.get! m.val a = Raw₀.Const.get! m a := by
+  simp [Raw.Const.get!, m.2]
 
 theorem Const.fst_getThenInsertIfNew?_eq [BEq α] [Hashable α] {m : Raw α (fun _ => β)} (h : m.WF) {a : α} {b : β} :
-    (Const.getThenInsertIfNew? m a b).1 = (Raw₀.Const.getThenInsertIfNew? ⟨m, h.size_buckets_pos⟩ a b).1.1 := by
-  simp [Const.getThenInsertIfNew?, h.size_buckets_pos]
+    (Raw.Const.getThenInsertIfNew? m a b).1 = (Raw₀.Const.getThenInsertIfNew? ⟨m, h.size_buckets_pos⟩ a b).1.1 := by
+  simp [Raw.Const.getThenInsertIfNew?, h.size_buckets_pos]
 
 theorem Const.fst_getThenInsertIfNew?_val [BEq α] [Hashable α] {m : Raw₀ α (fun _ => β)} {a : α} {b : β} :
-    (Const.getThenInsertIfNew? m.val a b).1 = (Raw₀.Const.getThenInsertIfNew? m a b).1.1 := by
-  simp [Const.getThenInsertIfNew?, m.2]
+    (Raw.Const.getThenInsertIfNew? m.val a b).1 = (Raw₀.Const.getThenInsertIfNew? m a b).1.1 := by
+  simp [Raw.Const.getThenInsertIfNew?, m.2]
 
 theorem Const.snd_getThenInsertIfNew?_eq [BEq α] [Hashable α] {m : Raw α (fun _ => β)} (h : m.WF) {a : α} {b : β} :
-    (Const.getThenInsertIfNew? m a b).2 = (Raw₀.Const.getThenInsertIfNew? ⟨m, h.size_buckets_pos⟩ a b).2 := by
-  simp [Const.getThenInsertIfNew?, h.size_buckets_pos]
+    (Raw.Const.getThenInsertIfNew? m a b).2 = (Raw₀.Const.getThenInsertIfNew? ⟨m, h.size_buckets_pos⟩ a b).2 := by
+  simp [Raw.Const.getThenInsertIfNew?, h.size_buckets_pos]
 
 theorem Const.snd_getThenInsertIfNew?_val [BEq α] [Hashable α] {m : Raw₀ α (fun _ => β)} {a : α} {b : β} :
-    (Const.getThenInsertIfNew? m.val a b).2 = (Raw₀.Const.getThenInsertIfNew? m a b).2 := by
-  simp [Const.getThenInsertIfNew?, m.2]
+    (Raw.Const.getThenInsertIfNew? m.val a b).2 = (Raw₀.Const.getThenInsertIfNew? m a b).2 := by
+  simp [Raw.Const.getThenInsertIfNew?, m.2]
 
 end
 
 end Raw
 
-theorem empty_eq [BEq α] [Hashable α] {c : Nat} : (empty c : DHashMap α β).1 = (Raw₀.empty c).1 := rfl
-
-theorem emptyc_eq [BEq α] [Hashable α] : (∅ : DHashMap α β).1 = Raw₀.empty.1 := rfl
-
-end MyLean.DHashMap
+end MyLean.DHashMap.Internal

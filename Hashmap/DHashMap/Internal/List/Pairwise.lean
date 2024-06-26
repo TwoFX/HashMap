@@ -7,7 +7,7 @@ import Hashmap.DHashMap.Internal.List.Defs
 import Hashmap.DHashMap.Internal.List.Perm
 import Hashmap.DHashMap.Internal.List.Sublist
 
-namespace MyLean.DHashMap.Internal
+namespace MyLean.DHashMap.Internal.List
 
 set_option autoImplicit false
 
@@ -46,4 +46,4 @@ theorem Pairwise.sublist {P : α → α → Prop} {l l' : List α} (h : Sublist 
 theorem pairwise_cons {P : α → α → Prop} {a : α} {l : List α} : Pairwise P (a::l) ↔ (∀ y ∈ l, P a y) ∧ Pairwise P l :=
   Iff.rfl
 
-end MyLean.DHashMap.Internal
+end MyLean.DHashMap.Internal.List

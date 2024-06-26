@@ -13,6 +13,8 @@ variable {α : Type u} {β : α → Type v} {δ : Type w} {m : Type w → Type w
 
 namespace MyLean
 
+open DHashMap.Internal DHashMap.Internal.List
+
 namespace DHashMap
 
 namespace Raw
@@ -181,7 +183,7 @@ structure WFImp [BEq α] [Hashable α] (m : Raw α β) : Prop where
   buckets_hash_self : IsHashSelf m.buckets
   buckets_size : 0 < m.buckets.size
   size_eq : m.size = (toListModel m.buckets).length
-  distinct : (toListModel m.buckets).DistinctKeys
+  distinct : DistinctKeys (toListModel m.buckets)
 
 /--
 Well-formedness predicate for hash maps. Users of `DHashMap` will not need to interact with this. Users of `DHashMap.Raw`
