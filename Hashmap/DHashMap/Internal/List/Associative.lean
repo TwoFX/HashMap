@@ -156,8 +156,8 @@ theorem getValueCast?_cons_self [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} 
     getValueCast? k (⟨k, v⟩ :: l) = some v := by
   rw [getValueCast?_cons_of_true BEq.refl, cast_eq]
 
-theorem getValueCast?_eq_getValue? [BEq α] [LawfulBEq α] {β : Type v} {l : List ((_ : α) × β)} {a : α} :
-    getValueCast? a l = getValue? a l := by
+theorem getValue?_eq_getValueCast? [BEq α] [LawfulBEq α] {β : Type v} {l : List ((_ : α) × β)} {a : α} :
+    getValue? a l = getValueCast? a l := by
   induction l using assoc_induction <;> simp_all [getValueCast?_cons, getValue?_cons]
 
 section
@@ -450,7 +450,7 @@ theorem getValue?_eq_some_getValueD [BEq α] {l : List ((_ : α) × β)} {a : α
 
 theorem getValueD_eq_getValueCastD [BEq α] [LawfulBEq α] {l : List ((_ : α) × β)} {a : α} {fallback : β} :
     getValueD a l fallback = getValueCastD a l fallback := by
-  simp only [getValueD_eq_getValue?, getValueCastD_eq_getValueCast?, getValueCast?_eq_getValue?]
+  simp only [getValueD_eq_getValue?, getValueCastD_eq_getValueCast?, getValue?_eq_getValueCast?]
 
 theorem getValueD_congr [BEq α] [PartialEquivBEq α] {l : List ((_ : α) × β)} {a b : α} {fallback : β} (hab : a == b) :
     getValueD a l fallback = getValueD b l fallback := by
@@ -480,7 +480,7 @@ theorem getValue?_eq_some_getValue! [BEq α] [Inhabited β] {l : List ((_ : α) 
 
 theorem getValue!_eq_getValueCast! [BEq α] [LawfulBEq α] [Inhabited β] {l : List ((_ : α) × β)} {a : α} :
     getValue! a l = getValueCast! a l := by
-  simp only [getValue!_eq_getValue?, getValueCast!_eq_getValueCast?, getValueCast?_eq_getValue?]
+  simp only [getValue!_eq_getValue?, getValueCast!_eq_getValueCast?, getValue?_eq_getValueCast?]
 
 theorem getValue!_congr [BEq α] [PartialEquivBEq α] [Inhabited β] {l : List ((_ : α) × β)} {a b : α} (hab : a == b) :
     getValue! a l = getValue! b l := by

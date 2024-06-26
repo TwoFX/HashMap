@@ -26,8 +26,7 @@ section
 open Lean Elab Meta Tactic
 
 def baseNames : Array Name :=
-  #[
-    ``Raw.empty_eq, ``Raw.emptyc_eq,
+  #[``Raw.empty_eq, ``Raw.emptyc_eq,
     ``insert_eq, ``insert_val,
     ``insertIfNew_eq, ``insertIfNew_val,
     ``snd_containsThenInsert_eq, ``snd_containsThenInsert_val,
@@ -48,8 +47,7 @@ def baseNames : Array Name :=
     ``contains_eq, ``contains_val,
     ``get_eq, ``get_val,
     ``getD_eq, ``getD_val,
-    ``get!_eq, ``get!_val
-    ]
+    ``get!_eq, ``get!_val]
 
 syntax "dhashmap_simp_to_raw" ("using" term)? : tactic
 
