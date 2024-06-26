@@ -12,7 +12,7 @@ universe u v w
 
 variable {α : Type u} {β : Type v} {γ : Type w}
 
-namespace MyLean
+namespace Std
 
 namespace HashMap
 
@@ -34,4 +34,4 @@ end Raw
 
 end HashMap
 
-end MyLean
+end Std

@@ -16,7 +16,7 @@ If you want to run this benchmark, go back to bfabba0e6b2e19f7da7ce840189d3cbb11
 functions on the hash map are implemented.
 -/
 
-open MyLean
+open Std
 
 def lowercase : List Char :=
   [ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',

@@ -12,7 +12,7 @@ universe u v w
 
 variable {α : Type u} {β : α → Type v} {δ : Type w} {m : Type w → Type w} [Monad m]
 
-namespace MyLean
+namespace Std
 
 open DHashMap.Internal DHashMap.Internal.List
 
@@ -381,4 +381,4 @@ instance [BEq α] [Hashable α] : ForIn m (DHashMap α β) (Σ a, β a) where
 @[inline] def isEmpty [BEq α] [Hashable α] (m : DHashMap α β) : Bool :=
   m.1.isEmpty
 
-end MyLean.DHashMap
+end Std.DHashMap

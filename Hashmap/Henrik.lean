@@ -1,6 +1,6 @@
 import Hashmap.HashMap.Lemmas
 
-open MyLean
+open Std
 
 set_option autoImplicit false
 

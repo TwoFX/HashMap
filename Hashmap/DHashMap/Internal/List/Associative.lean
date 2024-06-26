@@ -32,7 +32,7 @@ theorem bif_neg {b : Bool} {a a' : α} (h : b = false) : (bif b then a else a') 
 
 end
 
-namespace MyLean.DHashMap.Internal.List
+namespace Std.DHashMap.Internal.List
 
 @[elab_as_elim]
 theorem assoc_induction {motive : List (Σ a, β a) → Prop} (nil : motive [])

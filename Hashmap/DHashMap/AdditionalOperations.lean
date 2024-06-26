@@ -10,7 +10,7 @@ This file defines operations on `DHashMap` which cannot be defined in `Basic.lea
 This file will have more imports than `Basic.lean` once everything is properly untangled.
 -/
 
-open MyLean.DHashMap.Internal
+open Std.DHashMap.Internal
 
 set_option autoImplicit false
 
@@ -18,7 +18,7 @@ universe u v w
 
 variable {α : Type u} {β : α → Type v} {γ : Type w} {δ : α → Type w}
 
-namespace MyLean.DHashMap
+namespace Std.DHashMap
 
 namespace Raw
 
@@ -40,4 +40,4 @@ end Raw
 @[inline] def map [BEq α] [Hashable α] (f : (a : α) → β a → δ a) (m : DHashMap α β) : DHashMap α δ :=
   ⟨Raw₀.map f ⟨m.1, m.2.size_buckets_pos⟩, .wf (Raw₀.map f ⟨m.1, m.2.size_buckets_pos⟩).2 (Internal.Raw.WFImp.map m.2.out)⟩
 
-end MyLean.DHashMap
+end Std.DHashMap

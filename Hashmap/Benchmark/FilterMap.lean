@@ -21,7 +21,7 @@ not clear how one would need to change the code to make this work.
 
 -/
 
-open MyLean
+open Std
 
 def lowercase : List Char :=
   ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',

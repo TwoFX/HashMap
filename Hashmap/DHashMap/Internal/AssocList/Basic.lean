@@ -8,7 +8,7 @@ set_option autoImplicit false
 
 universe w v u
 
-namespace MyLean.DHashMap.Internal
+namespace Std.DHashMap.Internal
 
 variable {α : Type u} {β : α → Type v} {γ : α → Type w} {δ : Type w} {m : Type w → Type w} [Monad m]
 
@@ -136,4 +136,4 @@ where
 
 end AssocList
 
-end MyLean.DHashMap.Internal
+end Std.DHashMap.Internal

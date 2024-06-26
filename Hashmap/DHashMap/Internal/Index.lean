@@ -6,7 +6,7 @@ Authors: Markus Himmel
 import Hashmap.Init.All
 import Hashmap.Classes.LawfulHashable
 
-namespace MyLean.DHashMap.Internal
+namespace Std.DHashMap.Internal
 
 /--
 Scramble the hash code in order to protect against bad hash functions.
@@ -73,4 +73,4 @@ theorem hashesTo_cons [BEq α] [Hashable α] [LawfulHashable α] {i : Nat} {size
 
 end List
 
-end MyLean.DHashMap.Internal
+end Std.DHashMap.Internal

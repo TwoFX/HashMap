@@ -21,7 +21,7 @@ universe u v w
 
 variable {α : Type u} {β : α → Type v} {γ : Type w} {δ : α → Type w}
 
-namespace MyLean.DHashMap.Internal
+namespace Std.DHashMap.Internal
 
 open Internal.List
 
@@ -404,4 +404,4 @@ end
 
 end Raw₀
 
-end MyLean.DHashMap.Internal
+end Std.DHashMap.Internal

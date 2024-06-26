@@ -6,7 +6,7 @@ Authors: Markus Himmel
 import Hashmap.DHashMap.Internal.AssocList.Basic
 import Hashmap.DHashMap.Internal.List.Associative
 
-open MyLean.DHashMap.Internal
+open Std.DHashMap.Internal
 
 set_option autoImplicit false
 
@@ -14,7 +14,7 @@ universe w v u
 
 variable {α : Type u} {β : α → Type v} {γ : α → Type w} {δ : Type w} {m : Type w → Type w} [Monad m]
 
-namespace MyLean.DHashMap.Internal.AssocList
+namespace Std.DHashMap.Internal.AssocList
 
 open Internal.List
 
@@ -153,4 +153,4 @@ theorem toList_filter {f : (a : α) → β a → Bool} {l : AssocList α β} :
     · exact (ih _).trans (by simpa using perm_middle.symm)
     · exact ih _
 
-end MyLean.DHashMap.Internal.AssocList
+end Std.DHashMap.Internal.AssocList

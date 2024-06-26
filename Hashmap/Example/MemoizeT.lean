@@ -1,6 +1,6 @@
 import Hashmap.DHashMap.Basic
 
-open MyLean
+open Std
 
 universe u v w
 

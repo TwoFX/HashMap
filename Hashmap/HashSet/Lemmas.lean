@@ -12,7 +12,7 @@ universe u v
 
 variable {α : Type u} [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
 
-namespace MyLean.HashSet
+namespace Std.HashSet
 
 namespace Raw
 
@@ -260,4 +260,4 @@ theorem snd_containsThenInsert {a : α} : (m.containsThenInsert a).2 = m.contain
 
 end
 
-end MyLean.HashSet
+end Std.HashSet

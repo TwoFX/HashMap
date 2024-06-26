@@ -20,7 +20,7 @@ This allows us to speed up the calculation of multiple factorizations by reusing
 to prove that the results are correct.
 -/
 
-open MyLean
+open Std
 
 def Nat.Prime (n : Nat) : Prop :=
   1 < n ∧ ∀ i j, 1 < i → 1 < j → i * j ≠ n

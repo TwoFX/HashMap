@@ -12,7 +12,7 @@ universe u v
 
 variable {α : Type u} {β : Type v} [BEq α] [Hashable α]
 
-namespace MyLean.HashMap
+namespace Std.HashMap
 
 namespace Raw
 
@@ -752,4 +752,4 @@ instance [EquivBEq α] [LawfulHashable α] : LawfulGetElem (HashMap α β) α β
 
 end
 
-end MyLean.HashMap
+end Std.HashMap

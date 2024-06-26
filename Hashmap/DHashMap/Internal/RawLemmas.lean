@@ -6,7 +6,7 @@ Authors: Markus Himmel
 import Hashmap.DHashMap.Internal.WF
 import Lean.Elab.Tactic
 
-open MyLean.DHashMap.Internal.List
+open Std.DHashMap.Internal.List
 
 set_option autoImplicit false
 
@@ -14,7 +14,7 @@ universe u v
 
 variable {α : Type u} {β : α → Type v} [BEq α] [Hashable α]
 
-namespace MyLean.DHashMap.Internal
+namespace Std.DHashMap.Internal
 
 section empty
 
@@ -60,7 +60,7 @@ def modifyNames : List Name :=
   [ ``toListModel_insert, ``toListModel_remove, ``toListModel_insertIfNew ]
 
 def congrNames : MetaM (List (TSyntax `term)) := do
-  return [← `(MyLean.DHashMap.Internal.List.Perm.isEmpty_eq), ← `(containsKey_of_perm), ← `(MyLean.DHashMap.Internal.List.Perm.length_eq),
+  return [← `(Std.DHashMap.Internal.List.Perm.isEmpty_eq), ← `(containsKey_of_perm), ← `(Std.DHashMap.Internal.List.Perm.length_eq),
     ← `(getValueCast?_of_perm _), ← `(getValue?_of_perm _), ← `(getValue_of_perm _),
     ← `(getValueCast_of_perm _), ← `(getValueCast!_of_perm _), ← `(getValueCastD_of_perm _),
     ← `(getValue!_of_perm _), ← `(getValueD_of_perm _) ]
@@ -537,4 +537,4 @@ end Const
 
 end Raw₀
 
-end MyLean.DHashMap.Internal
+end Std.DHashMap.Internal

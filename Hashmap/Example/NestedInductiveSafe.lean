@@ -17,7 +17,7 @@ declare an inductive predicate for the well-formedness.
 Our chosen example is a (non-path-compressing) trie that stores child nodes in a hash map.
 -/
 
-open MyLean
+open Std
 
 inductive RawTrie (α : Type u) where
   | mk : Bool → HashMap.Raw α (RawTrie α) → RawTrie α

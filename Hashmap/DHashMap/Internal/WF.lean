@@ -7,7 +7,7 @@ import Hashmap.DHashMap.Basic
 import Hashmap.DHashMap.Internal.Model
 import Hashmap.DHashMap.Internal.AssocList.Lemmas
 
-open MyLean.DHashMap.Internal.List
+open Std.DHashMap.Internal.List
 
 set_option autoImplicit false
 
@@ -17,7 +17,7 @@ variable {α : Type u} {β : α → Type v} {γ : Type w} {δ : α → Type w}
 
 open List
 
-namespace MyLean.DHashMap.Internal
+namespace Std.DHashMap.Internal
 
 @[simp]
 theorem toListModel_mkArray_nil {c} : toListModel (mkArray c (AssocList.nil : AssocList α β)) = [] := by
@@ -751,4 +751,4 @@ end
 
 end Raw
 
-end MyLean.DHashMap.Internal
+end Std.DHashMap.Internal

@@ -8,7 +8,7 @@ universe u v w
 
 variable {α : Type u} {β : α → Type v} {γ : α → Type w}
 
-namespace MyLean.DHashMap.Internal.List
+namespace Std.DHashMap.Internal.List
 
 def Pairwise (P : α → α → Prop) : List α → Prop
 | [] => True
@@ -26,4 +26,4 @@ def values {β : Type v} : List ((_ : α) × β) → List β
   | [] => []
   | ⟨_, v⟩ :: l => v :: values l
 
-end MyLean.DHashMap.Internal.List
+end Std.DHashMap.Internal.List

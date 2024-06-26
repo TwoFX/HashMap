@@ -9,10 +9,10 @@ set_option autoImplicit false
 
 universe u v
 
-namespace MyLean.DHashMap
+namespace Std.DHashMap
 
 structure Raw (α : Type u) (β : α → Type v) where
   size : Nat
   buckets : Array (DHashMap.Internal.AssocList α β)
 
-end MyLean.DHashMap
+end Std.DHashMap

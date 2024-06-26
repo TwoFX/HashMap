@@ -11,7 +11,7 @@ universe u v w
 
 variable {α : Type u} {β : Type v}
 
-namespace MyLean
+namespace Std
 
 namespace HashMap
 
@@ -244,4 +244,4 @@ instance [BEq α] [Hashable α] {m : Type w → Type w} : ForIn m (HashMap α β
 @[inline] def isEmpty [BEq α] [Hashable α] (m : HashMap α β) : Bool :=
   m.inner.isEmpty
 
-end MyLean.HashMap
+end Std.HashMap

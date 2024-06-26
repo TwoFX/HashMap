@@ -13,7 +13,7 @@ Takeaways:
 
 -/
 
-open MyLean
+open Std
 
 def lowercase : List Char :=
   [ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',

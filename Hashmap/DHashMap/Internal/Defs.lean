@@ -13,7 +13,7 @@ universe u v w
 
 variable {α : Type u} {β : α → Type v} {δ : Type w} {m : Type w → Type w} [Monad m]
 
-namespace MyLean
+namespace Std
 
 namespace DHashMap.Internal
 
@@ -229,4 +229,4 @@ structure WFImp [BEq α] [Hashable α] (m : Raw α β) : Prop where
 
 end Raw
 
-end MyLean.DHashMap.Internal
+end Std.DHashMap.Internal

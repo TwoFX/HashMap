@@ -5,7 +5,7 @@ Authors: Markus Himmel
 -/
 import Hashmap.DHashMap.Internal.RawLemmas
 
-open MyLean.DHashMap.Internal
+open Std.DHashMap.Internal
 
 set_option autoImplicit false
 
@@ -13,7 +13,7 @@ universe u v
 
 variable {α : Type u} {β : α → Type v} [BEq α] [Hashable α]
 
-namespace MyLean.DHashMap
+namespace Std.DHashMap
 
 namespace Raw
 
@@ -1262,4 +1262,4 @@ end Const
 
 end
 
-end MyLean.DHashMap
+end Std.DHashMap

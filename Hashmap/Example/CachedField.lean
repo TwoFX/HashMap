@@ -32,7 +32,7 @@ to make this easier:
    the case `LawfulBEq α` are special cases of this.
 -/
 
-open MyLean
+open Std
 
 structure Range where
   start : Nat

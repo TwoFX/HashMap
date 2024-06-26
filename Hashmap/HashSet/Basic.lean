@@ -11,7 +11,7 @@ universe u v
 
 variable {α : Type u}
 
-namespace MyLean
+namespace Std
 
 namespace HashSet
 
@@ -168,4 +168,4 @@ instance [BEq α] [Hashable α] {m : Type v → Type v} : ForIn m (HashSet α) �
 
 end HashSet
 
-end MyLean
+end Std
