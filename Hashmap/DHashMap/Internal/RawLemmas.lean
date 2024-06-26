@@ -45,7 +45,7 @@ namespace Raw₀
 variable (m : Raw₀ α β) (h : m.1.WF)
 
 macro "wf_trivial" : tactic => `(tactic|
-  repeat (first | apply Raw.WFImp.insert | apply Raw.WFImp.insertIfNew | apply Raw.WFImp.remove | apply Raw.WF.out | assumption | apply wfImp_empty | apply Raw.WFImp.distinct | apply Raw.WF.empty₀))
+  repeat (first | apply Raw₀.wfImp_insert | apply Raw₀.wfImp_insertIfNew | apply Raw₀.wfImp_remove | apply Raw.WF.out | assumption | apply Raw₀.wfImp_empty | apply Raw.WFImp.distinct | apply Raw.WF.empty₀))
 
 macro "empty" : tactic => `(tactic| { intros; simp_all [List.isEmpty_iff] } )
 
@@ -101,7 +101,7 @@ theorem contains_of_isEmpty [EquivBEq α] [LawfulHashable α] {a : α} : m.1.isE
   simp_to_model; empty
 
 theorem isEmpty_eq_false_iff_exists_contains_eq_true [EquivBEq α] [LawfulHashable α] : m.1.isEmpty = false ↔ ∃ a, m.contains a = true := by
-  simp only [contains_eq_containsKey h.out]
+  simp only [contains_eq_containsKey (Raw.WF.out h)]
   simp_to_model using List.isEmpty_eq_false_iff_exists_containsKey
 
 theorem contains_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} : (m.insert a b).contains k = ((a == k) || m.contains k) := by

@@ -215,4 +215,18 @@ end
 
 end Raw₀
 
+namespace Raw
+
+/--
+This is the actual well-formedness predicate for hash maps. Users should never need to interact with this and should use
+`WF` instead.
+-/
+structure WFImp [BEq α] [Hashable α] (m : Raw α β) : Prop where
+  buckets_hash_self : IsHashSelf m.buckets
+  buckets_size : 0 < m.buckets.size
+  size_eq : m.size = (toListModel m.buckets).length
+  distinct : List.DistinctKeys (toListModel m.buckets)
+
+end Raw
+
 end MyLean.DHashMap.Internal

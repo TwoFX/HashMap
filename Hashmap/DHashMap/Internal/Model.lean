@@ -130,7 +130,7 @@ theorem exists_bucket [BEq α] [Hashable α]
 /--
 This is the general theorem used to show that access operations are correct.
 -/
-theorem apply_bucket [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α}
+theorem apply_bucket [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : Raw.WFImp m.1) {a : α}
     {f : AssocList α β → γ} {g : List (Σ a, β a) → γ} (hfg : ∀ {l}, f l = g l.toList)
     (hg₁ : ∀ {l l'}, DistinctKeys l → Perm l l' → g l = g l') (hg₂ : ∀ {l l'}, containsKey a l' = false → g (l ++ l') = g l) :
     f (bucket m.1.buckets m.2 a) = g (toListModel m.1.buckets) := by
@@ -139,7 +139,8 @@ theorem apply_bucket [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable
   rw [hfg, hg₂]
   exact hlk hm.buckets_hash_self _ rfl
 
-theorem apply_bucket_with_proof {γ : α → Type w} [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : m.1.WFImp) (a : α)
+theorem apply_bucket_with_proof {γ : α → Type w} [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
+    (hm : Raw.WFImp m.1) (a : α)
     (f : (a : α) → (l : AssocList α β) → l.contains a → γ a) (g : (a : α) → (l : List (Σ a, β a)) → containsKey a l → γ a)
     (hfg : ∀ {a l h}, f a l h = g a l.toList (AssocList.contains_eq.symm.trans h))
     (hg₁ : ∀ {l l' a h}, DistinctKeys l → (hl' : Perm l l') → g a l h = g a l' ((List.containsKey_of_perm hl').symm.trans h)) {h h'}
@@ -153,7 +154,7 @@ theorem apply_bucket_with_proof {γ : α → Type w} [BEq α] [Hashable α] [Par
 /--
 This is the general theorem to show that modification operations are correct.
 -/
-theorem toListModel_updateBucket [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : m.1.WFImp) {a : α}
+theorem toListModel_updateBucket [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α β} (hm : Raw.WFImp m.1) {a : α}
     {f : AssocList α β → AssocList α β} {g : List (Σ a, β a) → List (Σ a, β a)} (hfg : ∀ {l}, (f l).toList = g l.toList)
     (hg₁ : ∀ {l l'}, DistinctKeys l → Perm l l' → Perm (g l) (g l')) (hg₂ : ∀ {l l'}, containsKey a l' = false → g (l ++ l') = g l ++ l') :
     Perm (toListModel (updateBucket m.1.buckets m.2 a f)) (g (toListModel m.1.2)) := by

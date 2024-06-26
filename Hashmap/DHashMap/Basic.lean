@@ -177,22 +177,13 @@ instance : ForIn m (Raw α β) (Σ a, β a) where
 section WF
 
 /--
-This is the actual well-formedness predicate for hash maps. Users should never need to interact with this and should use
-`WF` instead.
--/
-structure WFImp [BEq α] [Hashable α] (m : Raw α β) : Prop where
-  buckets_hash_self : IsHashSelf m.buckets
-  buckets_size : 0 < m.buckets.size
-  size_eq : m.size = (toListModel m.buckets).length
-  distinct : DistinctKeys (toListModel m.buckets)
-
-/--
 Well-formedness predicate for hash maps. Users of `DHashMap` will not need to interact with this. Users of `DHashMap.Raw`
-will need to provide proofs of `WF` to lemmas and should use the lemmas `WF.empty`, `WF.insert'` and `WF.insert` to show
-that map operations preserve well-formedness.
+will need to provide proofs of `WF` to lemmas and should use the lemmas `WF.empty`, `WF.emptyc`, `WF.insert`, `WF.containsThenInsert`,
+`WF.remove`, `WF.insertIfNew`, `WF.getThenInsertIfNew?`, `WF.filter`, `WF.Const.getThenInsertIfNew?`, `WF.filterMap` and `WF.map` to
+show that map operations preserve well-formedness.
 -/
 inductive WF : {α : Type u} → {β : α → Type v} → [BEq α] → [Hashable α] → Raw α β → Prop where
-  | wf {α β} [BEq α] [Hashable α] {m : Raw α β} : 0 < m.buckets.size → (∀ [EquivBEq α] [LawfulHashable α], m.WFImp) → WF m
+  | wf {α β} [BEq α] [Hashable α] {m : Raw α β} : 0 < m.buckets.size → (∀ [EquivBEq α] [LawfulHashable α], Raw.WFImp m) → WF m
   | empty₀ {α β} [BEq α] [Hashable α] {c} : WF (Raw₀.empty c : Raw₀ α β).1
   | insert₀ {α β} [BEq α] [Hashable α] {m : Raw α β} {h a b} : WF m → WF (Raw₀.insert ⟨m, h⟩ a b).1
   | containsThenInsert₀ {α β} [BEq α] [Hashable α] {m : Raw α β} {h a b} : WF m → WF (Raw₀.containsThenInsert ⟨m, h⟩ a b).1.1
