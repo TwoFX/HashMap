@@ -134,7 +134,7 @@ theorem apply_bucket [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable
     {f : AssocList α β → γ} {g : List (Σ a, β a) → γ} (hfg : ∀ {l}, f l = g l.toList)
     (hg₁ : ∀ {l l'}, DistinctKeys l → Perm l l' → g l = g l') (hg₂ : ∀ {l l'}, containsKey a l' = false → g (l ++ l') = g l) :
     f (bucket m.1.buckets m.2 a) = g (toListModel m.1.buckets) := by
-  obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets hm.buckets_size a
+  obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets m.2 a
   refine Eq.trans ?_ (hg₁ (hm.distinct.perm hl.symm) hl.symm)
   rw [hfg, hg₂]
   exact hlk hm.buckets_hash_self _ rfl
@@ -146,7 +146,7 @@ theorem apply_bucket_with_proof {γ : α → Type w} [BEq α] [Hashable α] [Par
     (hg₁ : ∀ {l l' a h}, DistinctKeys l → (hl' : Perm l l') → g a l h = g a l' ((List.containsKey_of_perm hl').symm.trans h)) {h h'}
     (hg₂ : ∀ {l l' a h}, (hl' : containsKey a l' = false) → g a (l ++ l') h = g a l ((List.containsKey_append_of_not_contains_right hl').symm.trans h)) :
     f a (bucket m.1.buckets m.2 a) h = g a (toListModel m.1.buckets) h' := by
-  obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets hm.buckets_size a
+  obtain ⟨l, hl, hlk⟩ := exists_bucket m.1.buckets m.2 a
   refine Eq.trans ?_ (hg₁ hm.distinct hl).symm
   rw [hfg, hg₂]
   exact hlk hm.buckets_hash_self _ rfl

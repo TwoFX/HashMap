@@ -204,11 +204,6 @@ theorem isSome_getValueCast?_eq_isSome_getEntry? [BEq α] [LawfulBEq α] {l : Li
     (getValueCast? a l).isSome = (getEntry? a l).isSome := by
   rw [getValueCast?_eq_getEntry?, Option.isSome_dmap]
 
-theorem getValueCast?_congr [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a a' : α} (h : a == a') :
-    getValueCast? a l = cast (congrArg _ (congrArg _ (eq_of_beq h).symm)) (getValueCast? a' l) := by
-  obtain rfl := eq_of_beq h
-  rw [cast_eq]
-
 theorem isEmpty_eq_false_iff_exists_isSome_getValueCast? [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} :
     l.isEmpty = false ↔ ∃ a, (getValueCast? a l).isSome := by
   simp [isEmpty_eq_false_iff_exists_isSome_getEntry?, isSome_getValueCast?_eq_isSome_getEntry?]

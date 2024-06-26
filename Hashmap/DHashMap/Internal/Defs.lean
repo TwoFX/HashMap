@@ -223,7 +223,6 @@ This is the actual well-formedness predicate for hash maps. Users should never n
 -/
 structure WFImp [BEq α] [Hashable α] (m : Raw α β) : Prop where
   buckets_hash_self : IsHashSelf m.buckets
-  buckets_size : 0 < m.buckets.size
   size_eq : m.size = (toListModel m.buckets).length
   distinct : List.DistinctKeys (toListModel m.buckets)
 

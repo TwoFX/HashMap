@@ -56,7 +56,6 @@ theorem toListModel_buckets_empty {c} : toListModel (empty c : Raw₀ α β).1.b
 
 theorem wfImp_empty [BEq α] [Hashable α] {c} : Raw.WFImp (empty c : Raw₀ α β).1 where
   buckets_hash_self := by simp [Raw.empty, Raw₀.empty]
-  buckets_size := Raw.WF.empty₀.size_buckets_pos
   size_eq := by simp [Raw.empty, Raw₀.empty]
   distinct := by simp
 
@@ -170,9 +169,8 @@ theorem wfImp_expandIfNecessary [BEq α] [Hashable α] [EquivBEq α] [LawfulHash
   · let ⟨⟨size, buckets⟩, hm⟩ := m
     have := toListModel_expand (buckets := ⟨buckets, hm⟩)
     dsimp at this
-    refine ⟨?_, ?_, ?_, ?_⟩
+    refine ⟨?_, ?_, ?_⟩
     · simpa using isHashSelf_expand
-    · simpa using (expand _).2
     · refine h.size_eq.trans ?_
       simpa using this.symm.length_eq
     · simpa using h.distinct.perm this
@@ -276,7 +274,6 @@ theorem isHashSelf_replaceₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashab
 theorem wfImp_replaceₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
     (h : Raw.WFImp m.1) (a : α) (b : β a) : Raw.WFImp (m.replaceₘ a b).1 where
   buckets_hash_self := isHashSelf_replaceₘ m h a b
-  buckets_size := by simpa [replaceₘ] using h.buckets_size
   size_eq := h.size_eq.trans (Eq.trans length_replaceEntry.symm (toListModel_replaceₘ _ h _ _).length_eq.symm)
   distinct := h.distinct.replaceEntry.perm (toListModel_replaceₘ _ h _ _)
 
@@ -297,7 +294,6 @@ theorem isHashSelf_consₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable 
 theorem wfImp_consₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β)
     (h : Raw.WFImp m.1) (a : α) (b : β a) (hc : m.containsₘ a = false) : Raw.WFImp (m.consₘ a b).1 where
   buckets_hash_self := isHashSelf_consₘ m h a b
-  buckets_size := by simpa [consₘ] using h.buckets_size
   size_eq := by
     refine Eq.trans ?_ (toListModel_consₘ _ h _ _).length_eq.symm
     simpa [consₘ] using h.size_eq
@@ -421,7 +417,6 @@ theorem isHashSelf_removeₘaux [BEq α] [Hashable α] [EquivBEq α] [LawfulHash
 theorem wfImp_removeₘaux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (m : Raw₀ α β) (a : α)
     (h : Raw.WFImp m.1) (h' : m.containsₘ a = true) : Raw.WFImp (m.removeₘaux a).1 where
   buckets_hash_self := isHashSelf_removeₘaux m a h
-  buckets_size := by simpa [removeₘaux] using h.buckets_size
   size_eq := by
     rw [(toListModel_removeₘaux m a h).length_eq, removeₘaux, length_removeKey,
       ← containsₘ_eq_containsKey h, h', cond_true, h.size_eq]
@@ -478,7 +473,6 @@ theorem isHashSelf_filterMapₘ [BEq α] [Hashable α] [ReflBEq α] [LawfulHasha
 theorem wfImp_filterMapₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} {f : (a : α) → β a → Option (δ a)} (h : Raw.WFImp m.1) :
     Raw.WFImp (m.filterMapₘ f).1 where
   buckets_hash_self := isHashSelf_filterMapₘ h
-  buckets_size := by simpa [filterMapₘ] using h.buckets_size
   size_eq := by simp [filterMapₘ]
   distinct := h.distinct.filterMap.perm toListModel_filterMapₘ
 
@@ -510,7 +504,6 @@ theorem isHashSelf_mapₘ [BEq α] [Hashable α] [ReflBEq α] [LawfulHashable α
 theorem wfImp_mapₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} {f : (a : α) → β a → δ a}
     (h : Raw.WFImp m.1) : Raw.WFImp (m.mapₘ f).1 where
   buckets_hash_self := isHashSelf_mapₘ h
-  buckets_size := by simpa [mapₘ] using h.buckets_size
   size_eq := by rw [toListModel_mapₘ.length_eq, List.length_map, ← h.size_eq, mapₘ]
   distinct := h.distinct.map.perm toListModel_mapₘ
 
@@ -542,7 +535,6 @@ theorem isHashSelf_filterₘ [BEq α] [Hashable α] [ReflBEq α] [LawfulHashable
 theorem wfImp_filterₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β} {f : (a : α) → β a → Bool}
     (h : Raw.WFImp m.1) : Raw.WFImp (m.filterₘ f).1 where
   buckets_hash_self := isHashSelf_filterₘ h
-  buckets_size := by simpa [filterₘ] using h.buckets_size
   size_eq := by simp [filterₘ]
   distinct := h.distinct.filter.perm toListModel_filterₘ
 
