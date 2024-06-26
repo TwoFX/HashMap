@@ -48,7 +48,7 @@ macro "dhashmap_wf_trivial" : tactic => `(tactic|
 
 macro "dhashmap_empty" : tactic => `(tactic| { intros; simp_all [List.isEmpty_iff] } )
 
-open Lean Elab Meta Tactic
+open Lean
 
 def queryNames : Array Name :=
   #[``contains_eq_containsKey, ``Raw.isEmpty_eq_isEmpty, ``Raw.size_eq_length, ``get?_eq_getValueCast?,
