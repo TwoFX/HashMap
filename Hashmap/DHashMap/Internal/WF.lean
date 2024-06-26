@@ -4,9 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
 import Hashmap.DHashMap.Basic
-import Hashmap.ForUpstream
 import Hashmap.DHashMap.Internal.Model
-import Hashmap.Leftovers
 import Hashmap.DHashMap.Internal.AssocList.Lemmas
 
 open MyLean.DHashMap.Internal.List

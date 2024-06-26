@@ -3,10 +3,8 @@ Copyright (c) 2024 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
-import Hashmap.BEq
-import Hashmap.Or
-import Hashmap.ForUpstream
-import Hashmap.Option
+import Hashmap.Classes.BEq
+import Hashmap.Init.All
 import Hashmap.DHashMap.Internal.List.Pairwise
 
 set_option autoImplicit false
@@ -130,11 +128,6 @@ theorem getValue?_eq_of_beq [BEq α] [PartialEquivBEq α] {l : List ((_ : α) ×
     getValue? a l = getValue? a' l := by
   simp [getValue?_eq_getEntry?, getEntry?_eq_of_beq h]
 
--- TODO
-@[simp] theorem Option.isSome_map (α : Type u) (β : Type v) (f : α → β) (o : Option α) :
-    (o.map f).isSome = o.isSome := by
-  cases o <;> simp
-
 theorem isEmpty_eq_false_iff_exists_isSome_getValue? [BEq α] [ReflBEq α] {l : List ((_ : α) × β)} :
     l.isEmpty = false ↔ ∃ a, (getValue? a l).isSome := by
   simp [isEmpty_eq_false_iff_exists_isSome_getEntry?, getValue?_eq_getEntry?]
@@ -194,13 +187,6 @@ theorem _root_.Option.dmap_congr {o o' : Option α} {f : (a : α) → (o = some 
 @[simp]
 theorem _root_.Option.isSome_dmap {o : Option α} {f : (a : α) → (o = some a) → β} :
     (o.dmap f).isSome = o.isSome := by
-  cases o <;> rfl
-
--- TODO: this is not needed
-theorem _root_.Option.dmap_or {o o' : Option α} (f : (a : α) → ((o.or o') = some a) → β) :
-    (o.or o').dmap f = (o.dmap fun a h => f a (by rw [h, Option.or_some])).or (o'.dmap fun a h => match o with
-      | none => f a (by rw [Option.none_or, h])
-      | some a' => f a' (by rw [Option.or_some])) := by
   cases o <;> rfl
 
 end
@@ -741,10 +727,6 @@ theorem distinctKeys_of_sublist [BEq α] {l l' : List (Σ a, β a)} (h : Sublist
 theorem DistinctKeys.of_keys_eq [BEq α] {l : List (Σ a, β a)} {l' : List (Σ a, γ a)} (h : keys l = keys l') : DistinctKeys l → DistinctKeys l' :=
   distinctKeys_of_sublist_keys (h ▸ Sublist.refl)
 
--- TODO
-theorem List.contains_iff_exists_mem_beq [BEq α] (l : List α) (a : α) : l.contains a ↔ ∃ a' ∈ l, a == a' := by
-  induction l <;> simp_all
-
 theorem containsKey_iff_exists [BEq α] [PartialEquivBEq α] {l : List (Σ a, β a)} {a : α} :
     containsKey a l ↔ ∃ a' ∈ keys l, a == a' := by
   rw [containsKey_eq_keys_contains, List.contains_iff_exists_mem_beq]
@@ -1156,7 +1138,6 @@ section
 
 variable {β : Type v}
 
--- TODO
 theorem getValue?_removeKey_self [BEq α] [PartialEquivBEq α] {l : List ((_ : α) × β)} {k : α} (h : DistinctKeys l) :
     getValue? k (removeKey k l) = none := by
   simp [getValue?_eq_getEntry?, getEntry?_removeKey_self h]

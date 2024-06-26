@@ -5,10 +5,7 @@ Authors: Leonardo de Moura, Mario Carneiro, Markus Himmel
 -/
 import Hashmap.DHashMap.Raw
 import Hashmap.DHashMap.Internal.List.Defs
-import Hashmap.BEq
-import Hashmap.LawfulHashable
 import Hashmap.DHashMap.Internal.Index
-import Hashmap.Sigma
 
 set_option autoImplicit false
 

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
 import Hashmap.DHashMap.Internal.WF
-import Lean.Elab.Command
+import Lean.Elab.Tactic
 
 open MyLean.DHashMap.Internal.List
 

@@ -3,35 +3,8 @@ Copyright (c) 2024 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
-import Hashmap.PowerOfTwo
-import Hashmap.LawfulHashable
-
--- This file needs a lot of clean-up, but I don't really want to get bogged down with this too much at the moment
-
-theorem USize.toNat_and {a b : USize} : (a &&& b).toNat = a.toNat &&& b.toNat := by
-  change (a.toNat &&& b.toNat) % _ = _
-  rw [Nat.mod_eq_of_lt]
-  have : a.toNat < size := a.1.2
-  refine Nat.lt_of_le_of_lt and_le_left this
-
-theorem Nat.toNat_toUSize {a : Nat} (h : a < USize.size) : a.toUSize.toNat = a :=
-  Nat.mod_eq_of_lt h -- Oooooooooooooooofffffffff
-
-theorem USize.ext : {a b : USize} → a.toNat = b.toNat → a = b
-| ⟨⟨_, _⟩⟩, ⟨⟨_, _⟩⟩, rfl => rfl
-
-theorem USize.ext_small : {a b : USize} → a.val = b.val → a = b
-| ⟨_⟩, ⟨_⟩, rfl => rfl
-
--- Is this not just Fin.coe_sub_iff_le?
-theorem USize.toNat_sub_le {a b : USize} (h : b ≤ a) : (a - b).toNat = a.toNat - b.toNat := by
-  erw [Fin.coe_sub_iff_le]
-  exact h
-
-theorem Nat.toUSize_one : (1 : Nat).toUSize = 1 := rfl
-
-theorem USize.toNat_lt' {a : USize} : a.toNat < USize.size :=
-  a.1.2
+import Hashmap.Init.All
+import Hashmap.Classes.LawfulHashable
 
 namespace MyLean.DHashMap.Internal
 
@@ -52,92 +25,15 @@ def scrambleHash (hash : UInt64) : UInt64 :=
   let fold := hash ^^^ (hash >>> 32)
   fold ^^^ (fold >>> 16)
 
--- set_option trace.compiler.ir.result true in
--- TODO: benchmark if we need a C implementation for this. Currently this still needs to do a scalar check for sz which we could
--- maybe get rid of, if we changed to size condition in IsGoodSize to assert that sz is definitely a scalar.
-
 -- Note that this indexing scheme always produces a valid index, but it only has a chance of returning every index if sz is a power of two.
 /--
-`sz` is an explicit parameter because having it inferred from `h` can lead to suboptimal IR.
-Consider this implementation of `erase`:
-
-```
-def erase [BEq α] [Hashable α] (m : Raw₀ α β) (a : α) : Raw₀ α β :=
-  let ⟨⟨size, buckets⟩, hb⟩ := m
-  let ⟨i, h⟩ := mkIdx buckets.size hb (hash a)
-  let bkt := buckets[i]
-  if bkt.contains a then
-    ⟨⟨size - 1, buckets.uset i (bkt.erase a) h⟩, by simpa [-List.length_pos]⟩
-  else
-    ⟨⟨size, buckets⟩, hb⟩
-```
-
-If we do not explicitly provide `buckets.size` to `mkIdx`, then we actually infer
-`⟨size, buckets⟩.2.size` for the size argument, so the code generator thinks that we need
-the pair `⟨size, buckets⟩` regardless of which branch we take (because it appears as an
-argument to `mkIdx`) and it generates this IR:
-
-```
-[reset_reuse]
-def MyLean.DHashMap.Raw₀.erase._rarg (x_1 : obj) (x_2 : obj) (x_3 : obj) (x_4 : obj) : obj :=
-  case x_3 : obj of
-  MyLean.DHashMap.Raw.mk →
-    let x_5 : obj := proj[0] x_3;
-    let x_6 : obj := proj[1] x_3;
-    let x_18 : obj := reset[2] x_3;
-    let x_7 : obj := reuse x_18 in ctor_0[MyLean.DHashMap.Raw.mk] x_5 x_6;
-    let x_8 : obj := Array.size ◾ x_6;
-    let x_9 : u64 := app x_2 x_4;
-    let x_10 : usize := mkIdx x_8 ◾ x_9;
-    let x_11 : obj := Array.uget ◾ x_6 x_10 ◾;
-    let x_12 : u8 := MyLean.AssocList.contains._rarg x_1 x_4 x_11;
-    case x_12 : obj of
-    Bool.false →
-      ret x_7
-    Bool.true →
-      let x_13 : obj := 1;
-      let x_14 : obj := Nat.sub x_5 x_13;
-      let x_15 : obj := MyLean.AssocList.erase._rarg x_1 x_4 x_11;
-      let x_16 : obj := Array.uset ◾ x_6 x_10 x_15 ◾;
-      let x_17 : obj := ctor_0[MyLean.DHashMap.Raw.mk] x_14 x_16;
-      ret x_17
-```
-
-This is suboptimal, because it misses the opportunity to reuse the memory cell of the `Raw`
-in case we actually need to erase something. If we provide the argument `buckets.size`, then we
-get the better IR
-
-```
-[reset_reuse]
-def MyLean.DHashMap.Raw₀.erase._rarg (x_1 : obj) (x_2 : obj) (x_3 : obj) (x_4 : obj) : obj :=
-  case x_3 : obj of
-  MyLean.DHashMap.Raw.mk →
-    let x_5 : obj := proj[0] x_3;
-    let x_6 : obj := proj[1] x_3;
-    let x_18 : obj := reset[2] x_3;
-    let x_7 : obj := Array.size ◾ x_6;
-    let x_8 : u64 := app x_2 x_4;
-    let x_9 : usize := mkIdx x_7 ◾ x_8;
-    let x_10 : obj := Array.uget ◾ x_6 x_9 ◾;
-    let x_11 : u8 := MyLean.AssocList.contains._rarg x_1 x_4 x_10;
-    case x_11 : obj of
-    Bool.false →
-      let x_12 : obj := reuse x_18 in ctor_0[MyLean.DHashMap.Raw.mk] x_5 x_6;
-      ret x_12
-    Bool.true →
-      let x_13 : obj := 1;
-      let x_14 : obj := Nat.sub x_5 x_13;
-      let x_15 : obj := MyLean.AssocList.erase._rarg x_1 x_4 x_10;
-      let x_16 : obj := Array.uset ◾ x_6 x_9 x_15 ◾;
-      let x_17 : obj := reuse x_18 in ctor_0[MyLean.DHashMap.Raw.mk] x_14 x_16;
-      ret x_17
-```
+`sz` is an explicit parameter because having it inferred from `h` can lead to suboptimal IR, cf. https://github.com/leanprover/lean4/issues/4157
 -/
 @[irreducible] def mkIdx (sz : Nat) (h : 0 < sz) (hash : UInt64) : { u : USize // u.toNat < sz } :=
   ⟨(scrambleHash hash).toUSize &&& (sz.toUSize - 1), by
     by_cases h' : sz < USize.size
     · rw [USize.toNat_and, ← Nat.toUSize_one, USize.toNat_sub_le, Nat.toNat_toUSize]
-      · refine Nat.lt_of_le_of_lt and_le_right ?_
+      · refine Nat.lt_of_le_of_lt Nat.and_le_right ?_
         refine Nat.sub_lt h ?_
         rw [Nat.toNat_toUSize]
         · exact Nat.one_pos

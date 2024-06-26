@@ -5,7 +5,6 @@ Authors: Markus Himmel
 -/
 import Hashmap.DHashMap.Internal.AssocList.Basic
 import Hashmap.DHashMap.Internal.List.Associative
-import Hashmap.Option
 
 open MyLean.DHashMap.Internal
 
