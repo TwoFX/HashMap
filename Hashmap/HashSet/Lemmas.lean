@@ -252,7 +252,7 @@ theorem size_remove_le [EquivBEq α] [LawfulHashable α] {a : α} : (m.remove a)
 
 @[simp]
 theorem fst_containsThenInsert {a : α} : (m.containsThenInsert a).1 = m.insert a :=
-  ext (HashMap.fst_containsThenInsert)
+  ext HashMap.fst_containsThenInsert
 
 @[simp]
 theorem snd_containsThenInsert {a : α} : (m.containsThenInsert a).2 = m.contains a :=
