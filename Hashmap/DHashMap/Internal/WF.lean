@@ -306,7 +306,7 @@ theorem wfImp_consₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (
     rwa [← containsₘ_eq_containsKey h]
 
 theorem toListModel_insertₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
-    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.insertₘ a b).1.2) (insertEntry (toListModel m.1.2) a b) := by
+    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.insertₘ a b).1.2) (insertEntry a b (toListModel m.1.2)) := by
   rw [insertₘ]
   split
   · next h' =>
@@ -330,7 +330,7 @@ theorem wfImp_insertₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
 /-! # `insert` -/
 
 theorem toListModel_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
-    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.insert a b).1.2) (insertEntry (toListModel m.1.2) a b) := by
+    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.insert a b).1.2) (insertEntry a b (toListModel m.1.2)) := by
   rw [insert_eq_insertₘ]
   exact toListModel_insertₘ h
 
@@ -342,7 +342,7 @@ theorem wfImp_insert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m
 /-! # `containsThenInsert` -/
 
 theorem toListModel_containsThenInsert [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
-    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.containsThenInsert a b).1.1.2) (insertEntry (toListModel m.1.2) a b) := by
+    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.containsThenInsert a b).1.1.2) (insertEntry a b (toListModel m.1.2)) := by
   rw [containsThenInsert_eq_insertₘ]
   exact toListModel_insertₘ h
 
@@ -354,7 +354,7 @@ theorem wfImp_containsThenInsert [BEq α] [Hashable α] [EquivBEq α] [LawfulHas
 /-! # `insertIfNewₘ` -/
 
 theorem toListModel_insertIfNewₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
-    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.insertIfNewₘ a b).1.buckets) (insertEntryIfNew (toListModel m.1.buckets) a b) := by
+    (h : m.1.WFImp) {a : α} {b : β a} : Perm (toListModel (m.insertIfNewₘ a b).1.buckets) (insertEntryIfNew a b (toListModel m.1.buckets)) := by
   rw [insertIfNewₘ, insertEntryIfNew, containsₘ_eq_containsKey h, cond_eq_if]
   split
   · next h' => exact Perm.refl _
@@ -372,7 +372,7 @@ theorem wfImp_insertIfNewₘ [BEq α] [Hashable α] [EquivBEq α] [LawfulHashabl
 
 theorem toListModel_insertIfNew [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {m : Raw₀ α β}
     (h : m.1.WFImp) {a : α} {b : β a} :
-    Perm (toListModel (m.insertIfNew a b).1.buckets) (insertEntryIfNew (toListModel m.1.buckets) a b) := by
+    Perm (toListModel (m.insertIfNew a b).1.buckets) (insertEntryIfNew a b (toListModel m.1.buckets)) := by
   rw [insertIfNew_eq_insertIfNewₘ]
   exact toListModel_insertIfNewₘ h
 
@@ -384,7 +384,7 @@ theorem wfImp_insertIfNew [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable �
 /-! # `getThenInsertIfNew?` -/
 
 theorem toListModel_getThenInsertIfNew? [BEq α] [Hashable α] [LawfulBEq α] {m : Raw₀ α β} {a : α} {b : β a} (h : m.1.WFImp) :
-    Perm (toListModel (m.getThenInsertIfNew? a b).1.1.buckets) (insertEntryIfNew (toListModel m.1.buckets) a b) := by
+    Perm (toListModel (m.getThenInsertIfNew? a b).1.1.buckets) (insertEntryIfNew a b (toListModel m.1.buckets)) := by
   rw [getThenInsertIfNew?_eq_insertIfNewₘ]
   exact toListModel_insertIfNewₘ h
 
@@ -397,7 +397,7 @@ theorem wfImp_getThenInsertIfNew? [BEq α] [Hashable α] [LawfulBEq α] {m : Raw
 
 theorem Const.toListModel_getThenInsertIfNew? {β : Type v} [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α]
     {m : Raw₀ α (fun _ => β)} {a : α} {b : β} (h : m.1.WFImp) :
-    Perm (toListModel (Const.getThenInsertIfNew? m a b).1.1.buckets) (insertEntryIfNew (toListModel m.1.buckets) a b) := by
+    Perm (toListModel (Const.getThenInsertIfNew? m a b).1.1.buckets) (insertEntryIfNew a b (toListModel m.1.buckets)) := by
   rw [getThenInsertIfNew?_eq_insertIfNewₘ]
   exact toListModel_insertIfNewₘ h
 
