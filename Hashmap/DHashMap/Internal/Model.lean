@@ -79,27 +79,19 @@ theorem exists_bucket_of_uset [BEq α] [Hashable α]
     simpa using perm_append_comm_assoc _ _ _
   · rw [toListModel, h₃]
     simpa using perm_append_comm_assoc _ _ _
-  · intro _ h k
-    rw [← Decidable.not_imp_not]
-    intro hk
-    simp only [Bool.not_eq_false, containsKey_eq_true_iff_exists_mem, List.mem_append, List.mem_bind] at hk
-    obtain ⟨⟨k', v'⟩, ⟨(⟨a, ha₁, ha₂⟩|⟨a, ha₁, ha₂⟩), hk⟩⟩ := hk
-    · obtain ⟨n, ⟨hn', hn⟩⟩ := List.getElem_of_mem ha₁
-      rw [List.get_eq_get_append_right (self[i] :: l₂)] at hn
-      suffices (mkIdx self.size h₀ (hash k')).1.toNat = n from
-        Nat.ne_of_lt (Nat.lt_of_eq_of_lt (hash_eq hk ▸ this) (h₂ ▸ hn'))
-      simp only [← h₁] at hn
-      rw [← Array.getElem_eq_data_getElem] at hn
-      exact (h.hashes_to n (by omega)).hash_self h₀ _ (hn.symm ▸ ha₂)
-    · obtain ⟨n, hn⟩ := List.get_of_mem ha₁
-      rw [List.get_eq_get_cons self[i], List.get_eq_get_append_left l₁] at hn
-      suffices (mkIdx self.size h₀ (hash k')).1.toNat = n + 1 + l₁.length by
-        refine Nat.ne_of_lt' ?_
-        simp only [← hash_eq hk, this, h₂, Nat.lt_add_left_iff_pos, Nat.succ_pos]
-      rw [List.get_congr h₁.symm] at hn
-      simp [← Array.getElem_eq_data_getElem] at hn
-      refine (h.hashes_to (n + 1 + l₁.length) ?_).hash_self h₀ _ (hn.symm ▸ ha₂)
-      rw [Array.size_eq_length_data, h₁, List.length_append, List.length_cons]
+  · intro _ h k hki
+    simp only [containsKey_append, Bool.or_eq_false_iff]
+    refine ⟨?_, ?_⟩
+    · apply List.containsKey_bind_eq_false
+      intro j hj
+      rw [← List.getElem_append (l₂ := self[i] :: l₂), List.getElem_congr h₁.symm]
+      apply (h.hashes_to j _).containsKey_eq_false h₀ k
+      omega
+    · apply List.containsKey_bind_eq_false
+      intro j hj
+      rw [← List.getElem_cons_succ self[i] _ _ (by simp only [Array.ugetElem_eq_getElem, List.length_cons]; omega)]
+      rw [List.getElem_append_right'' l₁, List.getElem_congr h₁.symm]
+      apply (h.hashes_to (j + 1 + l₁.length) _).containsKey_eq_false h₀ k
       omega
 
 theorem exists_bucket_of_update [BEq α] [Hashable α] (m : Array (AssocList α β)) (h : 0 < m.size) (k : α)

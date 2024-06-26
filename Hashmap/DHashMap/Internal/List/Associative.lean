@@ -1356,6 +1356,18 @@ theorem containsKey_append [BEq α] {l l' : List (Σ a, β a)} {k : α} :
     containsKey k (l ++ l') = (containsKey k l || containsKey k l') := by
   simp [containsKey_eq_isSome_getEntry?]
 
+theorem containsKey_bind_eq_false [BEq α] {γ : Type w} {l : List γ} {f : γ → List (Σ a, β a)} {k : α}
+    (h : ∀ (i : Nat) (h : i < l.length), containsKey k (f l[i]) = false) : containsKey k (l.bind f) = false := by
+  induction l
+  · simp
+  · next g t ih =>
+    simp only [List.bind_cons, containsKey_append, Bool.or_eq_false_iff]
+    refine ⟨?_, ?_⟩
+    · simpa using h 0 (by simp)
+    · refine ih ?_
+      intro i hi
+      simpa using h (i + 1) (by simp; omega)
+
 theorem containsKey_append_of_not_contains_right [BEq α] {l l' : List (Σ a, β a)} {k : α}
     (hl' : containsKey k l' = false) : containsKey k (l ++ l') = containsKey k l := by
   simp [hl']

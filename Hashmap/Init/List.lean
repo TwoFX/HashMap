@@ -23,30 +23,12 @@ theorem exists_of_set' {n : Nat} {a' : α} {l : List α} (h : n < l.length) :
       · simpa using ht₂
       · simpa using ht₃
 
-theorem length_le_append_right {l₁ l₂ : List α} : l₁.length ≤ (l₁ ++ l₂).length := by
-  simpa using Nat.le_add_right _ _
+theorem getElem_append_right'' (l₁ : List α) {l₂ : List α} {n : Nat} (hn : n < l₂.length) :
+    l₂[n] = (l₁ ++ l₂)[n + l₁.length]'(by simp; omega) := by
+  rw [getElem_append_right] <;> simp <;> omega
 
-theorem length_le_append_left {l₁ l₂ : List α} : l₂.length ≤ (l₁ ++ l₂).length := by
-  simpa using Nat.le_add_left _ _
-
-theorem get_eq_get_append_right {l₁ : List α} (l₂ : List α) {n : Nat} {h : n < l₁.length} :
-    l₁[n] = (l₁ ++ l₂)[n]'(by simp; omega) :=
-  (List.getElem_append _ _).symm
-
-theorem get_eq_get_append_left (l₁ : List α) {l₂ : List α} {n : Fin l₂.length} :
-    l₂.get n = (l₁ ++ l₂).get ((n.addNat l₁.length).cast (by simp [Nat.add_comm l₂.length])) := by
-  simp only [get_eq_getElem, Fin.coe_cast, Fin.coe_addNat]
-  rw [getElem_append_right]
-  · simp
-  · simpa using Nat.le_add_left _ _
-  · simp
-
-theorem get_eq_get_cons (a : α) {l : List α} {n : Fin l.length} :
-    l.get n = (a :: l).get ((n.addNat 1).cast (by simp)) := by
-  erw [get_cons_succ]
-
-theorem get_congr {l₁ l₂ : List α} {n : Fin l₁.length} (h : l₁ = l₂) :
-    l₁.get n = l₂.get (n.cast (h ▸ rfl)) := by
+theorem getElem_congr {l₁ l₂ : List α} (h : l₁ = l₂) (i : Nat) (hi : i < l₁.length) :
+    l₁[i] = l₂[i]'(h ▸ hi) := by
   cases h; rfl
 
 -- From mathlib
