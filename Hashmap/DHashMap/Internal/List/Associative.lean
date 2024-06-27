@@ -13,25 +13,6 @@ universe u v w
 
 variable {α : Type u} {β : α → Type v} {γ : α → Type w}
 
-section
-variable {α : Type u} {β : Type v}
-
-theorem apply_bif (f : α → β) {b : Bool} {a a' : α} :
-    f (bif b then a else a') = bif b then f a else f a' := by
-  cases b <;> simp
-
-@[simp]
-theorem bif_const {b : Bool} {a : α} : (bif b then a else a) = a := by
-  cases b <;> simp
-
-theorem bif_pos {b : Bool} {a a' : α} (h : b = true) : (bif b then a else a') = a := by
-  rw [h, cond_true]
-
-theorem bif_neg {b : Bool} {a a' : α} (h : b = false) : (bif b then a else a') = a' := by
-  rw [h, cond_false]
-
-end
-
 namespace Std.DHashMap.Internal.List
 
 @[elab_as_elim]
@@ -165,33 +146,31 @@ variable {β : Type v}
 
 /--
 This is a strange dependent version of `Option.map` in which the mapping function is allowed to "know" about the
-option that is being mapped...
-
-It is even possible for `β` to be a type family depending on `o`, which is even worse, but it hints that this function
-really isn't that different from `Option.rec` in some sense.
+option that is being mapped. This happens to be useful in this file (see `getValueCast_eq_getEntry?`), but we do
+not want it to leak out of the file.
 -/
-def _root_.Option.dmap : (o : Option α) → (f : (a : α) → (o = some a) → β) → Option β
+private def Option.dmap : (o : Option α) → (f : (a : α) → (o = some a) → β) → Option β
   | none, _ => none
   | some a, f => some (f a rfl)
 
-@[simp] theorem _root_.Option.dmap_none (f : (a : α) → (none = some a) → β) : none.dmap f = none := rfl
+@[simp] private theorem Option.dmap_none (f : (a : α) → (none = some a) → β) : Option.dmap none f = none := rfl
 
-@[simp] theorem _root_.Option.dmap_some (a : α) (f : (a' : α) → (some a = some a') → β) :
-    (some a).dmap f = some (f a rfl) := rfl
+@[simp] private theorem Option.dmap_some (a : α) (f : (a' : α) → (some a = some a') → β) :
+    Option.dmap (some a) f = some (f a rfl) := rfl
 
-theorem _root_.Option.dmap_congr {o o' : Option α} {f : (a : α) → (o = some a) → β} (h : o = o') :
-    o.dmap f = o'.dmap (fun a h' => f a (h ▸ h')) := by
+private theorem Option.dmap_congr {o o' : Option α} {f : (a : α) → (o = some a) → β} (h : o = o') :
+    Option.dmap o f = Option.dmap o' (fun a h' => f a (h ▸ h')) := by
   cases h; rfl
 
 @[simp]
-theorem _root_.Option.isSome_dmap {o : Option α} {f : (a : α) → (o = some a) → β} :
-    (o.dmap f).isSome = o.isSome := by
+private theorem Option.isSome_dmap {o : Option α} {f : (a : α) → (o = some a) → β} :
+    (Option.dmap o f).isSome = o.isSome := by
   cases o <;> rfl
 
 end
 
 theorem getValueCast?_eq_getEntry? [BEq α] [LawfulBEq α] {l : List (Σ a, β a)} {a : α} :
-    getValueCast? a l = (getEntry? a l).dmap (fun p h => cast (congrArg β (eq_of_beq (getEntry?_eq_some h)).symm) p.2) := by
+    getValueCast? a l = Option.dmap (getEntry? a l) (fun p h => cast (congrArg β (eq_of_beq (getEntry?_eq_some h)).symm) p.2) := by
   induction l using assoc_induction
   · simp
   · next k v t ih =>
