@@ -269,6 +269,7 @@ theorem get_insert [LawfulBEq α] {k a : α} {v : β k} {h₁} :
 theorem get_insert_self [LawfulBEq α] {k : α} {v : β k} : (m.insert k v).get k (mem_insert_self h) = v := by
   dhashmap_simp_to_raw using Raw₀.get_insert_self ⟨m, _⟩
 
+@[simp]
 theorem get_remove [LawfulBEq α] {k a : α} {h'} :
     (m.remove a).get k h' = m.get k (mem_of_mem_remove h h') := by
   dhashmap_simp_to_raw using Raw₀.get_remove ⟨m, _⟩
@@ -289,6 +290,7 @@ theorem get_insert_self [EquivBEq α] [LawfulHashable α] {k : α} {v : β} :
     get (m.insert k v) k (mem_insert_self h) = v := by
   dhashmap_simp_to_raw using Raw₀.Const.get_insert_self ⟨m, _⟩
 
+@[simp]
 theorem get_remove [EquivBEq α] [LawfulHashable α] {k a : α} {h'} :
     get (m.remove k) a h' = get m a (mem_of_mem_remove h h') := by
   dhashmap_simp_to_raw using Raw₀.Const.get_remove ⟨m, _⟩
@@ -870,6 +872,7 @@ theorem get_insert [LawfulBEq α] {k a : α} {v : β k} {h₁} :
 theorem get_insert_self [LawfulBEq α] {k : α} {v : β k} : (m.insert k v).get k mem_insert_self = v :=
   Raw₀.get_insert_self ⟨m.1, _⟩ m.2
 
+@[simp]
 theorem get_remove [LawfulBEq α] {k a : α} {h'} :
     (m.remove k).get a h' = m.get a (mem_of_mem_remove h') :=
   Raw₀.get_remove ⟨m.1, _⟩ m.2
@@ -890,6 +893,7 @@ theorem get_insert_self [EquivBEq α] [LawfulHashable α] {k : α} {v : β} :
     get (m.insert k v) k mem_insert_self = v :=
   Raw₀.Const.get_insert_self ⟨m.1, _⟩ m.2
 
+@[simp]
 theorem get_remove [EquivBEq α] [LawfulHashable α] {k a : α} {h'} :
     get (m.remove k) a h' = get m a (mem_of_mem_remove h') :=
   Raw₀.Const.get_remove ⟨m.1, _⟩ m.2

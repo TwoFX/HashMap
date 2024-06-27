@@ -225,6 +225,7 @@ theorem get_insert [LawfulBEq α] {k a : α} {v : β k} {h₁} :
 theorem get_insert_self [LawfulBEq α] {k : α} {v : β k} : (m.insert k v).get k (contains_insert_self _ h) = v := by
   dhashmap_simp_to_model using List.getValueCast_insertEntry_self
 
+@[simp]
 theorem get_remove [LawfulBEq α] {k a : α} {h'} :
     (m.remove k).get a h' = m.get a (contains_of_contains_remove _ h h') := by
   dhashmap_simp_to_model using List.getValueCast_removeKey
@@ -244,6 +245,7 @@ theorem get_insert_self [EquivBEq α] [LawfulHashable α] {k : α} {v : β} :
     get (m.insert k v) k (contains_insert_self _ h) = v := by
   dhashmap_simp_to_model using List.getValue_insertEntry_self
 
+@[simp]
 theorem get_remove [EquivBEq α] [LawfulHashable α] {k a : α} {h'} :
     get (m.remove k) a h' = get m a (contains_of_contains_remove _ h h') := by
   dhashmap_simp_to_model using List.getValue_removeKey

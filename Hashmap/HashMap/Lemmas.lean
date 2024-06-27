@@ -188,6 +188,7 @@ theorem getElem_insert_self [EquivBEq α] [LawfulHashable α] {k : α} {v : β} 
     (m.insert k v)[k]'(mem_insert_self h) = v :=
   DHashMap.Raw.Const.get_insert_self h.out
 
+@[simp]
 theorem getElem_remove [EquivBEq α] [LawfulHashable α] {k a : α} {h'} :
     (m.remove k)[a]'h' = m[a]'(mem_of_mem_remove h h') :=
   DHashMap.Raw.Const.get_remove (h' := h') h.out
@@ -552,6 +553,7 @@ theorem getElem_insert_self [EquivBEq α] [LawfulHashable α] {k : α} {v : β} 
     (m.insert k v)[k]'mem_insert_self = v :=
   DHashMap.Const.get_insert_self
 
+@[simp]
 theorem getElem_remove [EquivBEq α] [LawfulHashable α] {k a : α} {h'} :
     (m.remove k)[a]'h' = m[a]'(mem_of_mem_remove h') :=
   DHashMap.Const.get_remove (h' := h')
