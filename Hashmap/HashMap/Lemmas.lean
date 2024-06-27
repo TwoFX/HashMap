@@ -746,9 +746,7 @@ instance [EquivBEq α] [LawfulHashable α] : LawfulGetElem (HashMap α β) α β
     split
     · exact getElem?_eq_some_getElem
     · exact getElem?_eq_none ‹_›
-  getElem!_def m a _ := by
-    -- workaround: switch to correct (unused) decidability instance so that the lemma applies
-    change (@getElem! _ _ _ _ _ _ m a instDecidableMem) = match (@getElem? _ _ _ _ _ m a instDecidableMem) with | some e => e | none => default
+  getElem!_def m a := by
     rw [getElem!_eq_get!_getElem?]
     split <;> simp_all
 

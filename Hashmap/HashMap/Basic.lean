@@ -61,7 +61,7 @@ instance [BEq α] [Hashable α] {m : Raw α β} {a : α} : Decidable (a ∈ m) :
 @[inline] def get! [BEq α] [Hashable α] [Inhabited β] (m : Raw α β) (a : α) : β :=
   DHashMap.Raw.Const.get! m.inner a
 
-instance [BEq α] [Hashable α] : GetElem (Raw α β) α β (fun m a => a ∈ m) where
+instance [BEq α] [Hashable α] : GetElem? (Raw α β) α β (fun m a => a ∈ m) where
   getElem m a h := m.get a h
   getElem? m a := m.get? a
   getElem! m a := m.get! a
@@ -194,7 +194,7 @@ instance [BEq α] [Hashable α] {m : HashMap α β} {a : α} : Decidable (a ∈ 
 @[inline] def get! [BEq α] [Hashable α] [Inhabited β] (m : HashMap α β) (a : α) : β :=
   DHashMap.Const.get! m.inner a
 
-instance [BEq α] [Hashable α] : GetElem (HashMap α β) α β (fun m a => a ∈ m) where
+instance [BEq α] [Hashable α] : GetElem? (HashMap α β) α β (fun m a => a ∈ m) where
   getElem m a h := m.get a h
   getElem? m a := m.get? a
   getElem! m a := m.get! a
