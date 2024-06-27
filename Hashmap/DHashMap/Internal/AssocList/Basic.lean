@@ -66,49 +66,49 @@ variable {β : Type v}
 
 def get? [BEq α] (a : α) : AssocList α (fun _ => β) → Option β
   | nil => none
-  | cons k v es => bif k == a then some v else get? a es
+  | cons k v es => bif a == k then some v else get? a es
 
 end
 
 def getCast? [BEq α] [LawfulBEq α] (a : α) : AssocList α β → Option (β a)
   | nil => none
-  | cons k v es => if h : k == a then some (cast (congrArg β (eq_of_beq h)) v) else es.getCast? a
+  | cons k v es => if h : a == k then some (cast (congrArg β (eq_of_beq h).symm) v) else es.getCast? a
 
 def contains [BEq α] (a : α) : AssocList α β → Bool
   | nil => false
-  | cons k _ l => k == a || l.contains a
+  | cons k _ l => a == k || l.contains a
 
 def get {β : Type v} [BEq α] (a : α) : (l : AssocList α (fun _ => β)) → l.contains a → β
-  | cons k v es, h => if hka : k == a then v else get a es
+  | cons k v es, h => if hka : a == k then v else get a es
       (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
 
 def getCast [BEq α] [LawfulBEq α] (a : α) : (l : AssocList α β) → l.contains a → β a
-  | cons k v es, h => if hka : k == a then cast (congrArg β (eq_of_beq hka)) v else es.getCast a
+  | cons k v es, h => if hka : a == k then cast (congrArg β (eq_of_beq hka).symm) v else es.getCast a
       (by rw [← h, contains, Bool.of_not_eq_true hka, Bool.false_or])
 
 def getCast! [BEq α] [LawfulBEq α] (a : α) [Inhabited (β a)] : AssocList α β → β a
   | nil => panic! "key is not present in hash table"
-  | cons k v es => if h : k == a then cast (congrArg β (eq_of_beq h)) v else es.getCast! a
+  | cons k v es => if h : a == k then cast (congrArg β (eq_of_beq h).symm) v else es.getCast! a
 
 def get! {β : Type v} [BEq α] [Inhabited β] (a : α) : AssocList α (fun _ => β) → β
   | nil => panic! "key is not present in hash table"
-  | cons k v es => bif k == a then v else es.get! a
+  | cons k v es => bif a == k then v else es.get! a
 
 def getCastD [BEq α] [LawfulBEq α] (a : α) (fallback : β a) : AssocList α β → β a
   | nil => fallback
-  | cons k v es => if h : k == a then cast (congrArg β (eq_of_beq h)) v else es.getCastD a fallback
+  | cons k v es => if h : a == k then cast (congrArg β (eq_of_beq h).symm) v else es.getCastD a fallback
 
 def getD {β : Type v} [BEq α] (a : α) (fallback : β) : AssocList α (fun _ => β) → β
   | nil => fallback
-  | cons k v es => bif k == a then v else es.getD a fallback
+  | cons k v es => bif a == k then v else es.getD a fallback
 
 def replace [BEq α] (a : α) (b : β a) : AssocList α β → AssocList α β
   | nil => nil
-  | cons k v l => bif k == a then cons a b l else cons k v (replace a b l)
+  | cons k v l => bif a == k then cons a b l else cons k v (replace a b l)
 
 def remove [BEq α] (a : α) : AssocList α β → AssocList α β
   | nil => nil
-  | cons k v l => bif k == a then l else cons k v (l.remove a)
+  | cons k v l => bif a == k then l else cons k v (l.remove a)
 
 @[inline] def filterMap (f : (a : α) → β a → Option (γ a)) :
     AssocList α β → AssocList α γ :=

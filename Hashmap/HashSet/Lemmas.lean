@@ -55,27 +55,27 @@ theorem mem_iff_contains {a : α} : a ∈ m ↔ m.contains a :=
   HashMap.Raw.not_mem_emptyc
 
 @[simp]
-theorem contains_insert [EquivBEq α] [LawfulHashable α] {a k : α} : (m.insert a).contains k = (a == k || m.contains k) :=
+theorem contains_insert [EquivBEq α] [LawfulHashable α] {k a : α} : (m.insert k).contains a = (a == k || m.contains a) :=
   HashMap.Raw.contains_insert h.out
 
 @[simp]
-theorem mem_insert [EquivBEq α] [LawfulHashable α] {a k : α} : k ∈ m.insert a ↔ a == k ∨ k ∈ m :=
+theorem mem_insert [EquivBEq α] [LawfulHashable α] {k a : α} : a ∈ m.insert k ↔ a == k ∨ a ∈ m :=
   HashMap.Raw.mem_insert h.out
 
-theorem contains_of_contains_insert [EquivBEq α] [LawfulHashable α] {a k : α} :
-    (m.insert a).contains k → (a == k) = false → m.contains k :=
+theorem contains_of_contains_insert [EquivBEq α] [LawfulHashable α] {k a : α} :
+    (m.insert k).contains a → (a == k) = false → m.contains a :=
   HashMap.Raw.contains_of_contains_insert h.out
 
-theorem mem_of_mem_insert [EquivBEq α] [LawfulHashable α] {a k : α} :
-    k ∈ m.insert a → (a == k) = false → k ∈ m :=
+theorem mem_of_mem_insert [EquivBEq α] [LawfulHashable α] {k a : α} :
+    a ∈ m.insert k → (a == k) = false → a ∈ m :=
   HashMap.Raw.mem_of_mem_insert h.out
 
 @[simp]
-theorem contains_insert_self [EquivBEq α] [LawfulHashable α] {a : α}  : (m.insert a).contains a :=
+theorem contains_insert_self [EquivBEq α] [LawfulHashable α] {k : α}  : (m.insert k).contains k :=
   HashMap.Raw.contains_insert_self h.out
 
 @[simp]
-theorem mem_insert_self [EquivBEq α] [LawfulHashable α] {a : α} : a ∈ m.insert a :=
+theorem mem_insert_self [EquivBEq α] [LawfulHashable α] {k : α} : k ∈ m.insert k :=
   HashMap.Raw.mem_insert_self h.out
 
 @[simp]
@@ -89,30 +89,30 @@ theorem size_emptyc : (∅ : Raw α).size = 0 :=
 theorem isEmpty_eq_size_eq_zero : m.isEmpty = (m.size == 0) :=
   HashMap.Raw.isEmpty_eq_size_eq_zero
 
-theorem size_insert [EquivBEq α] [LawfulHashable α] {a : α} : (m.insert a).size = bif m.contains a then m.size else m.size + 1 :=
+theorem size_insert [EquivBEq α] [LawfulHashable α] {k : α} : (m.insert k).size = bif m.contains k then m.size else m.size + 1 :=
   HashMap.Raw.size_insert h.out
 
-theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] {a : α} : m.size ≤ (m.insert a).size :=
+theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] {k : α} : m.size ≤ (m.insert k).size :=
   HashMap.Raw.size_le_size_insert h.out
 
 @[simp]
-theorem remove_empty {a : α} {c : Nat} : (empty c : Raw α).remove a = empty c :=
+theorem remove_empty {k : α} {c : Nat} : (empty c : Raw α).remove k = empty c :=
   ext HashMap.Raw.remove_empty
 
 @[simp]
-theorem remove_emptyc {a : α} : (∅ : Raw α).remove a = ∅ :=
+theorem remove_emptyc {k : α} : (∅ : Raw α).remove k = ∅ :=
   ext HashMap.Raw.remove_emptyc
 
 @[simp]
-theorem isEmpty_remove [EquivBEq α] [LawfulHashable α] {a : α} : (m.remove a).isEmpty = (m.isEmpty || (m.size == 1 && m.contains a)) :=
+theorem isEmpty_remove [EquivBEq α] [LawfulHashable α] {k : α} : (m.remove k).isEmpty = (m.isEmpty || (m.size == 1 && m.contains k)) :=
   HashMap.Raw.isEmpty_remove h.out
 
 @[simp]
-theorem contains_remove [EquivBEq α] [LawfulHashable α] {k a : α} : (m.remove k).contains a = (!(k == a) && m.contains a) :=
+theorem contains_remove [EquivBEq α] [LawfulHashable α] {k a : α} : (m.remove k).contains a = (!(a == k) && m.contains a) :=
   HashMap.Raw.contains_remove h.out
 
 @[simp]
-theorem mem_remove [EquivBEq α] [LawfulHashable α] {k a : α} : a ∈ m.remove k ↔ (k == a) = false ∧ a ∈ m :=
+theorem mem_remove [EquivBEq α] [LawfulHashable α] {k a : α} : a ∈ m.remove k ↔ (a == k) = false ∧ a ∈ m :=
   HashMap.Raw.mem_remove h.out
 
 theorem contains_of_contains_remove [EquivBEq α] [LawfulHashable α] {k a : α} : (m.remove k).contains a → m.contains a :=
@@ -121,18 +121,18 @@ theorem contains_of_contains_remove [EquivBEq α] [LawfulHashable α] {k a : α}
 theorem mem_of_mem_remove [EquivBEq α] [LawfulHashable α] {k a : α} : a ∈ m.remove k → a ∈ m :=
   HashMap.Raw.mem_of_mem_remove h.out
 
-theorem size_remove [EquivBEq α] [LawfulHashable α] {a : α} : (m.remove a).size = bif m.contains a then m.size - 1 else m.size :=
+theorem size_remove [EquivBEq α] [LawfulHashable α] {k : α} : (m.remove k).size = bif m.contains k then m.size - 1 else m.size :=
   HashMap.Raw.size_remove h.out
 
-theorem size_remove_le [EquivBEq α] [LawfulHashable α] {a : α} : (m.remove a).size ≤ m.size :=
+theorem size_remove_le [EquivBEq α] [LawfulHashable α] {k : α} : (m.remove k).size ≤ m.size :=
   HashMap.Raw.size_remove_le h.out
 
 @[simp]
-theorem fst_containsThenInsert {a : α} : (m.containsThenInsert a).1 = m.insert a :=
+theorem fst_containsThenInsert {k : α} : (m.containsThenInsert k).1 = m.insert k :=
   ext (HashMap.Raw.fst_containsThenInsert h.out)
 
 @[simp]
-theorem snd_containsThenInsert {a : α} : (m.containsThenInsert a).2 = m.contains a :=
+theorem snd_containsThenInsert {k : α} : (m.containsThenInsert k).2 = m.contains k :=
   HashMap.Raw.snd_containsThenInsert h.out
 
 end Raw
@@ -178,27 +178,27 @@ theorem mem_iff_contains {a : α} : a ∈ m ↔ m.contains a :=
   HashMap.not_mem_emptyc
 
 @[simp]
-theorem contains_insert [EquivBEq α] [LawfulHashable α] {a k : α} : (m.insert a).contains k = (a == k || m.contains k) :=
+theorem contains_insert [EquivBEq α] [LawfulHashable α] {k a : α} : (m.insert k).contains a = (a == k || m.contains a) :=
   HashMap.contains_insert
 
 @[simp]
-theorem mem_insert [EquivBEq α] [LawfulHashable α] {a k : α} : k ∈ m.insert a ↔ a == k ∨ k ∈ m :=
+theorem mem_insert [EquivBEq α] [LawfulHashable α] {k a : α} : a ∈ m.insert k ↔ a == k ∨ a ∈ m :=
   HashMap.mem_insert
 
-theorem contains_of_contains_insert [EquivBEq α] [LawfulHashable α] {a k : α} :
-    (m.insert a).contains k → (a == k) = false → m.contains k :=
+theorem contains_of_contains_insert [EquivBEq α] [LawfulHashable α] {k a : α} :
+    (m.insert k).contains a → (a == k) = false → m.contains a :=
   HashMap.contains_of_contains_insert
 
-theorem mem_of_mem_insert [EquivBEq α] [LawfulHashable α] {a k : α} :
-    k ∈ m.insert a → (a == k) = false → k ∈ m :=
+theorem mem_of_mem_insert [EquivBEq α] [LawfulHashable α] {k a : α} :
+    a ∈ m.insert k → (a == k) = false → a ∈ m :=
   HashMap.mem_of_mem_insert
 
 @[simp]
-theorem contains_insert_self [EquivBEq α] [LawfulHashable α] {a : α}  : (m.insert a).contains a :=
+theorem contains_insert_self [EquivBEq α] [LawfulHashable α] {k : α}  : (m.insert k).contains k :=
   HashMap.contains_insert_self
 
 @[simp]
-theorem mem_insert_self [EquivBEq α] [LawfulHashable α] {a : α} : a ∈ m.insert a :=
+theorem mem_insert_self [EquivBEq α] [LawfulHashable α] {k : α} : k ∈ m.insert k :=
   HashMap.mem_insert_self
 
 @[simp]
@@ -212,10 +212,10 @@ theorem size_emptyc : (∅ : HashSet α).size = 0 :=
 theorem isEmpty_eq_size_eq_zero : m.isEmpty = (m.size == 0) :=
   HashMap.isEmpty_eq_size_eq_zero
 
-theorem size_insert [EquivBEq α] [LawfulHashable α] {a : α} : (m.insert a).size = bif m.contains a then m.size else m.size + 1 :=
+theorem size_insert [EquivBEq α] [LawfulHashable α] {k : α} : (m.insert k).size = bif m.contains k then m.size else m.size + 1 :=
   HashMap.size_insert
 
-theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] {a : α} : m.size ≤ (m.insert a).size :=
+theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] {k : α} : m.size ≤ (m.insert k).size :=
   HashMap.size_le_size_insert
 
 @[simp]
@@ -227,15 +227,15 @@ theorem remove_emptyc {a : α} : (∅ : HashSet α).remove a = ∅ :=
   ext HashMap.remove_emptyc
 
 @[simp]
-theorem isEmpty_remove [EquivBEq α] [LawfulHashable α] {a : α} : (m.remove a).isEmpty = (m.isEmpty || (m.size == 1 && m.contains a)) :=
+theorem isEmpty_remove [EquivBEq α] [LawfulHashable α] {k : α} : (m.remove k).isEmpty = (m.isEmpty || (m.size == 1 && m.contains k)) :=
   HashMap.isEmpty_remove
 
 @[simp]
-theorem contains_remove [EquivBEq α] [LawfulHashable α] {k a : α} : (m.remove k).contains a = (!(k == a) && m.contains a) :=
+theorem contains_remove [EquivBEq α] [LawfulHashable α] {k a : α} : (m.remove k).contains a = (!(a == k) && m.contains a) :=
   HashMap.contains_remove
 
 @[simp]
-theorem mem_remove [EquivBEq α] [LawfulHashable α] {k a : α} : a ∈ m.remove k ↔ (k == a) = false ∧ a ∈ m :=
+theorem mem_remove [EquivBEq α] [LawfulHashable α] {k a : α} : a ∈ m.remove k ↔ (a == k) = false ∧ a ∈ m :=
   HashMap.mem_remove
 
 theorem contains_of_contains_remove [EquivBEq α] [LawfulHashable α] {k a : α} : (m.remove k).contains a → m.contains a :=
@@ -244,18 +244,18 @@ theorem contains_of_contains_remove [EquivBEq α] [LawfulHashable α] {k a : α}
 theorem mem_of_mem_remove [EquivBEq α] [LawfulHashable α] {k a : α} : a ∈ m.remove k → a ∈ m :=
   HashMap.mem_of_mem_remove
 
-theorem size_remove [EquivBEq α] [LawfulHashable α] {a : α} : (m.remove a).size = bif m.contains a then m.size - 1 else m.size :=
+theorem size_remove [EquivBEq α] [LawfulHashable α] {k : α} : (m.remove k).size = bif m.contains k then m.size - 1 else m.size :=
   HashMap.size_remove
 
-theorem size_remove_le [EquivBEq α] [LawfulHashable α] {a : α} : (m.remove a).size ≤ m.size :=
+theorem size_remove_le [EquivBEq α] [LawfulHashable α] {k : α} : (m.remove k).size ≤ m.size :=
   HashMap.size_remove_le
 
 @[simp]
-theorem fst_containsThenInsert {a : α} : (m.containsThenInsert a).1 = m.insert a :=
+theorem fst_containsThenInsert {k : α} : (m.containsThenInsert k).1 = m.insert k :=
   ext HashMap.fst_containsThenInsert
 
 @[simp]
-theorem snd_containsThenInsert {a : α} : (m.containsThenInsert a).2 = m.contains a :=
+theorem snd_containsThenInsert {k : α} : (m.containsThenInsert k).2 = m.contains k :=
   HashMap.snd_containsThenInsert
 
 end

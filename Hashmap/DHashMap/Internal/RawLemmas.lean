@@ -82,7 +82,7 @@ theorem isEmpty_empty {c} : (empty c : Raw₀ α β).1.isEmpty := by
   rw [Raw.isEmpty_eq_isEmpty wfImp_empty, toListModel_buckets_empty, List.isEmpty_nil]
 
 @[simp]
-theorem isEmpty_insert [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} : (m.insert a b).1.isEmpty = false := by
+theorem isEmpty_insert [EquivBEq α] [LawfulHashable α] {k : α} {v : β k} : (m.insert k v).1.isEmpty = false := by
   dhashmap_simp_to_model using List.isEmpty_insertEntry
 
 theorem contains_congr [EquivBEq α] [LawfulHashable α] {a b : α} (hab : a == b) : m.contains a = m.contains b := by
@@ -99,14 +99,14 @@ theorem isEmpty_eq_false_iff_exists_contains_eq_true [EquivBEq α] [LawfulHashab
   simp only [contains_eq_containsKey (Raw.WF.out h)]
   dhashmap_simp_to_model using List.isEmpty_eq_false_iff_exists_containsKey
 
-theorem contains_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} : (m.insert a b).contains k = ((a == k) || m.contains k) := by
+theorem contains_insert [EquivBEq α] [LawfulHashable α] {k a : α} {v : β k} : (m.insert k v).contains a = ((a == k) || m.contains a) := by
   dhashmap_simp_to_model using List.containsKey_insertEntry
 
-theorem contains_of_contains_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} :
-    (m.insert a b).contains k → (a == k) = false → m.contains k := by
+theorem contains_of_contains_insert [EquivBEq α] [LawfulHashable α] {k a : α} {v : β k} :
+    (m.insert k v).contains a → (a == k) = false → m.contains a := by
   dhashmap_simp_to_model using List.containsKey_of_containsKey_insertEntry
 
-theorem contains_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} : (m.insert a b).contains a := by
+theorem contains_insert_self [EquivBEq α] [LawfulHashable α] {k : α} {v : β k} : (m.insert k v).contains k := by
   dhashmap_simp_to_model using List.containsKey_insertEntry_self
 
 @[simp]
@@ -115,37 +115,37 @@ theorem size_empty {c} : (empty c : Raw₀ α β).1.size = 0 := rfl
 theorem isEmpty_eq_size_eq_zero : m.1.isEmpty = (m.1.size == 0) := by
   simp [Raw.isEmpty]
 
-theorem size_insert [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} : (m.insert a b).1.size = bif m.contains a then m.1.size else m.1.size + 1 := by
+theorem size_insert [EquivBEq α] [LawfulHashable α] {k : α} {v : β k} : (m.insert k v).1.size = bif m.contains k then m.1.size else m.1.size + 1 := by
   dhashmap_simp_to_model using List.length_insertEntry
 
-theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} : m.1.size ≤ (m.insert a b).1.size := by
+theorem size_le_size_insert [EquivBEq α] [LawfulHashable α] {k : α} {v : β k} : m.1.size ≤ (m.insert k v).1.size := by
   dhashmap_simp_to_model using List.length_le_length_insertEntry
 
 @[simp]
-theorem remove_empty {a : α} {c : Nat} : (empty c : Raw₀ α β).remove a = empty c := by
+theorem remove_empty {k : α} {c : Nat} : (empty c : Raw₀ α β).remove k = empty c := by
   simp [remove, empty]
 
-theorem isEmpty_remove [EquivBEq α] [LawfulHashable α] {a : α} : (m.remove a).1.isEmpty = (m.1.isEmpty || (m.1.size == 1 && m.contains a)) := by
+theorem isEmpty_remove [EquivBEq α] [LawfulHashable α] {k : α} : (m.remove k).1.isEmpty = (m.1.isEmpty || (m.1.size == 1 && m.contains k)) := by
   dhashmap_simp_to_model using List.isEmpty_removeKey
 
-theorem contains_remove [EquivBEq α] [LawfulHashable α] {k a : α} : (m.remove k).contains a = (!(k == a) && m.contains a) := by
+theorem contains_remove [EquivBEq α] [LawfulHashable α] {k a : α} : (m.remove k).contains a = (!(a == k) && m.contains a) := by
   dhashmap_simp_to_model using List.containsKey_removeKey
 
 theorem contains_of_contains_remove [EquivBEq α] [LawfulHashable α] {k a : α} : (m.remove k).contains a → m.contains a := by
   dhashmap_simp_to_model using List.containsKey_of_containsKey_removeKey
 
-theorem size_remove [EquivBEq α] [LawfulHashable α] {a : α} : (m.remove a).1.size = bif m.contains a then m.1.size - 1 else m.1.size := by
+theorem size_remove [EquivBEq α] [LawfulHashable α] {k : α} : (m.remove k).1.size = bif m.contains k then m.1.size - 1 else m.1.size := by
   dhashmap_simp_to_model using List.length_removeKey
 
-theorem size_remove_le [EquivBEq α] [LawfulHashable α] {a : α} : (m.remove a).1.size ≤ m.1.size := by
+theorem size_remove_le [EquivBEq α] [LawfulHashable α] {k : α} : (m.remove k).1.size ≤ m.1.size := by
   dhashmap_simp_to_model using List.length_removeKey_le
 
 @[simp]
-theorem fst_containsThenInsert {a : α} {b : β a} : (m.containsThenInsert a b).1 = m.insert a b := by
+theorem fst_containsThenInsert {k : α} {v : β k} : (m.containsThenInsert k v).1 = m.insert k v := by
   rw [containsThenInsert_eq_insertₘ, insert_eq_insertₘ]
 
 @[simp]
-theorem snd_containsThenInsert {a : α} {b : β a} : (m.containsThenInsert a b).2 = m.contains a := by
+theorem snd_containsThenInsert {k : α} {v : β k} : (m.containsThenInsert k v).2 = m.contains k := by
   rw [containsThenInsert_eq_containsₘ, contains_eq_containsₘ]
 
 @[simp]
@@ -155,11 +155,11 @@ theorem get?_empty [LawfulBEq α] {a : α} {c} : (empty c : Raw₀ α β).get? a
 theorem get?_of_isEmpty [LawfulBEq α] {a : α} : m.1.isEmpty = true → m.get? a = none := by
   dhashmap_simp_to_model; dhashmap_empty
 
-theorem get?_insert [LawfulBEq α] {a k : α} {b : β a} :
-    (m.insert a b).get? k = if h : a == k then some (cast (congrArg β (eq_of_beq h)) b) else m.get? k := by
+theorem get?_insert [LawfulBEq α] {a k : α} {v : β k} :
+    (m.insert k v).get? a = if h : a == k then some (cast (congrArg β (eq_of_beq h).symm) v) else m.get? a := by
   dhashmap_simp_to_model using List.getValueCast?_insertEntry
 
-theorem get?_insert_self [LawfulBEq α] {a : α} {b : β a} : (m.insert a b).get? a = some b := by
+theorem get?_insert_self [LawfulBEq α] {k : α} {v : β k} : (m.insert k v).get? k = some v := by
   dhashmap_simp_to_model using List.getValueCast?_insertEntry_self
 
 theorem contains_eq_isSome_get? [LawfulBEq α] {a : α} : m.contains a = (m.get? a).isSome := by
@@ -168,10 +168,10 @@ theorem contains_eq_isSome_get? [LawfulBEq α] {a : α} : m.contains a = (m.get?
 theorem get?_eq_none [LawfulBEq α] {a : α} : m.contains a = false → m.get? a = none := by
   dhashmap_simp_to_model using List.getValueCast?_eq_none
 
-theorem get?_remove [LawfulBEq α] {a k : α} : (m.remove a).get? k = bif a == k then none else m.get? k := by
+theorem get?_remove [LawfulBEq α] {k a : α} : (m.remove k).get? a = bif a == k then none else m.get? a := by
   dhashmap_simp_to_model using List.getValueCast?_removeKey
 
-theorem get?_remove_self [LawfulBEq α] {a : α} : (m.remove a).get? a = none := by
+theorem get?_remove_self [LawfulBEq α] {k : α} : (m.remove k).get? k = none := by
   dhashmap_simp_to_model using List.getValueCast?_removeKey_self
 
 namespace Const
@@ -185,12 +185,12 @@ theorem get?_empty {a : α} {c} : get? (empty c : Raw₀ α (fun _ => β)) a = n
 theorem get?_of_isEmpty [EquivBEq α] [LawfulHashable α] {a : α} : m.1.isEmpty = true → get? m a = none := by
   dhashmap_simp_to_model; dhashmap_empty
 
-theorem get?_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β} :
-    get? (m.insert a b) k = bif a == k then some b else get? m k := by
+theorem get?_insert [EquivBEq α] [LawfulHashable α] {k a : α} {v : β} :
+    get? (m.insert k v) a = bif a == k then some v else get? m a := by
   dhashmap_simp_to_model using List.getValue?_insertEntry
 
-theorem get?_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {b : β} :
-    get? (m.insert a b) a = some b := by
+theorem get?_insert_self [EquivBEq α] [LawfulHashable α] {k : α} {v : β} :
+    get? (m.insert k v) k = some v := by
   dhashmap_simp_to_model using List.getValue?_insertEntry_self
 
 theorem contains_eq_isSome_get? [EquivBEq α] [LawfulHashable α] {a : α} : m.contains a = (get? m a).isSome := by
@@ -199,11 +199,11 @@ theorem contains_eq_isSome_get? [EquivBEq α] [LawfulHashable α] {a : α} : m.c
 theorem get?_eq_none [EquivBEq α] [LawfulHashable α] {a : α} : m.contains a = false → get? m a = none := by
   dhashmap_simp_to_model using List.getValue?_eq_none.2
 
-theorem get?_remove [EquivBEq α] [LawfulHashable α] {a k : α} :
-    Const.get? (m.remove a) k = bif a == k then none else get? m k := by
+theorem get?_remove [EquivBEq α] [LawfulHashable α] {k a : α} :
+    Const.get? (m.remove k) a = bif a == k then none else get? m a := by
   dhashmap_simp_to_model using List.getValue?_removeKey
 
-theorem get?_remove_self [EquivBEq α] [LawfulHashable α] {a : α} : get? (m.remove a) a = none := by
+theorem get?_remove_self [EquivBEq α] [LawfulHashable α] {k : α} : get? (m.remove k) k = none := by
   dhashmap_simp_to_model using List.getValue?_removeKey_self
 
 theorem get?_eq_get? [LawfulBEq α] {a : α} : get? m a = m.get? a := by
@@ -214,19 +214,19 @@ theorem get?_congr [EquivBEq α] [LawfulHashable α] {a b : α} (hab : a == b) :
 
 end Const
 
-theorem get_insert [LawfulBEq α] {a k : α} {b : β a} {h₁} :
-    (m.insert a b).get k h₁ =
+theorem get_insert [LawfulBEq α] {k a : α} {v : β k} {h₁} :
+    (m.insert k v).get a h₁ =
       if h₂ : a == k then
-        cast (congrArg β (eq_of_beq h₂)) b
+        cast (congrArg β (eq_of_beq h₂).symm) v
       else
-        m.get k (contains_of_contains_insert _ h h₁ (Bool.eq_false_iff.2 h₂)) := by
+        m.get a (contains_of_contains_insert _ h h₁ (Bool.eq_false_iff.2 h₂)) := by
   dhashmap_simp_to_model using List.getValueCast_insertEntry
 
-theorem get_insert_self [LawfulBEq α] {a : α} {b : β a} : (m.insert a b).get a (contains_insert_self _ h) = b := by
+theorem get_insert_self [LawfulBEq α] {k : α} {v : β k} : (m.insert k v).get k (contains_insert_self _ h) = v := by
   dhashmap_simp_to_model using List.getValueCast_insertEntry_self
 
-theorem get_remove [LawfulBEq α] {a k : α} {h'} :
-    (m.remove a).get k h' = m.get k (contains_of_contains_remove _ h h') := by
+theorem get_remove [LawfulBEq α] {k a : α} {h'} :
+    (m.remove k).get a h' = m.get a (contains_of_contains_remove _ h h') := by
   dhashmap_simp_to_model using List.getValueCast_removeKey
 
 theorem get?_eq_some_get [LawfulBEq α] {a : α} {h} : m.get? a = some (m.get a h) := by
@@ -236,16 +236,16 @@ namespace Const
 
 variable {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF)
 
-theorem get_insert [EquivBEq α] [LawfulHashable α] {a k : α} {b : β} {h₁} :
-    get (m.insert a b) k h₁ = if h₂ : a == k then b else get m k (contains_of_contains_insert _ h h₁ (Bool.eq_false_iff.2 h₂)) := by
+theorem get_insert [EquivBEq α] [LawfulHashable α] {k a : α} {v : β} {h₁} :
+    get (m.insert k v) a h₁ = if h₂ : a == k then v else get m a (contains_of_contains_insert _ h h₁ (Bool.eq_false_iff.2 h₂)) := by
   dhashmap_simp_to_model using List.getValue_insertEntry
 
-theorem get_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {b : β} :
-    get (m.insert a b) a (contains_insert_self _ h) = b := by
+theorem get_insert_self [EquivBEq α] [LawfulHashable α] {k : α} {v : β} :
+    get (m.insert k v) k (contains_insert_self _ h) = v := by
   dhashmap_simp_to_model using List.getValue_insertEntry_self
 
-theorem get_remove [EquivBEq α] [LawfulHashable α] {a k : α} {h'} :
-    get (m.remove a) k h' = get m k (contains_of_contains_remove _ h h') := by
+theorem get_remove [EquivBEq α] [LawfulHashable α] {k a : α} {h'} :
+    get (m.remove k) a h' = get m a (contains_of_contains_remove _ h h') := by
   dhashmap_simp_to_model using List.getValue_removeKey
 
 theorem get?_eq_some_get [EquivBEq α] [LawfulHashable α] {a : α} {h} : get? m a = some (get m a h) := by
@@ -265,8 +265,8 @@ theorem get!_empty [LawfulBEq α] {a : α} [Inhabited (β a)] {c} : (empty c : R
 theorem get!_of_isEmpty [LawfulBEq α] {a : α} [Inhabited (β a)] : m.1.isEmpty = true → m.get! a = default := by
   dhashmap_simp_to_model; dhashmap_empty
 
-theorem get!_insert [LawfulBEq α] {a k : α} [Inhabited (β k)] {b : β a} :
-    (m.insert a b).get! k = if h : a == k then cast (congrArg β (eq_of_beq h)) b else m.get! k := by
+theorem get!_insert [LawfulBEq α] {k a : α} [Inhabited (β a)] {v : β k} :
+    (m.insert k v).get! a = if h : a == k then cast (congrArg β (eq_of_beq h).symm) v else m.get! a := by
   dhashmap_simp_to_model using List.getValueCast!_insertEntry
 
 theorem get!_insert_self [LawfulBEq α] {a : α} [Inhabited (β a)] {b : β a} :
@@ -277,8 +277,8 @@ theorem get!_eq_default [LawfulBEq α] {a : α} [Inhabited (β a)] :
     m.contains a = false → m.get! a = default := by
   dhashmap_simp_to_model using List.getValueCast!_eq_default
 
-theorem get!_remove [LawfulBEq α] {a k : α} [Inhabited (β k)] :
-    (m.remove a).get! k = bif a == k then default else m.get! k := by
+theorem get!_remove [LawfulBEq α] {k a : α} [Inhabited (β a)] :
+    (m.remove k).get! a = bif a == k then default else m.get! a := by
   dhashmap_simp_to_model using List.getValueCast!_removeKey
 
 theorem get!_remove_self [LawfulBEq α] {k : α} [Inhabited (β k)] :
@@ -307,20 +307,20 @@ theorem get!_empty [Inhabited β] {a : α} {c} : get! (empty c : Raw₀ α (fun 
 theorem get!_of_isEmpty [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} : m.1.isEmpty = true → get! m a = default := by
   dhashmap_simp_to_model; dhashmap_empty
 
-theorem get!_insert [EquivBEq α] [LawfulHashable α] [Inhabited β] {a k : α} {b : β} :
-    get! (m.insert a b) k = bif a == k then b else get! m k := by
+theorem get!_insert [EquivBEq α] [LawfulHashable α] [Inhabited β] {k a : α} {v : β} :
+    get! (m.insert k v) a = bif a == k then v else get! m a := by
   dhashmap_simp_to_model using List.getValue!_insertEntry
 
-theorem get!_insert_self [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} {b : β} :
-    get! (m.insert a b) a = b := by
+theorem get!_insert_self [EquivBEq α] [LawfulHashable α] [Inhabited β] {k : α} {v : β} :
+    get! (m.insert k v) k = v := by
   dhashmap_simp_to_model using List.getValue!_insertEntry_self
 
 theorem get!_eq_default [EquivBEq α] [LawfulHashable α] [Inhabited β] {a : α} :
     m.contains a = false → get! m a = default := by
   dhashmap_simp_to_model using List.getValue!_eq_default
 
-theorem get!_remove [EquivBEq α] [LawfulHashable α] [Inhabited β] {a k : α} :
-    get! (m.remove a) k = bif a == k then default else get! m k := by
+theorem get!_remove [EquivBEq α] [LawfulHashable α] [Inhabited β] {k a : α} :
+    get! (m.remove k) a = bif a == k then default else get! m a := by
   dhashmap_simp_to_model using List.getValue!_removeKey
 
 theorem get!_remove_self [EquivBEq α] [LawfulHashable α] [Inhabited β] {k : α} :
@@ -355,8 +355,8 @@ theorem getD_empty [LawfulBEq α] {a : α} {fallback : β a} {c} : (empty c : Ra
 theorem getD_of_isEmpty [LawfulBEq α] {a : α} {fallback : β a} : m.1.isEmpty = true → m.getD a fallback = fallback := by
   dhashmap_simp_to_model; dhashmap_empty
 
-theorem getD_insert [LawfulBEq α] {a k : α} {fallback : β k} {b : β a} :
-    (m.insert a b).getD k fallback = if h : a == k then cast (congrArg β (eq_of_beq h)) b else m.getD k fallback := by
+theorem getD_insert [LawfulBEq α] {k a : α} {fallback : β a} {v : β k} :
+    (m.insert k v).getD a fallback = if h : a == k then cast (congrArg β (eq_of_beq h).symm) v else m.getD a fallback := by
   dhashmap_simp_to_model using List.getValueCastD_insertEntry
 
 theorem getD_insert_self [LawfulBEq α] {a : α} {fallback b : β a} :
@@ -367,8 +367,8 @@ theorem getD_eq_fallback [LawfulBEq α] {a : α} {fallback : β a} :
     m.contains a = false → m.getD a fallback = fallback := by
   dhashmap_simp_to_model using List.getValueCastD_eq_fallback
 
-theorem getD_remove [LawfulBEq α] {a k : α} {fallback : β k} :
-    (m.remove a).getD k fallback = bif a == k then fallback else m.getD k fallback := by
+theorem getD_remove [LawfulBEq α] {k a : α} {fallback : β a} :
+    (m.remove k).getD a fallback = bif a == k then fallback else m.getD a fallback := by
   dhashmap_simp_to_model using List.getValueCastD_removeKey
 
 theorem getD_remove_self [LawfulBEq α] {k : α} {fallback : β k} :
@@ -401,20 +401,20 @@ theorem getD_empty {a : α} {fallback : β} {c} : getD (empty c : Raw₀ α (fun
 theorem getD_of_isEmpty [EquivBEq α] [LawfulHashable α] {a : α} {fallback : β} : m.1.isEmpty = true → getD m a fallback = fallback := by
   dhashmap_simp_to_model; dhashmap_empty
 
-theorem getD_insert [EquivBEq α] [LawfulHashable α] {a k : α} {fallback b : β} :
-    getD (m.insert a b) k fallback = bif a == k then b else getD m k fallback := by
+theorem getD_insert [EquivBEq α] [LawfulHashable α] {k a : α} {fallback v : β} :
+    getD (m.insert k v) a fallback = bif a == k then v else getD m a fallback := by
   dhashmap_simp_to_model using List.getValueD_insertEntry
 
-theorem getD_insert_self [EquivBEq α] [LawfulHashable α] {a : α} {fallback b : β} :
-    getD (m.insert a b) a fallback = b := by
+theorem getD_insert_self [EquivBEq α] [LawfulHashable α] {k : α} {fallback v : β} :
+    getD (m.insert k v) k fallback = v := by
   dhashmap_simp_to_model using List.getValueD_insertEntry_self
 
 theorem getD_eq_fallback [EquivBEq α] [LawfulHashable α] {a : α} {fallback : β} :
     m.contains a = false → getD m a fallback = fallback := by
   dhashmap_simp_to_model using List.getValueD_eq_fallback
 
-theorem getD_remove [EquivBEq α] [LawfulHashable α] {a k : α} {fallback : β} :
-    getD (m.remove a) k fallback = bif a == k then fallback else getD m k fallback := by
+theorem getD_remove [EquivBEq α] [LawfulHashable α] {k a : α} {fallback : β} :
+    getD (m.remove k) a fallback = bif a == k then fallback else getD m a fallback := by
   dhashmap_simp_to_model using List.getValueD_removeKey
 
 theorem getD_remove_self [EquivBEq α] [LawfulHashable α] {k : α} {fallback : β} :
@@ -447,73 +447,73 @@ theorem getD_congr [EquivBEq α] [LawfulHashable α] {a b : α} {fallback : β} 
 
 end Const
 
-theorem isEmpty_insertIfNew [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} :
-    (m.insertIfNew a b).1.isEmpty = false := by
+theorem isEmpty_insertIfNew [EquivBEq α] [LawfulHashable α] {k : α} {v : β k} :
+    (m.insertIfNew k v).1.isEmpty = false := by
   dhashmap_simp_to_model using List.isEmpty_insertEntryIfNew
 
-theorem contains_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} :
-    (m.insertIfNew a b).contains k = (a == k || m.contains k) := by
+theorem contains_insertIfNew [EquivBEq α] [LawfulHashable α] {k a : α} {v : β k} :
+    (m.insertIfNew k v).contains a = (a == k || m.contains a) := by
   dhashmap_simp_to_model using List.containsKey_insertEntryIfNew
 
 /-- This is a restatement of `contains_insertIfNew` that is written to exactly match the proof obligation in the statement of
     `get_insertIfNew`. -/
-theorem contains_of_contains_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {b : β a} :
-    (m.insertIfNew a b).contains k → ¬((a == k) ∧ m.contains a = false) → m.contains k := by
+theorem contains_of_contains_insertIfNew [EquivBEq α] [LawfulHashable α] {k a : α} {v : β k} :
+    (m.insertIfNew k v).contains a → ¬((a == k) ∧ m.contains k = false) → m.contains a := by
   dhashmap_simp_to_model using List.containsKey_of_containsKey_insertEntryIfNew
 
-theorem size_insertIfNew [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} :
-    (m.insertIfNew a b).1.size = bif m.contains a then m.1.size else m.1.size + 1 := by
+theorem size_insertIfNew [EquivBEq α] [LawfulHashable α] {k : α} {v : β k} :
+    (m.insertIfNew k v).1.size = bif m.contains k then m.1.size else m.1.size + 1 := by
   dhashmap_simp_to_model using List.length_insertEntryIfNew
 
-theorem size_le_size_insertIfNew [EquivBEq α] [LawfulHashable α] {a : α} {b : β a} :
-    m.1.size ≤ (m.insertIfNew a b).1.size := by
+theorem size_le_size_insertIfNew [EquivBEq α] [LawfulHashable α] {k : α} {v : β k} :
+    m.1.size ≤ (m.insertIfNew k v).1.size := by
   dhashmap_simp_to_model using List.length_le_length_insertEntryIfNew
 
-theorem get?_insertIfNew [LawfulBEq α] {a k : α} {b : β a} :
-    (m.insertIfNew a b).get? k = if h : a == k ∧ m.contains a = false then some (cast (congrArg β (eq_of_beq h.1)) b) else m.get? k := by
+theorem get?_insertIfNew [LawfulBEq α] {k a : α} {v : β k} :
+    (m.insertIfNew k v).get? a = if h : a == k ∧ m.contains k = false then some (cast (congrArg β (eq_of_beq h.1).symm) v) else m.get? a := by
   dhashmap_simp_to_model using List.getValueCast?_insertEntryIfNew
 
-theorem get_insertIfNew [LawfulBEq α] {a k : α} {b : β a} {h₁} :
-    (m.insertIfNew a b).get k h₁ = if h₂ : a == k ∧ m.contains a = false then cast (congrArg β (eq_of_beq h₂.1)) b else m.get k
+theorem get_insertIfNew [LawfulBEq α] {k a : α} {v : β k} {h₁} :
+    (m.insertIfNew k v).get a h₁ = if h₂ : a == k ∧ m.contains k = false then cast (congrArg β (eq_of_beq h₂.1).symm) v else m.get a
       (contains_of_contains_insertIfNew _ h h₁ h₂) := by
   dhashmap_simp_to_model using List.getValueCast_insertEntryIfNew
 
-theorem get!_insertIfNew [LawfulBEq α] {a k : α} [Inhabited (β k)] {b : β a} :
-    (m.insertIfNew a b).get! k = if h : a == k ∧ m.contains a = false then cast (congrArg β (eq_of_beq h.1)) b else m.get! k := by
+theorem get!_insertIfNew [LawfulBEq α] {k a : α} [Inhabited (β a)] {v : β k} :
+    (m.insertIfNew k v).get! a = if h : a == k ∧ m.contains k = false then cast (congrArg β (eq_of_beq h.1).symm) v else m.get! a := by
   dhashmap_simp_to_model using List.getValueCast!_insertEntryIfNew
 
-theorem getD_insertIfNew [LawfulBEq α] {a k : α} {fallback : β k} {b : β a} :
-    (m.insertIfNew a b).getD k fallback = if h : a == k ∧ m.contains a = false then cast (congrArg β (eq_of_beq h.1)) b else m.getD k fallback := by
+theorem getD_insertIfNew [LawfulBEq α] {k a : α} {fallback : β a} {v : β k} :
+    (m.insertIfNew k v).getD a fallback = if h : a == k ∧ m.contains k = false then cast (congrArg β (eq_of_beq h.1).symm) v else m.getD a fallback := by
   dhashmap_simp_to_model using List.getValueCastD_insertEntryIfNew
 
 namespace Const
 
 variable {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF)
 
-theorem get?_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {b : β} :
-    get? (m.insertIfNew a b) k = bif a == k && !m.contains a then some b else get? m k := by
+theorem get?_insertIfNew [EquivBEq α] [LawfulHashable α] {k a : α} {v : β} :
+    get? (m.insertIfNew k v) a = bif a == k && !m.contains k then some v else get? m a := by
   dhashmap_simp_to_model using List.getValue?_insertEntryIfNew
 
-theorem get_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {b : β} {h₁} :
-    get (m.insertIfNew a b) k h₁ = if h₂ : a == k ∧ m.contains a = false then b else get m k (contains_of_contains_insertIfNew _ h h₁ h₂) := by
+theorem get_insertIfNew [EquivBEq α] [LawfulHashable α] {k a : α} {v : β} {h₁} :
+    get (m.insertIfNew k v) a h₁ = if h₂ : a == k ∧ m.contains k = false then v else get m a (contains_of_contains_insertIfNew _ h h₁ h₂) := by
   dhashmap_simp_to_model using List.getValue_insertEntryIfNew
 
-theorem get!_insertIfNew [EquivBEq α] [LawfulHashable α] [Inhabited β] {a k : α} {b : β} :
-    get! (m.insertIfNew a b) k = bif a == k && !m.contains a then b else get! m k := by
+theorem get!_insertIfNew [EquivBEq α] [LawfulHashable α] [Inhabited β] {k a : α} {v : β} :
+    get! (m.insertIfNew k v) a = bif a == k && !m.contains k then v else get! m a := by
   dhashmap_simp_to_model using List.getValue!_insertEntryIfNew
 
-theorem getD_insertIfNew [EquivBEq α] [LawfulHashable α] {a k : α} {fallback b : β} :
-    getD (m.insertIfNew a b) k fallback = bif a == k && !m.contains a then b else getD m k fallback := by
+theorem getD_insertIfNew [EquivBEq α] [LawfulHashable α] {k a : α} {fallback v : β} :
+    getD (m.insertIfNew k v) a fallback = bif a == k && !m.contains k then v else getD m a fallback := by
   dhashmap_simp_to_model using List.getValueD_insertEntryIfNew
 
 end Const
 
 @[simp]
-theorem fst_getThenInsertIfNew? [LawfulBEq α] {a : α} {b : β a} : (m.getThenInsertIfNew? a b).1 = m.insertIfNew a b := by
+theorem fst_getThenInsertIfNew? [LawfulBEq α] {k : α} {v : β k} : (m.getThenInsertIfNew? k v).1 = m.insertIfNew k v := by
   rw [getThenInsertIfNew?_eq_insertIfNewₘ, insertIfNew_eq_insertIfNewₘ]
 
 @[simp]
-theorem snd_getThenInsertIfNew? [LawfulBEq α] {a : α} {b : β a} : (m.getThenInsertIfNew? a b).2 = m.get? a := by
+theorem snd_getThenInsertIfNew? [LawfulBEq α] {k : α} {v : β k} : (m.getThenInsertIfNew? k v).2 = m.get? k := by
   rw [getThenInsertIfNew?_eq_get?ₘ, get?_eq_get?ₘ]
 
 namespace Const
@@ -521,11 +521,11 @@ namespace Const
 variable {β : Type v} (m : Raw₀ α (fun _ => β)) (h : m.1.WF)
 
 @[simp]
-theorem fst_getThenInsertIfNew? {a : α} {b : β} : (getThenInsertIfNew? m a b).1 = m.insertIfNew a b := by
+theorem fst_getThenInsertIfNew? {k : α} {v : β} : (getThenInsertIfNew? m k v).1 = m.insertIfNew k v := by
   rw [getThenInsertIfNew?_eq_insertIfNewₘ, insertIfNew_eq_insertIfNewₘ]
 
 @[simp]
-theorem snd_getThenInsertIfNew? {a : α} {b : β} : (getThenInsertIfNew? m a b).2 = get? m a := by
+theorem snd_getThenInsertIfNew? {k : α} {v : β} : (getThenInsertIfNew? m k v).2 = get? m k := by
   rw [getThenInsertIfNew?_eq_get?ₘ, get?_eq_get?ₘ]
 
 end Const
