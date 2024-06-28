@@ -783,7 +783,7 @@ theorem size_remove_le [EquivBEq α] [LawfulHashable α] {k : α} : (m.remove k)
 
 @[simp]
 theorem fst_containsThenInsert {k : α} {v : β k} : (m.containsThenInsert k v).1 = m.insert k v :=
-  Subtype.eq <| (congrArg Subtype.val (Raw₀.fst_containsThenInsert _)).trans rfl
+  Subtype.eq <| (congrArg Subtype.val (Raw₀.fst_containsThenInsert _ (k := k)) :)
 
 @[simp]
 theorem snd_containsThenInsert {k : α} {v : β k} : (m.containsThenInsert k v).2 = m.contains k :=
@@ -1251,7 +1251,7 @@ end Const
 
 @[simp]
 theorem fst_getThenInsertIfNew? [LawfulBEq α] {k : α} {v : β k} : (m.getThenInsertIfNew? k v).1 = m.insertIfNew k v :=
-  Subtype.eq <| (congrArg Subtype.val (Raw₀.fst_getThenInsertIfNew? _)).trans rfl
+  Subtype.eq <| (congrArg Subtype.val (Raw₀.fst_getThenInsertIfNew? _ (k := k)) :)
 
 @[simp]
 theorem snd_getThenInsertIfNew? [LawfulBEq α] {k : α} {v : β k} : (m.getThenInsertIfNew? k v).2 = m.get? k :=
@@ -1263,7 +1263,7 @@ variable {β : Type v} {m : DHashMap α (fun _ => β)}
 
 @[simp]
 theorem fst_getThenInsertIfNew? {k : α} {v : β} : (getThenInsertIfNew? m k v).1 = m.insertIfNew k v :=
-  Subtype.eq <| (congrArg Subtype.val (Raw₀.Const.fst_getThenInsertIfNew? _)).trans rfl
+  Subtype.eq <| (congrArg Subtype.val (Raw₀.Const.fst_getThenInsertIfNew? _ (k := k)) :)
 
 @[simp]
 theorem snd_getThenInsertIfNew? {k : α} {v : β} : (getThenInsertIfNew? m k v).2 = get? m k :=
