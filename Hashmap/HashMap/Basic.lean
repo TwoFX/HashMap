@@ -117,6 +117,18 @@ instance {m : Type w → Type w} : ForIn m (Raw α β) (α × β) where
 @[inline] def isEmpty (m : Raw α β) : Bool :=
   m.inner.isEmpty
 
+@[inline] def insertMany [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ (α × β)] (m : Raw α β) (l : ρ) : Raw α β :=
+  ⟨DHashMap.Raw.Const.insertMany m.inner l⟩
+
+@[inline] def insertManyUnit [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ α] (m : Raw α Unit) (l : ρ) : Raw α Unit :=
+  ⟨DHashMap.Raw.Const.insertManyUnit m.inner l⟩
+
+@[inline] def ofList [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ (α × β)] (l : ρ) : Raw α β :=
+  ⟨DHashMap.Raw.Const.ofList l⟩
+
+@[inline] def unitOfList [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ α] (l : ρ) : Raw α Unit :=
+  ⟨DHashMap.Raw.Const.unitOfList l⟩
+
 structure WF [BEq α] [Hashable α] (m : Raw α β) : Prop where
   out : m.inner.WF
 
@@ -143,6 +155,18 @@ theorem WF.remove [BEq α] [Hashable α] {m : Raw α β} {a : α} (h : m.WF) : (
 
 theorem WF.filter [BEq α] [Hashable α] {m : Raw α β} {f : α → β → Bool} (h : m.WF) : (m.filter f).WF :=
   ⟨DHashMap.Raw.WF.filter h.out⟩
+
+theorem WF.insertMany [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ (α × β)] {m : Raw α β} {l : ρ} (h : m.WF) : (m.insertMany l).WF :=
+  ⟨DHashMap.Raw.WF.Const.insertMany h.out⟩
+
+theorem WF.insertManyUnit [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ α] {m : Raw α Unit} {l : ρ} (h : m.WF) : (m.insertManyUnit l).WF :=
+  ⟨DHashMap.Raw.WF.Const.insertManyUnit h.out⟩
+
+theorem WF.ofList [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ (α × β)] {l : ρ} : (ofList l).WF :=
+  ⟨DHashMap.Raw.WF.Const.ofList⟩
+
+theorem WF.unitOfList [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ α] {l : ρ} : (unitOfList l).WF :=
+  ⟨DHashMap.Raw.WF.Const.unitOfList⟩
 
 end Raw
 
@@ -243,5 +267,17 @@ instance [BEq α] [Hashable α] {m : Type w → Type w} : ForIn m (HashMap α β
 
 @[inline] def isEmpty [BEq α] [Hashable α] (m : HashMap α β) : Bool :=
   m.inner.isEmpty
+
+@[inline] def insertMany [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ (α × β)] (m : HashMap α β) (l : ρ) : HashMap α β :=
+  ⟨DHashMap.Const.insertMany m.inner l⟩
+
+@[inline] def insertManyUnit [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ α] (m : HashMap α Unit) (l : ρ) : HashMap α Unit :=
+  ⟨DHashMap.Const.insertManyUnit m.inner l⟩
+
+@[inline] def ofList [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ (α × β)] (l : ρ) : HashMap α β :=
+  ⟨DHashMap.Const.ofList l⟩
+
+@[inline] def unitOfList [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ α] (l : ρ) : HashMap α Unit :=
+  ⟨DHashMap.Const.unitOfList l⟩
 
 end Std.HashMap

@@ -175,6 +175,13 @@ where
   let newBuckets := buckets.map (AssocList.filter f)
   ⟨⟨computeSize newBuckets, newBuckets⟩, by simpa [newBuckets] using hb⟩
 
+@[inline] def insertMany {ρ : Type w} [ForIn Id ρ (Σ a, β a)] [BEq α] [Hashable α] (m : Raw₀ α β) (l : ρ) :
+    { m' : Raw₀ α β // ∀ (P : Raw₀ α β → Prop), (∀ {m'' a b}, P m'' → P (m''.insert a b)) → P m → P m'} := Id.run do
+  let mut r : { m' : Raw₀ α β // ∀ (P : Raw₀ α β → Prop), (∀ {m'' a b}, P m'' → P (m''.insert a b)) → P m → P m'} := ⟨m, fun _ _ => id⟩
+  for ⟨a, b⟩ in l do
+    r := ⟨r.1.insert a b, fun _ h hm => h (r.2 _ h hm)⟩
+  return r
+
 section
 
 variable {β : Type v}
@@ -210,6 +217,20 @@ variable {β : Type v}
     let buckets' := buckets.uset i (AssocList.cons a b bkt) h
     (expandIfNecessary ⟨⟨size', buckets'⟩, by simpa [buckets']⟩, none)
   | some v => (⟨⟨size, buckets⟩, hm⟩, some v)
+
+@[inline] def Const.insertMany {ρ : Type w} [ForIn Id ρ (α × β)] [BEq α] [Hashable α] (m : Raw₀ α (fun _ => β)) (l : ρ) :
+    { m' : Raw₀ α (fun _ => β) // ∀ (P : Raw₀ α (fun _ => β) → Prop), (∀ {m'' a b}, P m'' → P (m''.insert a b)) → P m → P m'} := Id.run do
+  let mut r : { m' : Raw₀ α (fun _ => β) // ∀ (P : Raw₀ α (fun _ => β) → Prop), (∀ {m'' a b}, P m'' → P (m''.insert a b)) → P m → P m'} := ⟨m, fun _ _ => id⟩
+  for (a, b) in l do
+    r := ⟨r.1.insert a b, fun _ h hm => h (r.2 _ h hm)⟩
+  return r
+
+@[inline] def Const.insertManyUnit {ρ : Type w} [ForIn Id ρ α] [BEq α] [Hashable α] (m : Raw₀ α (fun _ => Unit)) (l : ρ) :
+    { m' : Raw₀ α (fun _ => Unit) // ∀ (P : Raw₀ α (fun _ => Unit) → Prop), (∀ {m'' a b}, P m'' → P (m''.insert a b)) → P m → P m'} := Id.run do
+  let mut r : { m' : Raw₀ α (fun _ => Unit) // ∀ (P : Raw₀ α (fun _ => Unit) → Prop), (∀ {m'' a b}, P m'' → P (m''.insert a b)) → P m → P m'} := ⟨m, fun _ _ => id⟩
+  for a in l do
+    r := ⟨r.1.insert a (), fun _ h hm => h (r.2 _ h hm)⟩
+  return r
 
 end
 

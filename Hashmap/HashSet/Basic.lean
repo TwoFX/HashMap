@@ -78,6 +78,12 @@ instance {m : Type v → Type v} : ForIn m (Raw α) α where
 @[inline] def isEmpty (m : Raw α) : Bool :=
   m.inner.isEmpty
 
+@[inline] def insertMany [BEq α] [Hashable α] {ρ : Type v} [ForIn Id ρ α] (m : Raw α) (l : ρ) : Raw α :=
+  ⟨m.inner.insertManyUnit l⟩
+
+@[inline] def ofList [BEq α] [Hashable α] {ρ : Type v} [ForIn Id ρ α] (l : ρ) : Raw α :=
+  ⟨HashMap.Raw.unitOfList l⟩
+
 structure WF [BEq α] [Hashable α] (m : Raw α) : Prop where
   out : m.inner.WF
 
@@ -98,6 +104,12 @@ theorem WF.remove [BEq α] [Hashable α] {m : Raw α} {a : α} (h : m.WF) : (m.r
 
 theorem WF.filter [BEq α] [Hashable α] {m : Raw α} {f : α → Bool} (h : m.WF) : (m.filter f).WF :=
   ⟨HashMap.Raw.WF.filter h.out⟩
+
+theorem WF.insertMany [BEq α] [Hashable α] {ρ : Type v} [ForIn Id ρ α] {m : Raw α} {l : ρ} (h : m.WF) : (m.insertMany l).WF :=
+  ⟨HashMap.Raw.WF.insertManyUnit h.out⟩
+
+theorem WF.ofList [BEq α] [Hashable α] {ρ : Type v} [ForIn Id ρ α] {l : ρ} : (ofList l : Raw α).WF :=
+  ⟨HashMap.Raw.WF.unitOfList⟩
 
 end Raw
 
@@ -165,6 +177,12 @@ instance [BEq α] [Hashable α] {m : Type v → Type v} : ForIn m (HashSet α) �
 
 @[inline] def isEmpty [BEq α] [Hashable α] (m : HashSet α) : Bool :=
   m.inner.isEmpty
+
+@[inline] def insertMany [BEq α] [Hashable α] {ρ : Type v} [ForIn Id ρ α] (m : HashSet α) (l : ρ) : HashSet α :=
+  ⟨m.inner.insertManyUnit l⟩
+
+@[inline] def ofList [BEq α] [Hashable α] {ρ : Type v} [ForIn Id ρ α] (l : ρ) : HashSet α :=
+  ⟨HashMap.unitOfList l⟩
 
 end HashSet
 

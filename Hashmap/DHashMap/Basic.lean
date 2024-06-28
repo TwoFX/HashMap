@@ -174,6 +174,30 @@ instance : ForIn m (Raw α β) (Σ a, β a) where
 @[inline] def isEmpty (m : Raw α β) : Bool :=
   m.size == 0
 
+@[inline] def insertMany [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ ((a : α) × β a)] (m : Raw α β) (l : ρ) : Raw α β :=
+  if h : 0 < m.buckets.size then
+    (Raw₀.insertMany ⟨m, h⟩ l).1
+else m -- will never happen for well-formed inputs
+
+@[inline] def Const.insertMany {β : Type v} [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ (α × β)] (m : Raw α (fun _ => β)) (l : ρ) : Raw α (fun _ => β) :=
+  if h : 0 < m.buckets.size then
+    (Raw₀.Const.insertMany ⟨m, h⟩ l).1
+  else m -- will never happen for well-formed inputs
+
+@[inline] def Const.insertManyUnit [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ α] (m : Raw α (fun _ => Unit)) (l : ρ) : Raw α (fun _ => Unit) :=
+  if h : 0 < m.buckets.size then
+    (Raw₀.Const.insertManyUnit ⟨m, h⟩ l).1
+  else m -- will never happen for well-formed inputs
+
+@[inline] def ofList [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ ((a : α) × β a)] (l : ρ) : Raw α β :=
+  insertMany ∅ l
+
+@[inline] def Const.ofList {β : Type v} [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ (α × β)] (l : ρ) : Raw α (fun _ => β) :=
+  Const.insertMany ∅ l
+
+@[inline] def Const.unitOfList [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ α] (l : ρ) : Raw α (fun _ => Unit) :=
+  Const.insertManyUnit ∅ l
+
 section WF
 
 /--
@@ -235,6 +259,27 @@ theorem WF.filter [BEq α] [Hashable α] {m : Raw α β} {f : (a : α) → β a 
 theorem WF.Const.getThenInsertIfNew? {β : Type v} [BEq α] [Hashable α] {m : Raw α (fun _ => β)} {a : α} {b : β} (h : m.WF) :
     (Const.getThenInsertIfNew? m a b).1.WF := by
   simpa [Raw.Const.getThenInsertIfNew?, h.size_buckets_pos] using .constGetThenInsertIfNew?₀ h
+
+theorem WF.insertMany [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ ((a : α) × β a)] {m : Raw α β} {l : ρ} (h : m.WF) :
+    (m.insertMany l).WF := by
+  simpa [Raw.insertMany, h.size_buckets_pos] using (Raw₀.insertMany ⟨m, h.size_buckets_pos⟩ l).2 _ WF.insert₀ h
+
+theorem WF.Const.insertMany {β : Type v} [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ (α × β)] {m : Raw α (fun _ => β)} {l : ρ} (h : m.WF) :
+    (Const.insertMany m l).WF := by
+  simpa [Raw.Const.insertMany, h.size_buckets_pos] using (Raw₀.Const.insertMany ⟨m, h.size_buckets_pos⟩ l).2 _ WF.insert₀ h
+
+theorem WF.Const.insertManyUnit [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ α] {m : Raw α (fun _ => Unit)} {l : ρ} (h : m.WF) :
+    (Const.insertManyUnit m l).WF := by
+  simpa [Raw.Const.insertManyUnit, h.size_buckets_pos] using (Raw₀.Const.insertManyUnit ⟨m, h.size_buckets_pos⟩ l).2 _ WF.insert₀ h
+
+theorem WF.ofList [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ ((a : α) × β a)] {l : ρ} : (ofList l : Raw α β).WF :=
+  .insertMany WF.empty
+
+theorem WF.Const.ofList {β : Type v} [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ (α × β)] {l : ρ} : (Const.ofList l : Raw α (fun _ => β)).WF :=
+  Const.insertMany WF.empty
+
+theorem WF.Const.unitOfList [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ α] {l : ρ} : (Const.unitOfList l : Raw α (fun _ => Unit)).WF :=
+  Const.insertManyUnit WF.empty
 
 end WF
 
@@ -380,5 +425,23 @@ instance [BEq α] [Hashable α] : ForIn m (DHashMap α β) (Σ a, β a) where
 
 @[inline] def isEmpty [BEq α] [Hashable α] (m : DHashMap α β) : Bool :=
   m.1.isEmpty
+
+@[inline] def insertMany [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ ((a : α) × β a)] (m : DHashMap α β) (l : ρ) : DHashMap α β :=
+  ⟨(Raw₀.insertMany ⟨m.1, m.2.size_buckets_pos⟩ l).1, (Raw₀.insertMany ⟨m.1, m.2.size_buckets_pos⟩ l).2 _ Raw.WF.insert₀ m.2⟩
+
+@[inline] def Const.insertMany {β : Type v} [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ (α × β)] (m : DHashMap α (fun _ => β)) (l : ρ) : DHashMap α (fun _ => β) :=
+  ⟨(Raw₀.Const.insertMany ⟨m.1, m.2.size_buckets_pos⟩ l).1, (Raw₀.Const.insertMany ⟨m.1, m.2.size_buckets_pos⟩ l).2 _ Raw.WF.insert₀ m.2⟩
+
+@[inline] def Const.insertManyUnit [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ α] (m : DHashMap α (fun _ => Unit)) (l : ρ) : DHashMap α (fun _ => Unit) :=
+  ⟨(Raw₀.Const.insertManyUnit ⟨m.1, m.2.size_buckets_pos⟩ l).1, (Raw₀.Const.insertManyUnit ⟨m.1, m.2.size_buckets_pos⟩ l).2 _ Raw.WF.insert₀ m.2⟩
+
+@[inline] def ofList [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ ((a : α) × β a)] (l : ρ) : DHashMap α β :=
+  insertMany ∅ l
+
+@[inline] def Const.ofList {β : Type v} [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ (α × β)] (l : ρ) : DHashMap α (fun _ => β) :=
+  Const.insertMany ∅ l
+
+@[inline] def Const.unitOfList [BEq α] [Hashable α] {ρ : Type w} [ForIn Id ρ α] (l : ρ) : DHashMap α (fun _ => Unit) :=
+  Const.insertManyUnit ∅ l
 
 end Std.DHashMap
