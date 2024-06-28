@@ -17,10 +17,6 @@ namespace Std
 
 namespace DHashMap.Internal
 
--- TODO: Move this to a better place
-structure IsHashSelf [BEq α] [Hashable α] (m : Array (AssocList α β)) : Prop where
-  hashes_to (i : Nat) (h : i < m.size) : List.HashesTo m[i].toList i m.size
-
 @[inline] private def numBucketsForCapacity (capacity : Nat) : Nat :=
   -- a "load factor" of 0.75 is the usual standard for hash maps
   capacity * 4 / 3
@@ -235,6 +231,9 @@ variable {β : Type v}
 end
 
 end Raw₀
+
+structure IsHashSelf [BEq α] [Hashable α] (m : Array (AssocList α β)) : Prop where
+  hashes_to (i : Nat) (h : i < m.size) : List.HashesTo m[i].toList i m.size
 
 namespace Raw
 
