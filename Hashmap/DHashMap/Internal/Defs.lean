@@ -51,7 +51,7 @@ of so-called "model functions" on `Raw₀`, defined in the file `Internal.Model`
 signature as their counterparts defined in this file, but may have a slighly simpler implementation.
 For example, `Raw₀.erase` has a linearity optimization which is not present in the model function
 `Raw₀.eraseₘ`. We prove that the functions are equal to their model implementations in `Internal.Model`,
-then verify the model implementation. This makes the verification more rebust against implemenation
+then verify the model implementation. This makes the verification more robust against implemenation
 details, future performance improvements, etc.
 
 Second, reducing hash maps to lists only works if the hash map is well-formed. Our internal well-formedness
