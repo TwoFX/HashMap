@@ -566,6 +566,26 @@ theorem WF.out [BEq α] [Hashable α] [i₁ : EquivBEq α] [i₂ : LawfulHashabl
   · next h => exact Raw₀.wfImp_filter (by apply h)
   · next h => exact Raw₀.Const.wfImp_getThenInsertIfNew? (by apply h)
 
+end Raw
+
+namespace Raw₀
+
+theorem wfImp_insertMany [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {ρ : Type w} [ForIn Id ρ (Σ a, β a)] {m : Raw₀ α β}
+    {l : ρ} (h : Raw.WFImp m.1) : Raw.WFImp (m.insertMany l).1.1 :=
+  Raw.WF.out ((m.insertMany l).2 _ Raw.WF.insert₀ (.wf m.2 h))
+
+theorem Const.wfImp_insertMany {β : Type v} [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {ρ : Type w} [ForIn Id ρ (α × β)] {m : Raw₀ α (fun _ => β)}
+    {l : ρ} (h : Raw.WFImp m.1) : Raw.WFImp (Const.insertMany m l).1.1 :=
+  Raw.WF.out ((Const.insertMany m l).2 _ Raw.WF.insert₀ (.wf m.2 h))
+
+theorem Const.wfImp_insertManyUnit [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] {ρ : Type w} [ForIn Id ρ α] {m : Raw₀ α (fun _ => Unit)}
+    {l : ρ} (h : Raw.WFImp m.1) : Raw.WFImp (Const.insertManyUnit m l).1.1 :=
+  Raw.WF.out ((Const.insertManyUnit m l).2 _ Raw.WF.insert₀ (.wf m.2 h))
+
+end Raw₀
+
+namespace Raw
+
 theorem empty_eq [BEq α] [Hashable α] {c : Nat} : (Raw.empty c : Raw α β) = (Raw₀.empty c).1 := rfl
 
 theorem emptyc_eq [BEq α] [Hashable α] : (∅ : Raw α β) = Raw₀.empty.1 := rfl
