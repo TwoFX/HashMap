@@ -76,13 +76,16 @@ Here is a summary of the steps required to add and verify a new operation:
 1. Write the executable implementation
   * Implement the operation `AssocList.operation` on associative lists in `Internal.AssocList.Basic`
   * Implement the operation `Raw₀.operation` on `Raw₀` in `Internal.Defs`
-  * Implement the operation `Raw.operation`/`DHashMap.operation` on `DHashMap.Raw` and `DHashMap` in `DHashMap.Basic`
-    If you operation modifies the hash map, this will involve adding a new constructor `operation₀` to
+  * Implement the operation `Raw.operation`/`DHashMap.operation` on `DHashMap.Raw` and `DHashMap` in
+    `DHashMap.Basic`.
+    If your operation modifies the hash map, this will involve adding a new constructor `operation₀` to
     `Raw.WF`. In that case, don't forget to provide a well-formedness lemma `Raw.WF.operation` (which
     differs from `Raw.WF.operation₀` in that it is about the operation on `Raw`, not on `Raw₀` (remember,
     these differ by a bounds check)).
-  * Implement the operation `Raw.operation`/`HashMap.operation` on `HashMap.Raw` and `HashMap` in `HashMap.Basic`
-  * Implement the operation `Raw.operation`/`HashSet.operation` on `HashSet.Raw` and `HashSet` in `HashSet.Basic`
+  * Implement the operation `Raw.operation`/`HashMap.operation` on `HashMap.Raw` and `HashMap` in
+    `HashMap.Basic`.
+  * Implement the operation `Raw.operation`/`HashSet.operation` on `HashSet.Raw` and `HashSet` in
+    `HashSet.Basic`
 2. Write the list implementation
   * Implement the operation `List.operation` on lists in `Internal.List.Associative`
   * Connect the implementation on lists and associative lists in `Internal.AssocList.Lemmas` via a lemma
@@ -94,8 +97,8 @@ Here is a summary of the steps required to add and verify a new operation:
 4. Verify the model implementation
   * In `Internal.WF`, prove `operationₘ_eq_List.operation` (for access operations) or
     `wfImp_operationₘ` and `toListModel_operationₘ`
-  * Immediately deduce the corresponding results `operation_eq_List.operation`/`wfImp_operation`/`toListModel_operation`
-    by combining the results from steps 3 and 4.
+  * Immediately deduce the corresponding results `operation_eq_List.operation` or
+    `wfImp_operation`/`toListModel_operation` by combining the results from steps 3 and 4.
   * If you added a new constructor to `Raw.WF` earlier, fix up the proof of `Raw.WF.out`.
 5. Connect `Raw` and `Raw₀`
   * Write `Raw.operation_eq` and `Raw.operation_val` in `Internal.Raw`.
@@ -108,8 +111,8 @@ Here is a summary of the steps required to add and verify a new operation:
     will need to hook some of the results you proved in step 4 into the tactic. You might also have to
     prove that your list operation is invariant under permutation and add that to the tactic.
 7. State and prove the user-facing lemmas
-  * Restate all of your lemmas for `DHashMap.Raw` in `DHashMap.Lemmas` and prove them using the provided tactic
-    after hooking in you `operation_eq` and `operation_val` from step 5.
+  * Restate all of your lemmas for `DHashMap.Raw` in `DHashMap.Lemmas` and prove them using the provided
+    tactic after hooking in your `operation_eq` and `operation_val` from step 5.
   * Restate all of your lemmas for `DHashMap` in `DHashMap.Lemmas` and prove them by reducing to `Raw₀`.
   * Restate all of your lemmas for `HashMap.Raw` in `HashMap.Lemmas` and prove them by reducing to `DHashMap.Raw`.
   * Restate all of your lemmas for `HashMap` in `HashMap.Lemmas` and prove them by reducing to `DHashMap`.
