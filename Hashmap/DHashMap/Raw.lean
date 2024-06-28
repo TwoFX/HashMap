@@ -5,6 +5,14 @@ Authors: Leonardo de Moura, Mario Carneiro, Markus Himmel
 -/
 import Hashmap.DHashMap.Internal.AssocList.Basic
 
+/-!
+# Definition of `DHashMap.Raw`
+
+This file defines the type `Std.DHashMap.Raw`. All of its functions are defined in the module
+`Std.DHashMap.Basic`.
+-/
+
+set_option linter.missingDocs true
 set_option autoImplicit false
 
 universe u v

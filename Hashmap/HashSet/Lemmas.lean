@@ -6,6 +6,16 @@ Authors: Markus Himmel
 import Hashmap.HashMap.Lemmas
 import Hashmap.HashSet.Basic
 
+/-!
+# Hash set lemmas
+
+This file contains lemmas about `Std.HashSet.Raw` and `Std.HashSet`. Most of the lemmas require
+`EquivBEq α` and `LawfulHashable α` for the key type `α`. The easiest way to obtain these instances
+is to provide an instance of `LawfulBEq α`.
+
+-/
+
+set_option linter.missingDocs true
 set_option autoImplicit false
 
 universe u v

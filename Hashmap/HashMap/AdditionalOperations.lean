@@ -6,6 +6,13 @@ Authors: Markus Himmel
 import Hashmap.DHashMap.AdditionalOperations
 import Hashmap.HashMap.Basic
 
+/-!
+# Additional hash map operations
+
+This file defines the operations `map` and `filterMap` on `Std.HashMap`.
+-/
+
+set_option linter.missingDocs true
 set_option autoImplicit false
 
 universe u v w

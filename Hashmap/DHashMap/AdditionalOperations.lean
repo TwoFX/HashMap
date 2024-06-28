@@ -7,12 +7,14 @@ import Hashmap.DHashMap.Internal.Raw
 import Hashmap.DHashMap.Internal.WF
 
 /-!
-This file defines operations on `DHashMap` which cannot be defined in `Basic.lean` due to universe issues.
-This file will have more imports than `Basic.lean` once everything is properly untangled.
+# Additional dependent hash map operations
+
+This file defines the operations `map` and `filterMap` on `Std.DHashMap`.
 -/
 
 open Std.DHashMap.Internal
 
+set_option linter.missingDocs true
 set_option autoImplicit false
 
 universe u v w

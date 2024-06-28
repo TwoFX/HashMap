@@ -5,7 +5,22 @@ Authors: Markus Himmel
 -/
 import Hashmap.DHashMap.Basic
 
+set_option linter.missingDocs true
 set_option autoImplicit false
+
+/-!
+# Hash maps
+
+This file develops the two types `Std.HashMap.Raw` and `Std.HashMap`. The difference between these
+types is that the former does not bundle the well-formedness invariant and is thus safe to use in
+nested inductive types. The well-formedness predicate is available as `Std.HashMap.Raw.WF` and this
+file proves that all operations preserve well-formedness.
+
+The operations `map` and `filterMap` on `Std.HashMap` are defined in the module `Std.HashMap.AdditionalOperations`.
+
+Lemmas about the operations on `Std.HashMap.Raw` and `Std.HashMap` are available in the module
+`Std.HashMap.Lemmas`.
+-/
 
 universe u v w
 

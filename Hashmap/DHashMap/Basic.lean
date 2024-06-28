@@ -4,8 +4,26 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Leonardo de Moura, Mario Carneiro, Markus Himmel
 -/
 import Hashmap.Classes.BEq
+import Hashmap.Classes.LawfulHashable
 import Hashmap.DHashMap.Internal.Defs
 
+/-!
+# Dependent hash maps
+
+This file develops the two types `Std.DHashMap.Raw` and `Std.DHashMap`. The difference between these
+types is that the former does not bundle the well-formedness invariant and is thus safe to use in
+nested inductive types. The well-formedness predicate is available as `Std.DHashMap.Raw.WF` and this
+file proves that all operations preserve well-formedness.
+
+The operations `map` and `filterMap` on `Std.DHashMap` are defined in the module `Std.DHashMap.AdditionalOperations`.
+
+Lemmas about the operations on `Std.DHashMap.Raw` and `Std.DHashMap` are available in the module
+`Std.DHashMap.Lemmas`.
+
+For implementation notes, see the docstring of the module `Std.DHashMap.Internal.Defs`.
+-/
+
+set_option linter.missingDocs true
 set_option autoImplicit false
 
 universe u v w
@@ -207,6 +225,9 @@ will need to provide proofs of `WF` to lemmas and should use the lemmas `WF.empt
 show that map operations preserve well-formedness.
 -/
 inductive WF : {α : Type u} → {β : α → Type v} → [BEq α] → [Hashable α] → Raw α β → Prop where
+  -- Implementation note: the reason why we provide the `[EquivBEq α] [LawfulHashable α]` is so that we can write down
+  -- `DHashMap.map` and `DHashMap.filterMap` in `AdditionalOperations.lean` without requiring these proofs just to invoke
+  -- the operations.
   | wf {α β} [BEq α] [Hashable α] {m : Raw α β} : 0 < m.buckets.size → (∀ [EquivBEq α] [LawfulHashable α], Raw.WFImp m) → WF m
   | empty₀ {α β} [BEq α] [Hashable α] {c} : WF (Raw₀.empty c : Raw₀ α β).1
   | insert₀ {α β} [BEq α] [Hashable α] {m : Raw α β} {h a b} : WF m → WF (Raw₀.insert ⟨m, h⟩ a b).1

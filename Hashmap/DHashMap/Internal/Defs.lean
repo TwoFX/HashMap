@@ -7,6 +7,119 @@ import Hashmap.DHashMap.Raw
 import Hashmap.DHashMap.Internal.List.Defs
 import Hashmap.DHashMap.Internal.Index
 
+/-!
+# Hash map implementation notes
+
+This is a simple separate-chaining hash table. The data of the hash map (`DHashMap.Raw`) consists of
+a cached size and an array of buckets, where each bucket is an `AssocList α β` (which is the same as
+a `List (Σ a, β a)` but with one less level of indirection). The number of buckets is always a power of
+two. The hash map doubles its size upon inserting an element such that the number of elements is more
+than 75% of the number of buckets.
+
+Because we need `DHashMap.Raw` to be nested-inductive-safe, we cannot bundle the fact that there is at
+least one bucket. We there for define a type `Raw₀` which is just a `Raw` together with the fact that
+the size is positive. Almost all internal work on the hash map happens on `Raw₀` so that we do not have
+to perform size check all of the time. The operations defined on `Raw` perform this size check once
+to transform the `Raw` into a `Raw₀` and then operate on that (therefore, each operation on `Raw` will
+only do a single size check). The operations defined on `DHashMap` conclude that the size is positive
+from the well-formedness predicate, use that to build a `Raw₀` and then operate on that. So the
+operations on `DHashMap` are exactly the same as the operations on `Raw₀` and the operations on `Raw`
+are the same as the operations on `Raw₀` as long as we can prove that the size check will succeed.
+
+The operations on `Raw₀` are defined in this file. They are built for performance. The IR is
+hand-checked to ensure that there are no unnecessary allocations, inlining problems or linearity bugs.
+Note that for many operations the IR only becomes meaningful once it has been specialized with concrete
+`Hashable` and `BEq` instances as is the case in actual applications.
+
+Of the internal files, only `Internal.Index`, `Internal.Defs` and `Internal.AssocList.Basic` contain
+any executable code. The rest of the files set up the verification framework which is described in the
+remainder of this text.
+
+The basic idea is to translate statements about hash maps into statements about lists using the function
+`toListModel` defined in this file. The function `toListModel` simply concatenates all buckets into a
+`List (Σ a, β a)`. The file `Internal.List.Associative` then contains a complete verification of
+associative lists. The theorems relating the operations on `Raw₀` to the operations on `List (Σ a, β a)`
+are located in `Internal.WF` and have such names as `contains_eq_containsKey` or `toListModel_insert`.
+In the file `Internal.RawLemmas` we then state all of the lemmas for `Raw₀` and use a tactic to apply
+the results from `Internal.WF` to reduce to the results from `Internal.List.Associative`. From there we
+can state the actual lemmas for `DHashMap.Raw`, `DHashMap`, `HashMap.Raw`, `HashMap`, `HashSet.Raw`
+and `HashSet` in the non-internal `*.Lemmas` files and immediately reduce them to the results about
+`Raw₀` in `Internal.RawLemmas`.
+
+There are some additional indirections to this high-level strategy. First, we have an additional layer
+of so-called "model functions" on `Raw₀`, defined in the file `Internal.Model`. These have the same
+signature as their counterparts defined in this file, but may have a slighly simpler implementation.
+For example, `Raw₀.erase` has a linearity optimization which is not present in the model function
+`Raw₀.eraseₘ`. We prove that the functions are equal to their model implementations in `Internal.Model`,
+then verify the model implementation. This makes the verification more rebust against implemenation
+details, future performance improvements, etc.
+
+Second, reducing hash maps to lists only works if the hash map is well-formed. Our internal well-formedness
+predicate is called `Raw.WFImp` (defined in this file) and states that (a) each bucket only contains
+items with the correct hash, (b) the cached size is equal to the actual number of elements in the buckets,
+and (c) after concatenating the buckets the keys in the resulting list are pairwise not equal. The
+third condition is a priori stronger than the slightly more natural condition that the keys in each bucket
+are pairwise not equal, but they are equivalent in well-behaved cases and our condition works better.
+The user-visible well-formedness predicate `Raw.WF` is equivalent to `WFImp`, as is shown in `Internal.WF`.
+The user-visible version exists to postpone the proofs that all operations preserve well-formedness
+to a later file so that it is possible to import `DHashMap.Basic` without pulling in all of the proof
+machinery.
+
+The framework works very hard to make adding and verifying new operations very easy and maintainable.
+To this end, we provide theorems `apply_bucket`, `apply_bucket_with_proof`, `toListModel_updateBucket`
+and `toListModel_updateAllBuckets`, which do all of the heavy lifting in a general way. The verification
+for each actual operation in `Internal.WF` is then extremely straightward, requiring only to plug in
+some results about lists. See for example the functions `containsₘ_eq_containsKey` and the section on
+`removeₘ` for prototypical examples of this technique.
+
+Here is a summary of the steps required to add and verify a new operation:
+1. Write the executable implementation
+  * Implement the operation `AssocList.operation` on associative lists in `Internal.AssocList.Basic`
+  * Implement the operation `Raw₀.operation` on `Raw₀` in `Internal.Defs`
+  * Implement the operation `Raw.operation`/`DHashMap.operation` on `DHashMap.Raw` and `DHashMap` in `DHashMap.Basic`
+    If you operation modifies the hash map, this will involve adding a new constructor `operation₀` to
+    `Raw.WF`. In that case, don't forget to provide a well-formedness lemma `Raw.WF.operation` (which
+    differs from `Raw.WF.operation₀` in that it is about the operation on `Raw`, not on `Raw₀` (remember,
+    these differ by a bounds check)).
+  * Implement the operation `Raw.operation`/`HashMap.operation` on `HashMap.Raw` and `HashMap` in `HashMap.Basic`
+  * Implement the operation `Raw.operation`/`HashSet.operation` on `HashSet.Raw` and `HashSet` in `HashSet.Basic`
+2. Write the list implementation
+  * Implement the operation `List.operation` on lists in `Internal.List.Associative`
+  * Connect the implementation on lists and associative lists in `Internal.AssocList.Lemmas` via a lemma
+    `AssocList.operation_eq`.
+3. Write the model implementation
+  * Write the model implementation `Raw₀.operationₘ` in `Internal.List.Model`
+  * Prove that the model implementation is equal to the actual implementation in `Internal.List.Model` via
+    a lemma `operation_eq_operationₘ`.
+4. Verify the model implementation
+  * In `Internal.WF`, prove `operationₘ_eq_List.operation` (for access operations) or
+    `wfImp_operationₘ` and `toListModel_operationₘ`
+  * Immediately deduce the corresponding results `operation_eq_List.operation`/`wfImp_operation`/`toListModel_operation`
+    by combining the results from steps 3 and 4.
+  * If you added a new constructor to `Raw.WF` earlier, fix up the proof of `Raw.WF.out`.
+5. Connect `Raw` and `Raw₀`
+  * Write `Raw.operation_eq` and `Raw.operation_val` in `Internal.Raw`.
+6. Prove `Raw₀` versions of user-facing lemmas
+  * State all of the user-facing lemmas that you want in `Internal.RawLemmas`. This will generally involve
+    connecting the operation to ALL existing operations or deciding that there is nothing to be said about
+    a certain pair.
+  * Prove the corresponding results about lists in `List.Associative`
+  * Use the tactic provided in `Internal.RawLemmas` to deduce the `Raw₀` results from the list results. You
+    will need to hook some of the results you proved in step 4 into the tactic. You might also have to
+    prove that your list operation is invariant under permutation and add that to the tactic.
+7. State and prove the user-facing lemmas
+  * Restate all of your lemmas for `DHashMap.Raw` in `DHashMap.Lemmas` and prove them using the provided tactic
+    after hooking in you `operation_eq` and `operation_val` from step 5.
+  * Restate all of your lemmas for `DHashMap` in `DHashMap.Lemmas` and prove them by reducing to `Raw₀`.
+  * Restate all of your lemmas for `HashMap.Raw` in `HashMap.Lemmas` and prove them by reducing to `DHashMap.Raw`.
+  * Restate all of your lemmas for `HashMap` in `HashMap.Lemmas` and prove them by reducing to `DHashMap`.
+  * Restate all of your lemmas for `HashSet.Raw` in `HashSet.Lemmas` and prove them by reducing to `DHashSet.Raw`.
+  * Restate all of your lemmas for `HashSet` in `HashSet.Lemmas` and prove them by reducing to `DHashSet`.
+
+This sounds like a lot of work (and it is if you have to add a lot of user-facing lemmas), but the framework is
+set up in such a way that each step is really easy and the proofs are all really short and clean.
+-/
+
 set_option autoImplicit false
 
 universe u v w
@@ -231,6 +344,9 @@ variable {β : Type v}
 end
 
 end Raw₀
+
+structure List.HashesTo [BEq α] [Hashable α] (l : List (Σ a, β a)) (i : Nat) (size : Nat) : Prop where
+  hash_self : (h : 0 < size) → ∀ p, p ∈ l → (mkIdx size h (hash p.1)).1.toNat = i
 
 structure IsHashSelf [BEq α] [Hashable α] (m : Array (AssocList α β)) : Prop where
   hashes_to (i : Nat) (h : i < m.size) : List.HashesTo m[i].toList i m.size

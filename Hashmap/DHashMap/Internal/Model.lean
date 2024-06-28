@@ -3,8 +3,8 @@ Copyright (c) 2024 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
-import Hashmap.DHashMap.Internal.List.Associative
 import Hashmap.DHashMap.Basic
+import Hashmap.DHashMap.Internal.List.HashesTo
 import Hashmap.DHashMap.Internal.AssocList.Lemmas
 
 

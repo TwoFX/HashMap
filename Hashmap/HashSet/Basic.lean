@@ -5,6 +5,19 @@ Authors: Markus Himmel
 -/
 import Hashmap.HashMap.Basic
 
+/-!
+# Hash set
+
+This file develops the two types `Std.HashSet.Raw` and `Std.HashSet`. The difference between these
+types is that the former does not bundle the well-formedness invariant and is thus safe to use in
+nested inductive types. The well-formedness predicate is available as `Std.HashSet.Raw.WF` and this
+file proves that all operations preserve well-formedness.
+
+Lemmas about the operations on `Std.HashSet.Raw` and `Std.HashSet` are available in the module
+`Std.HashSet.Lemmas`.
+-/
+
+set_option linter.missingDocs true
 set_option autoImplicit false
 
 universe u v
