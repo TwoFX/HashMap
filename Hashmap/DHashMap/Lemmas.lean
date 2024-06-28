@@ -20,7 +20,7 @@ namespace Internal.Raw
 
 open Lean Elab Meta Tactic
 
-def baseNames : Array Name :=
+private def baseNames : Array Name :=
   #[``Raw.empty_eq, ``Raw.emptyc_eq,
     ``insert_eq, ``insert_val,
     ``insertIfNew_eq, ``insertIfNew_val,

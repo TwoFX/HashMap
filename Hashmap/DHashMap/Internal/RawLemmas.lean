@@ -50,15 +50,15 @@ scoped macro "empty" : tactic => `(tactic| { intros; simp_all [List.isEmpty_iff]
 
 open Lean
 
-def queryNames : Array Name :=
+private def queryNames : Array Name :=
   #[``contains_eq_containsKey, ``Raw.isEmpty_eq_isEmpty, ``Raw.size_eq_length, ``get?_eq_getValueCast?,
     ``Const.get?_eq_getValue?, ``get_eq_getValueCast, ``Const.get_eq_getValue, ``get!_eq_getValueCast!,
     ``getD_eq_getValueCastD, ``Const.get!_eq_getValue!, ``Const.getD_eq_getValueD]
 
-def modifyNames : Array Name :=
+private def modifyNames : Array Name :=
   #[``toListModel_insert, ``toListModel_remove, ``toListModel_insertIfNew]
 
-def congrNames : MacroM (Array (TSyntax `term)) := do
+private def congrNames : MacroM (Array (TSyntax `term)) := do
   return #[← `(Std.DHashMap.Internal.List.Perm.isEmpty_eq), ← `(containsKey_of_perm), ← `(Std.DHashMap.Internal.List.Perm.length_eq),
     ← `(getValueCast?_of_perm _), ← `(getValue?_of_perm _), ← `(getValue_of_perm _),
     ← `(getValueCast_of_perm _), ← `(getValueCast!_of_perm _), ← `(getValueCastD_of_perm _),
