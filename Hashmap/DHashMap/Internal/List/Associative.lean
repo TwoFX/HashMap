@@ -567,7 +567,7 @@ theorem getValueCast?_replaceEntry [BEq α] [LawfulBEq α] {l : List (Σ a, β a
   · next h =>
     rw [Option.dmap_congr (getEntry?_replaceEntry_of_true h.1 h.2), Option.dmap_some]
   · next h =>
-    simp only [Classical.not_and_iff_or_not_not] at h
+    simp only [Decidable.not_and_iff_or_not_not] at h
     rcases h with h|h
     · rw [Option.dmap_congr (getEntry?_replaceEntry_of_containsKey_eq_false (Bool.eq_false_iff.2 h)),
         getValueCast?_eq_getEntry?]
@@ -659,8 +659,7 @@ theorem containsKey_eq_keys_contains [BEq α] [PartialEquivBEq α] {l : List (Σ
     containsKey a l = (keys l).contains a := by
   induction l using assoc_induction
   · rfl
-  · next k _ l ih =>
-    simp [ih, BEq.comm]
+  · next k _ l ih => simp [ih, BEq.comm]
 
 theorem containsKey_eq_true_iff_exists_mem [BEq α] {l : List (Σ a, β a)} {a : α} :
     containsKey a l = true ↔ ∃ p ∈ l, a == p.1 := by
@@ -1293,8 +1292,7 @@ theorem getEntry?_ext [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} (hl : Di
     intro k'
     cases hk' : k' == k
     · simpa only [getEntry?_of_perm hl' hl'', getEntry?_cons_of_false hk'] using h k'
-    · simp only [getEntry?_congr hk']
-      rw [getEntry?_eq_none.2 hl.containsKey_eq_false,
+    · rw [getEntry?_congr hk', getEntry?_congr hk', getEntry?_eq_none.2 hl.containsKey_eq_false,
           getEntry?_eq_none.2 (hl'.perm hl''.symm).containsKey_eq_false]
 
 theorem replaceEntry_of_perm [BEq α] [EquivBEq α] {l l' : List (Σ a, β a)} {k : α} {v : β k}

@@ -17,17 +17,6 @@ class PartialEquivBEq (α) [BEq α] : Prop where
   /-- Transitivity for `BEq`. If `a == b` and `b == c` then `a == c`. -/
   trans : (a : α) == b → b == c → a == c
 
--- /-- `PartialEquivBEq α` says that the `BEq` implementation is a
--- partial equivalence relation, that is:
--- * it is symmetric: `a == b → b == a`
--- * it is transitive: `a == b → b == c → a == c`.
--- -/
--- class PartialEquivBEq (α) [BEq α] : Prop where
---   /-- Symmetry for `BEq`. If `a == b` then `b == a`. -/
---   symm : (a : α) == b → b == a
---   /-- Transitivity for `BEq`. If `a == b` and `b == c` then `a == c`. -/
---   trans : (a : α) == b → b == c → a == c
-
 /-- `ReflBEq α` says that the `BEq` implementation is reflexive. -/
 class ReflBEq (α) [BEq α] : Prop where
   /-- Reflexivity for `BEq`. -/
@@ -56,12 +45,12 @@ theorem BEq.trans [BEq α] [PartialEquivBEq α] {a b c : α} : a == b → b == c
   PartialEquivBEq.trans
 
 theorem BEq.neq_of_neq_of_beq [BEq α] [PartialEquivBEq α] {a b c : α} :
-    (a == b) = false → b == c → (a == c) = false := by
-  refine fun h₁ h₂ => Bool.eq_false_iff.2 fun h₃ => Bool.eq_false_iff.1 h₁ (BEq.trans h₃ (BEq.symm h₂))
+    (a == b) = false → b == c → (a == c) = false :=
+  fun h₁ h₂ => Bool.eq_false_iff.2 fun h₃ => Bool.eq_false_iff.1 h₁ (BEq.trans h₃ (BEq.symm h₂))
 
 theorem BEq.neq_of_beq_of_neq [BEq α] [PartialEquivBEq α] {a b c : α} :
-    a == b → (b == c) = false → (a == c) = false := by
-  refine fun h₁ h₂ => Bool.eq_false_iff.2 fun h₃ => Bool.eq_false_iff.1 h₂ (BEq.trans (BEq.symm h₁) h₃)
+    a == b → (b == c) = false → (a == c) = false :=
+  fun h₁ h₂ => Bool.eq_false_iff.2 fun h₃ => Bool.eq_false_iff.1 h₂ (BEq.trans (BEq.symm h₁) h₃)
 
 instance (priority := low) [BEq α] [LawfulBEq α] : EquivBEq α where
   refl := LawfulBEq.rfl

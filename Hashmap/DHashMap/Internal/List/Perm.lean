@@ -65,11 +65,7 @@ theorem perm_append_comm_assoc (l₁ l₂ l₃ : List α) : Perm (l₁ ++ (l₂ 
   simpa only [List.append_assoc] using perm_append_comm.append_right _
 
 theorem Perm.mem_iff {l₁ l₂ : List α} (h : Perm l₁ l₂) {a : α} : a ∈ l₁ ↔ a ∈ l₂ := by
-  induction h
-  · simp
-  · simp_all
-  · simp_all [← or_assoc, Or.comm]
-  · simp_all
+  induction h <;> simp_all [← or_assoc, Or.comm]
 
 theorem Perm.map (f : α → β) {l₁ l₂ : List α} (h : Perm l₁ l₂) : Perm (l₁.map f) (l₂.map f) := by
   induction h

@@ -33,21 +33,17 @@ def scrambleHash (hash : UInt64) : UInt64 :=
 -/
 @[irreducible] def mkIdx (sz : Nat) (h : 0 < sz) (hash : UInt64) : { u : USize // u.toNat < sz } :=
   ⟨(scrambleHash hash).toUSize &&& (sz.toUSize - 1), by
+    -- Making this proof significantly less painful will be a good test for our USize API
     by_cases h' : sz < USize.size
     · rw [USize.toNat_and, ← Nat.toUSize_one, USize.toNat_sub_le, Nat.toNat_toUSize]
-      · refine Nat.lt_of_le_of_lt Nat.and_le_right ?_
-        refine Nat.sub_lt h ?_
+      · refine Nat.lt_of_le_of_lt Nat.and_le_right (Nat.sub_lt h ?_)
         rw [Nat.toNat_toUSize]
         · exact Nat.one_pos
         · exact Nat.lt_of_le_of_lt h h'
       · exact h'
-      · rw [USize.le_def]
-        rw [Fin.le_def]
+      · rw [USize.le_def, Fin.le_def]
         change _ ≤ (_ % _)
-        rw [Nat.mod_eq_of_lt h']
-        rw [Nat.toUSize, USize.ofNat]
-        simp
-        rw [Nat.mod_eq_of_lt]
+        rw [Nat.mod_eq_of_lt h', Nat.toUSize, USize.ofNat, Fin.val_ofNat', Nat.mod_eq_of_lt]
         · exact h
         · exact Nat.lt_of_le_of_lt h h'
     · exact Nat.lt_of_lt_of_le USize.toNat_lt' (Nat.le_of_not_lt h')⟩

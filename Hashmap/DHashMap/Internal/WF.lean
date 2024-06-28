@@ -79,21 +79,19 @@ theorem toListModel_reinsertAux [BEq α] [Hashable α] [PartialEquivBEq α]
   refine h₂.trans ?_
   simpa using Perm.cons _ (Perm.symm h₁)
 
-theorem isHashSelf_foldl_reinsertAux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (l : AssocList α β) (target : { d : Array (AssocList α β) // 0 < d.size }) :
-    IsHashSelf target.1 → IsHashSelf (l.foldl (reinsertAux hash) target).1 := by
+theorem isHashSelf_foldl_reinsertAux [BEq α] [Hashable α] [EquivBEq α] [LawfulHashable α] (l : List (Σ a, β a)) (target : { d : Array (AssocList α β) // 0 < d.size }) :
+    IsHashSelf target.1 → IsHashSelf (l.foldl (fun acc p => reinsertAux hash acc p.1 p.2) target).1 := by
   induction l generalizing target
-  · simp [AssocList.foldl, AssocList.foldlM, Id.run]
+  · simp [Id.run]
   · next k v _ ih => exact fun h => ih _ (isHashSelf_reinsertAux _ _ _ h)
 
-theorem toListModel_foldl_reinsertAux [BEq α] [Hashable α] [PartialEquivBEq α] (l : AssocList α β)
+theorem toListModel_foldl_reinsertAux [BEq α] [Hashable α] [PartialEquivBEq α] (l : List (Σ a, β a))
     (target : { d : Array (AssocList α β) // 0 < d.size }) :
-    Perm (toListModel (l.foldl (reinsertAux hash) target).1) (l.toList ++ toListModel target.1) := by
+    Perm (toListModel (l.foldl (fun acc p => reinsertAux hash acc p.1 p.2) target).1) (l ++ toListModel target.1) := by
   induction l generalizing target
   · simpa using Perm.refl _
   · next k v t ih =>
-    skip
-    simp at ih
-    simp
+    simp only [foldl_cons, cons_append]
     refine (ih _).trans ?_
     refine ((toListModel_reinsertAux _ _ _).append_left _).trans perm_middle
 
@@ -108,48 +106,31 @@ theorem expand.go_neg [Hashable α] {i : Nat} {source : Array (AssocList α β)}
   rw [expand.go]
   simp only [h, dite_false]
 
+theorem expand.go_eq [BEq α] [Hashable α] [PartialEquivBEq α] (source : Array (AssocList α β)) (target : {d : Array (AssocList α β) // 0 < d.size}) :
+    expand.go 0 source target = (toListModel source).foldl (fun acc p => reinsertAux hash acc p.1 p.2) target := by
+  suffices ∀ i, expand.go i source target = ((source.data.drop i).bind AssocList.toList).foldl (fun acc p => reinsertAux hash acc p.1 p.2) target by
+    simpa using this 0
+  intro i
+  induction i, source, target using expand.go.induct
+  · next i source target hi _ es newSource newTarget ih =>
+    simp only [newSource, newTarget, es] at *
+    rw [expand.go_pos hi]
+    refine ih.trans ?_
+    simp only [Array.get_eq_getElem, AssocList.foldl_eq, Array.data_set]
+    rw [List.drop_eq_getElem_cons hi, List.bind_cons, List.foldl_append, List.drop_set_of_lt _ _ (by omega),
+      Array.getElem_eq_data_getElem]
+  · next i source target hi =>
+    rw [expand.go_neg hi, List.drop_eq_nil_of_le, bind_nil, foldl_nil]
+    rwa [Array.size_eq_length_data, Nat.not_lt] at hi
+
 theorem isHashSelf_expand [BEq α] [Hashable α] [LawfulHashable α] [EquivBEq α] {buckets : {d : Array (AssocList α β) // 0 < d.size}} :
     IsHashSelf (expand buckets).1 := by
-  rw [expand]
-  apply go
-  simp only [IsHashSelf.mkArray]
-  where
-    go (i) (source : Array (AssocList α β)) (target : {d : Array (AssocList α β) // 0 < d.size}) :
-        IsHashSelf target.1 → IsHashSelf (expand.go i source target).1 := by
-      induction i, source, target using expand.go.induct
-      · next i source target hi _ es newSource newTarget ih =>
-        simp only [newSource, newTarget, es] at *
-        rw [expand.go_pos hi]
-        refine ih ∘ ?_
-        exact isHashSelf_foldl_reinsertAux _ _
-      · next i source target hi =>
-        rw [expand.go_neg hi]
-        exact id
+  simpa [expand, expand.go_eq] using isHashSelf_foldl_reinsertAux _ _ (by simp)
 
 theorem toListModel_expand [BEq α] [Hashable α] [PartialEquivBEq α] {buckets : {d : Array (AssocList α β) // 0 < d.size}} :
     Perm (toListModel (expand buckets).1) (toListModel buckets.1) := by
-  rw [expand]
-  refine (go _ _ _).trans ?_
-  rw [drop_zero, toListModel_mkArray_nil, append_nil, toListModel]
-  exact Perm.refl _
-  where
-    go (i) (source : Array (AssocList α β)) (target : {d : Array (AssocList α β) // 0 < d.size}) :
-        Perm (toListModel (expand.go i source target).1) ((source.data.drop i).bind AssocList.toList ++ toListModel target.1) := by
-      induction i, source, target using expand.go.induct
-      · next i source target hi _ es newSource newTarget ih =>
-        simp only [newSource, newTarget, es] at *
-        rw [expand.go_pos hi]
-        refine ih.trans ?_
-        rw [Array.size_eq_length_data] at hi
-        rw [List.drop_eq_getElem_cons hi, List.bind_cons, Array.data_set, List.drop_set_of_lt _ _ (Nat.lt_succ_self i),
-          Array.get_eq_getElem, Array.getElem_eq_data_getElem]
-        refine ((toListModel_foldl_reinsertAux _ _).append_left _).trans ?_
-        simp only [Nat.succ_eq_add_one, Array.data_length, append_assoc]
-        exact perm_append_comm_assoc _ _ _
-      · next i source target hi =>
-        rw [expand.go_neg hi]
-        rw [Array.size_eq_length_data, Nat.not_lt, ← List.drop_eq_nil_iff_le] at hi
-        simpa [hi] using Perm.refl _
+  simpa [expand, expand.go_eq] using toListModel_foldl_reinsertAux (toListModel buckets.1)
+    ⟨mkArray (buckets.1.size * 2) .nil, by simpa using Nat.mul_pos buckets.2 Nat.two_pos⟩
 
 theorem toListModel_expandIfNecessary [BEq α] [Hashable α] [PartialEquivBEq α] (m : Raw₀ α β) :
     Perm (toListModel (expandIfNecessary m).1.2) (toListModel m.1.2) := by
@@ -253,10 +234,6 @@ theorem Const.getDₘ_eq_getValueD [BEq α] [Hashable α] [PartialEquivBEq α] [
 theorem Const.getD_eq_getValueD [BEq α] [Hashable α] [PartialEquivBEq α] [LawfulHashable α] {m : Raw₀ α (fun _ => β)}
     (hm : Raw.WFImp m.1) {a : α} {fallback : β} : Const.getD m a fallback = getValueD a (toListModel m.1.buckets) fallback := by
   rw [getD_eq_getDₘ, getDₘ_eq_getValueD hm]
-
--- theorem mem_values_iff_mem_values_toListModel {m : Raw₀ α (fun _ => β)} {b : β} :
---     b ∈ m.1.values ↔ b ∈ values (toListModel m.1.buckets) :=
---   Raw.values_perm_values_toListModel.mem_iff
 
 end
 

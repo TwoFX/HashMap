@@ -156,7 +156,9 @@ theorem toListModel_updateBucket [BEq α] [Hashable α] [PartialEquivBEq α] [La
   · exact Perm.refl _
   · exact h₃ hm.buckets_hash_self _ rfl
 
--- TODO: clean up this proof
+/--
+This is the general theorem to show that mapping operations (like `map` and `filter`) are correct.
+-/
 theorem toListModel_updateAllBuckets {m : Raw₀ α β} {f : AssocList α β → AssocList α δ} {g : List (Σ a, β a) → List (Σ a, δ a)}
     (hfg : ∀ {l}, Perm ((f l).toList) (g l.toList)) (hg : ∀ {l l'}, Perm (g (l ++ l')) (g l ++ g l')) :
     Perm (toListModel (updateAllBuckets m.1.buckets f)) (g (toListModel m.1.2)) := by

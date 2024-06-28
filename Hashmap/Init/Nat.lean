@@ -12,7 +12,6 @@ theorem lt_of_eq_of_lt {n m k : Nat} : n = m → m < k → n < k :=
 theorem le_of_testBit {n m : Nat} (h : ∀ i, n.testBit i = true → m.testBit i = true) : n ≤ m := by
   induction n using Nat.div2Induction generalizing m
   next n ih =>
-  skip
   have : n / 2 ≤ m / 2 := by
     rcases n with (_|n)
     · simp
@@ -30,15 +29,11 @@ theorem le_of_testBit {n m : Nat} (h : ∀ i, n.testBit i = true → m.testBit i
     rw [hn2, hm2]
     exact Nat.add_le_add_right (Nat.mul_le_mul_left _ this) _
 
-theorem and_le_left {n m : Nat} : n &&& m ≤ n := by
-  apply le_of_testBit
-  intro i
-  simpa using fun x _ => x
+theorem and_le_left {n m : Nat} : n &&& m ≤ n :=
+  le_of_testBit (by simpa using fun i x _ => x)
 
-theorem and_le_right {n m : Nat} : n &&& m ≤ m := by
-  apply le_of_testBit
-  intro i
-  simp
+theorem and_le_right {n m : Nat} : n &&& m ≤ m :=
+  le_of_testBit (by simp)
 
 theorem toNat_toUSize {a : Nat} (h : a < USize.size) : a.toUSize.toNat = a :=
   Nat.mod_eq_of_lt h

@@ -15,13 +15,9 @@ variable {α : Type u} {β : α → Type v} {γ : α → Type w} {δ : Type w} {
 /--
 `AssocList α β` is "the same as" `List (α × β)`, but flattening the structure
 leads to one fewer pointer indirection (in the current code generator).
-It is mainly intended as a component of `HashMap`, but it can also be used as a plain
-key-value map.
 -/
 inductive AssocList (α : Type u) (β : α → Type v) where
-  /-- An empty list -/
   | nil
-  /-- Add a `key, value` pair to the list -/
   | cons (key : α) (value : β key) (tail : AssocList α β)
   deriving Inhabited
 
@@ -48,11 +44,6 @@ where @[specialize] go : AssocList α β → δ → m (ForInStep δ)
     | ForInStep.done d => pure (ForInStep.done d)
     | ForInStep.yield d => go t d
 
-/--
-`O(n)`. Convert an `AssocList α β` into the equivalent `List (α × β)`.
-This is used to give specifications for all the `AssocList` functions
-in terms of corresponding list functions.
--/
 def toList : AssocList α β → List (Σ a, β a)
   | nil => []
   | cons a b es => ⟨a, b⟩ :: es.toList
